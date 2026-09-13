@@ -822,6 +822,28 @@
     select.picker{min-width:0;flex:1;}
   }
 
+  /* ---------- LOAD SCREEN ---------- */
+  /* Sits in the first bytes of <body>, so it paints while the rest of the
+     file (mostly the embedded library) is still arriving. Held back a beat
+     so a fast load never shows it; eases toward 90% then finishes when the
+     library has parsed. */
+  .load-screen{
+    position:fixed;inset:0;z-index:9999;background:var(--bg);color:var(--text-dim);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+    opacity:0;animation:loadIn .25s ease .3s forwards;transition:opacity .35s ease;
+  }
+  .load-screen.done{opacity:0;pointer-events:none;animation:none;}
+  @keyframes loadIn{to{opacity:1;}}
+  .load-logo{width:56px;height:56px;border-radius:14px;}
+  .load-bar{width:220px;height:6px;border-radius:3px;background:var(--bg-card);border:1px solid var(--border-soft);overflow:hidden;}
+  .load-bar span{
+    display:block;height:100%;width:0;border-radius:3px;
+    background:linear-gradient(90deg, var(--accent), var(--lav));
+    animation:loadFill 5s cubic-bezier(.15,.75,.25,1) forwards;transition:width .3s ease;
+  }
+  @keyframes loadFill{to{width:90%;}}
+  .load-screen.done .load-bar span{width:100%;animation:none;}
+  .load-text{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);}
 </style>
 <script>
   // Apply the saved theme before anything paints, so a light-mode user
@@ -830,6 +852,12 @@
 </script>
 </head>
 <body>
+
+<div class="load-screen" id="loadScreen" aria-hidden="true">
+  <svg class="load-logo" viewBox="0 0 512 512" aria-hidden="true"><rect width="512" height="512" rx="104" fill="#0A0C11"/><rect x="96" y="316" width="56" height="84" rx="8" fill="#5B8DEF"/><rect x="164" y="236" width="56" height="164" rx="8" fill="#E8B24D"/><rect x="232" y="336" width="56" height="64" rx="8" fill="#454C60"/><rect x="300" y="196" width="56" height="204" rx="8" fill="#C77DFF"/><rect x="368" y="336" width="56" height="64" rx="8" fill="#454C60"/><path d="M84 344 L152 330 L164 250 L222 244 L232 342 L290 348 L300 210 L358 204 L368 342 L428 338" fill="none" stroke="#FFF04D" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <div class="load-bar"><span></span></div>
+  <div class="load-text">Loading workouts</div>
+</div>
 
 <div class="app-shell" id="appShell">
 
@@ -4375,6 +4403,15 @@
       if(!w.key) w.key = String(w.name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     });
     render();
+    dismissLoadScreen();
+  }
+
+  // Fill the bar and fade the load screen out once the list is on screen.
+  function dismissLoadScreen(){
+    var ls = document.getElementById('loadScreen');
+    if(!ls) return;
+    ls.classList.add('done');
+    setTimeout(function(){ if(ls.parentNode) ls.parentNode.removeChild(ls); }, 450);
   }
 
   // The library is embedded in this file so the app works when it's opened
@@ -4403,6 +4440,7 @@
         els.resultCount.textContent = 'Library unavailable';
         els.noResults.style.display = 'block';
         els.noResults.textContent = 'No workout library found — this file has no embedded library and library.json could not be loaded (' + e.message + ').';
+        dismissLoadScreen();
       });
   }
   loadLibrary();
