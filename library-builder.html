@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Workout Library Builder</title>
+<style>
+  :root{
+    --bg:#0A0C11; --bg-elev:#12151D; --bg-card:#161A24; --border:#252B3A; --border-soft:#1D2230;
+    --text:#E8EAF2; --text-dim:#9BA1B8; --text-faint:#5C6278; --accent:#6E8BFF; --ok:#5FE39A; --warn:#F2B84A;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --sans: -apple-system, "Segoe UI", Arial, sans-serif;
+    --c-recovery:#454C60; --c-endurance:#5B8DEF; --c-tempo:#49B4B0; --c-sweetspot:#E8B24D;
+    --c-threshold:#F2764A; --c-vo2:#C77DFF; --c-anaerobic:#FF5D75;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);padding:28px 24px 80px;}
+  h1{font-size:24px;margin:0 0 6px;color:#fff;}
+  .sub{color:var(--text-dim);font-size:14px;margin:0 0 22px;}
+  .bar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:22px;}
+  button{
+    font-family:inherit;font-size:14px;font-weight:650;padding:11px 20px;border-radius:10px;
+    border:1px solid var(--border);background:var(--bg-elev);color:var(--text);cursor:pointer;
+  }
+  button.primary{background:var(--accent);border-color:var(--accent);color:#0A0C11;}
+  button:hover{filter:brightness(1.1);}
+  .stats{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;}
+  .stat{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:11px 16px;font-size:13px;}
+  .stat b{font-family:var(--mono);color:#fff;font-size:16px;display:block;margin-top:3px;}
+  .warnbox{
+    background:rgba(242,184,74,0.08);border:1px solid rgba(242,184,74,0.32);border-radius:10px;
+    padding:12px 15px;font-size:13px;color:var(--warn);margin-bottom:20px;
+  }
+  .okbox{
+    background:rgba(95,227,154,0.08);border:1px solid rgba(95,227,154,0.32);border-radius:10px;
+    padding:12px 15px;font-size:13px;color:var(--ok);margin-bottom:20px;
+  }
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{
+    text-align:left;color:var(--text-faint);font-size:11px;text-transform:uppercase;letter-spacing:0.05em;
+    padding:0 10px 9px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);
+  }
+  td{padding:9px 10px;border-bottom:1px solid var(--border-soft);vertical-align:middle;}
+  tr:hover td{background:var(--bg-elev);}
+  .wname{font-weight:700;color:#fff;font-size:14.5px;}
+  .wshort{color:var(--text-dim);font-size:12.5px;margin-top:2px;}
+  .zpill{
+    display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;
+    font-family:var(--mono);letter-spacing:0.02em;
+  }
+  .num{font-family:var(--mono);color:var(--text);}
+  .chillies{display:flex;gap:2px;align-items:center;}
+  .chilli{width:17px;height:17px;flex:none;}
+  .mismatch{color:var(--warn);font-family:var(--mono);font-size:12px;}
+</style>
+</head>
+<body>
+
+<h1>Workout Library Builder</h1>
+<p class="sub">Generates the library from <span style="font-family:var(--mono)">library-gen.js</span>, classifies every
+workout, and checks the derived chilli rating against the one the generator intended. Review here, then download.</p>
+
+<div class="bar">
+  <button class="primary" id="genBtn">Generate library</button>
+  <button id="dlAppBtn">Download ftp-plan.html (library embedded)</button>
+  <button id="dlBtn">Download library.json</button>
+  <span class="sub" style="margin:0" id="status">Not generated yet.</span>
+</div>
+
+<div class="stats" id="stats"></div>
+<div id="check"></div>
+<table id="tbl"><thead><tr>
+  <th>Name</th><th>Zone</th><th>Spice</th><th>Duration</th><th>Target</th>
+  <th>Work&nbsp;mean</th><th>Work</th><th>TSS</th><th>IF</th><th>Structure</th><th>Check</th>
+</tr></thead><tbody id="rows"></tbody></table>
+
+<script src="library-gen.js"></script>
+<script>
+(function(){
+  "use strict";
+  var lib = null;
+
+  // Chilli glyph. Inline SVG rather than emoji so it can be greyed out for
+  // unfilled levels and coloured to match the heat.
+  // Broad at the stem, tapering to a point. An earlier version used two
+  // curves of constant width, which renders as a crescent, not a chilli.
+  function chilliSvg(colour, stem){
+    return '<svg class="chilli" viewBox="0 0 24 24" fill="none" aria-hidden="true">' +
+      '<path d="M11.4 6.4C10.7 4.5 11.8 2.6 13.9 2.4" stroke="' + (stem || '#5FE39A') +
+        '" stroke-width="1.9" stroke-linecap="round"/>' +
+      '<path d="M11.2 6C15.8 4.6 19.6 7.2 20.2 11.6C20.9 16.8 15.6 21.6 9 22.6' +
+        'C7.6 22.8 7 21.3 8.1 20.6C11.4 18.4 12.8 14.8 12.4 11C12.2 8.8 12 7 11.2 6Z" ' +
+        'fill="' + colour + '"/></svg>';
+  }
+  var HEAT = ['#8FD14F','#D7D14F','#F2B84A','#F2764A','#FF3B30'];
+
+  function chillies(n){
+    var out = '<span class="chillies" title="' + n + ' of 5">';
+    for(var i = 1; i <= 5; i++){
+      out += i <= n ? chilliSvg(HEAT[n-1]) : chilliSvg('#5C6278', '#5C6278');
+    }
+    return out + '</span>';
+  }
+
+  function zonePill(z, label){
+    return '<span class="zpill" style="background:var(--c-' + z + ');color:#0A0C11">' + label + '</span>';
+  }
+
+  function render(){
+    var Z = LibraryGen.ZONES;
+    document.getElementById('status').textContent = lib.count + ' workouts generated.';
+
+    var byZone = {}, byDur = {};
+    lib.workouts.forEach(function(w){
+      byZone[w.zone] = (byZone[w.zone] || 0) + 1;
+      byDur[w.durationMin] = (byDur[w.durationMin] || 0) + 1;
+    });
+    var stats = [['Workouts', lib.count]];
+    Object.keys(byZone).forEach(function(z){ stats.push([Z[z].label, byZone[z]]); });
+    document.getElementById('stats').innerHTML = stats.map(function(s){
+      return '<div class="stat">' + s[0] + '<b>' + s[1] + '</b></div>';
+    }).join('');
+
+    var short = lib.nameShortfall || {};
+    var shortKeys = Object.keys(short);
+    var shortHtml = shortKeys.length
+      ? '<div class="warnbox"><b>Name pool exhausted</b> — ' +
+        shortKeys.map(function(z){ return short[z] + ' ' + z + ' workout(s)'; }).join(', ') +
+        ' were dropped because there were no names left. Recipes are processed in order, so the ones added most recently are starved first. Add more entries to NAMES in library-gen.js.</div>'
+      : '';
+
+    var sd = lib.snapDropped || [];
+    var snapHtml = sd.length
+      ? '<div class="warnbox"><b>' + sd.length + ' dropped at duration snap</b> — the structure overshot its slot by more than the cool-down could absorb. ' +
+        'First few: ' + sd.slice(0,8).map(function(d){ return d.zone + ' s' + d.spice + ' ' + d.duration + 'min ' + d.structure + (d.over ? ' (+' + d.over + 'min)' : ''); }).join('; ') +
+        '. Usually a recipe’s budget maths not counting its own recoveries.</div>'
+      : '';
+
+    var m = lib.mismatches;
+    document.getElementById('check').innerHTML = shortHtml + snapHtml + (m.length === 0
+      ? '<div class="okbox">Cross-check passed: the classifier independently derived the intended chilli rating for all ' +
+        lib.count + ' workouts.</div>'
+      : '<div class="warnbox"><b>' + m.length + ' of ' + lib.count +
+        ' disagree</b> between intended and derived spice — first 12: ' +
+        m.slice(0,12).map(function(x){ return x.name + ' (' + x.zone + ' ' + x.pct + '%: meant ' +
+          x.intended + ', got ' + x.derived + ')'; }).join('; ') + '</div>');
+
+    document.getElementById('rows').innerHTML = lib.workouts.map(function(w){
+      var tiz = Object.keys(w.timeInZone).map(function(k){ return k.slice(0,4) + ' ' + w.timeInZone[k]; }).join(', ');
+      return '<tr>' +
+        '<td><div class="wname">' + w.name + '</div><div class="wshort">' + w.short + '</div></td>' +
+        '<td>' + zonePill(w.zone, Z[w.zone].label) + '</td>' +
+        '<td>' + chillies(w.spice) + '</td>' +
+        '<td class="num">' + w.durationMin + ' min</td>' +
+        '<td class="num">' + w.targetPct + '%</td>' +
+        '<td class="num">' + w.workMeanPct + '%</td>' +
+        '<td class="num">' + w.workMin + ' min</td>' +
+        '<td class="num">' + w.tss + '</td>' +
+        '<td class="num">' + w.if.toFixed(2) + '</td>' +
+        '<td class="wshort">' + w.structure + '</td>' +
+        '<td>' + (w.derivedSpice === w.spice ? '<span style="color:var(--ok)">ok</span>'
+                : '<span class="mismatch">got ' + w.derivedSpice + '</span>') + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  document.getElementById('genBtn').addEventListener('click', function(){
+    lib = LibraryGen.generate();
+    window.__lib = lib;
+    render();
+  });
+
+  function download(text, filename, mime){
+    var blob = new Blob([text], {type:mime});
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  }
+
+  document.getElementById('dlBtn').addEventListener('click', function(){
+    if(!lib){ alert('Generate first.'); return; }
+    download(JSON.stringify(lib, null, 1), 'library.json', 'application/json');
+  });
+
+  // Rewrites the <script id="libraryData"> block inside ftp-plan.html and hands
+  // back a complete app file, so regenerating stays one click rather than a
+  // copy-paste into a 400 KB document.
+  document.getElementById('dlAppBtn').addEventListener('click', async function(){
+    if(!lib){ alert('Generate first.'); return; }
+    var status = document.getElementById('status');
+    try{
+      // The app is ftp-plan.html in the local folder and index.html in the
+      // GitHub Pages copy; take whichever is beside this file.
+      var appName = 'ftp-plan.html';
+      var res = await fetch(appName, {cache:'no-store'});
+      if(!res.ok){ appName = 'index.html'; res = await fetch(appName, {cache:'no-store'}); }
+      if(!res.ok) throw new Error('HTTP ' + res.status);
+      var html = await res.text();
+
+      var open = '<script id="libraryData" type="application/json">';
+      var i = html.indexOf(open);
+      if(i < 0) throw new Error('libraryData block not found in ftp-plan.html');
+      var j = html.indexOf('<\/script>', i);
+      if(j < 0) throw new Error('unterminated libraryData block');
+
+      // Escape < so the JSON can never terminate the script element early.
+      var json = JSON.stringify(lib).replace(/</g, '\\u003c');
+      var out = html.slice(0, i + open.length) + json + html.slice(j);
+
+      download(out, appName, 'text/html');
+      status.textContent = 'Built ' + appName + ' with ' + lib.count + ' workouts embedded (' +
+        Math.round(out.length / 1024) + ' KB). Save it over the existing file.';
+    }catch(e){
+      status.textContent = 'Could not build the app file: ' + e.message +
+        ' — open this page through start.bat (http://localhost:8777) or the hosted site, not as a local file.';
+    }
+  });
+})();
+</script>
+</body>
+</html>
