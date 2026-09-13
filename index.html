@@ -2594,7 +2594,13 @@
       say('Upload failed: ' + e.message, true);
     }
   }
-  els.summaryStravaBtn.addEventListener('click', stravaUpload);
+  els.summaryStravaBtn.addEventListener('click', function(){
+    if(stravaConnected()){ stravaUpload(); return; }
+    // Park the ride, go and connect; the callback brings the summary back
+    // and starts the upload.
+    stashRide(true);
+    stravaConnect();
+  });
 
   // ============================================================
   // LIVE WORKOUT PLAYER
@@ -3573,13 +3579,56 @@
       return '<div class="summary-chip"><span>' + c.lab + '</span><b>' + c.val + '</b></div>';
     }).join('');
     renderFtpEstimate();
-    // Fresh Strava state for this ride.
-    els.summaryStravaBtn.style.display = stravaConnected() ? '' : 'none';
+    // Fresh Strava state for this ride. Not connected yet? Offer to connect
+    // and upload in one go — the ride is parked first, since the consent
+    // round-trip reloads the page.
+    els.summaryStravaBtn.style.display = '';
     els.summaryStravaBtn.disabled = false;
-    els.summaryStravaBtn.textContent = '⬆ Upload to Strava';
+    els.summaryStravaBtn.textContent = stravaConnected() ? '⬆ Upload to Strava' : 'Connect Strava & upload';
     els.summaryStravaLink.style.display = 'none';
     els.summaryStravaStatus.style.display = 'none';
     els.summaryModal.style.display = 'flex';
+  }
+
+  // ---- parked ride: survives the Strava consent round-trip ----
+  var PENDING_RIDE_KEY = 'ftpPlan_pendingRide_v1';
+  function stashRide(uploadIntent){
+    try{
+      localStorage.setItem(PENDING_RIDE_KEY, JSON.stringify({
+        key: liveState.workout ? liveState.workout.key : null,
+        startDateMs: liveState.startDateMs,
+        samples: liveState.samples,
+        laps: liveState.laps,
+        upload: !!uploadIntent
+      }));
+    }catch(e){ console.log('Could not park the ride:', e && e.message); }
+  }
+  function clearStashedRide(){ try{ localStorage.removeItem(PENDING_RIDE_KEY); }catch(e){} }
+
+  // Rebuild enough of liveState for the summary, exports and the image.
+  function restoreStashedRide(){
+    var s = null;
+    try{ s = JSON.parse(localStorage.getItem(PENDING_RIDE_KEY)); }catch(e){}
+    if(!s || !s.samples || !s.samples.length) return false;
+    var wo = s.key ? byKey(s.key) : null;
+    var flat = wo ? expandBlocks(wo.blocks).map(function(x){
+      return {type:x.type, min:x.min, pct:x.pct, pctEnd:x.pctEnd, label:x.label, seconds:Math.round(x.min * 60)};
+    }) : [];
+    var peak = 0;
+    flat.forEach(function(x){ if(x.pct !== null) peak = Math.max(peak, x.pct, x.pctEnd || 0); });
+    liveState.workout = wo;
+    liveState.flat = flat;
+    liveState.totalSeconds = flat.reduce(function(a, x){ return a + x.seconds; }, 0) || s.samples.length;
+    liveState.samples = s.samples;
+    liveState.laps = s.laps || [];
+    liveState.startDateMs = s.startDateMs;
+    liveState.intensity = 1;
+    liveState.chartMaxPct = Math.max(105, Math.ceil((peak + 8) / 5) * 5);
+    liveState.elapsedTotal = liveState.totalSeconds;
+    liveState.active = false;
+    showSummary();
+    if(s.upload && stravaConnected()) stravaUpload();
+    return true;
   }
 
   // ---- FTP estimate from a fitness test ----
@@ -3650,6 +3699,7 @@
 
   els.summaryCloseBtn.addEventListener('click', function(){
     els.summaryModal.style.display = 'none';
+    clearStashedRide();   // the rider is done with it
   });
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape' && els.summaryModal.style.display !== 'none'){
@@ -4227,7 +4277,9 @@
   checkBleSupport();
   updateDeviceUI();   // shows "Reconnect" if a device is remembered
   updateStravaUI();
-  stravaHandleCallback();   // no-op unless we just came back from Strava's consent page
+  // Coming back from Strava's consent page (or reopening after a ride that
+  // never got closed): finish the sign-in, then bring the parked ride back.
+  stravaHandleCallback().then(function(){ restoreStashedRide(); });
   try{ if(localStorage.getItem(RAIL_KEY) === '1') setRail(true); }catch(e){}
   renderSortMenu();
   updateStarFilterUI();
