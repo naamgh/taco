@@ -2566,7 +2566,15 @@
       fd.append('file', new Blob([bytes], {type:'application/octet-stream'}), exportBasename() + '.fit');
       fd.append('data_type', 'fit');
       fd.append('name', wo ? wo.name : 'Indoor ride');
-      fd.append('description', (wo ? wo.short + ' · ' : '') + 'Indoor Training Console');
+      if(wo){
+        // Same figures as the detail pane: the plan's zone, time in zone,
+        // TSS and normalised power at the FTP it was ridden with.
+        var zl = (ZONES[wo.zone] || ZONES.endurance).label;
+        var desc = wo.test
+          ? zl + ' · ' + wo.durationMin + ' min'
+          : zl + ' · ' + wo.workMin + ' min in zone · TSS ' + wo.tss + ' · Normalised ' + planPower(wo).np + ' W';
+        fd.append('description', desc);
+      }
       fd.append('trainer', '1');
       var res = await fetch('https://www.strava.com/api/v3/uploads', {method:'POST', headers:{Authorization:'Bearer ' + token}, body:fd});
       var up = await res.json().catch(function(){ return {}; });
