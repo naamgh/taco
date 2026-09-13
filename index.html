@@ -761,6 +761,9 @@
   }
   .summary-chip span{display:block;font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;}
   .summary-chip b{display:block;font-family:var(--mono);font-size:20px;color:var(--text);}
+  .summary-hr-sets{
+    margin:-10px 0 18px;font-family:var(--mono);font-size:13px;color:var(--text-dim);text-align:center;
+  }
   .summary-actions{display:flex;flex-direction:column;gap:10px;}
   .ftp-estimate{
     background:rgba(255,93,117,0.07);border:1px dashed rgba(255,93,117,0.45);border-radius:14px;
@@ -1099,6 +1102,7 @@
     <p class="summary-title">Workout complete</p>
     <p class="live-segment-index" id="summaryWorkoutName"></p>
     <div class="summary-grid" id="summaryGrid"></div>
+    <p class="summary-hr-sets" id="summaryHrSets" style="display:none;"></p>
     <div class="ftp-estimate" id="ftpEstimate" style="display:none;"></div>
     <div class="summary-actions">
       <button class="action-btn primary" id="summaryFitBtn">&#11015; Export .fit for Strava</button>
@@ -1169,14 +1173,16 @@
   function expandBlocks(blocks){
     var out = [];
     blocks.forEach(function(b){
+      // `prep` (warm-up, primers, cool-down) and `work` (a repeat's on-leg)
+      // are carried through so the ride analysis can tell the main set apart.
       if(b.kind === 'single'){
-        out.push({type:b.zone, min:b.min, pct:b.pct, pctEnd:b.pctEnd, label:b.label});
+        out.push({type:b.zone, min:b.min, pct:b.pct, pctEnd:b.pctEnd, label:b.label, prep:!!b.prep});
         return;
       }
       for(var i=0; i<b.reps; i++){
-        out.push({type:b.work.zone, min:b.work.min, pct:b.work.pct, pctEnd:b.work.pctEnd, label:b.work.label + ' ' + (i+1)});
+        out.push({type:b.work.zone, min:b.work.min, pct:b.work.pct, pctEnd:b.work.pctEnd, label:b.work.label + ' ' + (i+1), prep:!!b.prep, work:true});
         if(b.rest && (i < b.reps - 1 || b.trailingRest)){
-          out.push({type:b.rest.zone, min:b.rest.min, pct:b.rest.pct, pctEnd:b.rest.pctEnd, label:b.rest.label});
+          out.push({type:b.rest.zone, min:b.rest.min, pct:b.rest.pct, pctEnd:b.rest.pctEnd, label:b.rest.label, prep:!!b.prep});
         }
       }
     });
@@ -1236,6 +1242,7 @@
     stravaClientSecret: document.getElementById('stravaClientSecret'),
     stravaAuthBtn: document.getElementById('stravaAuthBtn'),
     summaryStravaBtn: document.getElementById('summaryStravaBtn'),
+    summaryHrSets: document.getElementById('summaryHrSets'),
     summaryStravaLink: document.getElementById('summaryStravaLink'),
     summaryStravaStatus: document.getElementById('summaryStravaStatus'),
     guideBtn: document.getElementById('guideBtn'),
@@ -2726,7 +2733,7 @@
     if(!wo) return;
     var flat = expandBlocks(wo.blocks).map(function(s){
       // Rounded: a 20 s leg is stored as 1/3 min and 1/3 * 60 isn't exact.
-      return {type:s.type, min:s.min, pct:s.pct, pctEnd:s.pctEnd, label:s.label, seconds:Math.round(s.min * 60)};
+      return {type:s.type, min:s.min, pct:s.pct, pctEnd:s.pctEnd, label:s.label, seconds:Math.round(s.min * 60), prep:s.prep, work:s.work};
     });
     liveState.workout = wo;
     liveState.flat = flat;
@@ -3175,7 +3182,7 @@
     var start = liveState.lapStartSec;
     var end = liveState.samples.length;
     if(end > start){
-      liveState.laps.push({start:start, end:end, label:step.label, type:step.type, pct:step.pct});
+      liveState.laps.push({start:start, end:end, label:step.label, type:step.type, pct:step.pct, prep:!!step.prep, work:!!step.work});
     }
     liveState.lapStartSec = end;
   }
@@ -3570,8 +3577,74 @@
             avgHr:avg(hrs), maxHr:mx(hrs), avgCadence:avg(cads), maxCadence:mx(cads), kj:kj};
   }
 
+  // ---- HR by set ----
+  // Average heart rate of each work set, so drift across the session is
+  // visible as plain numbers with no verdict attached. A "set" is a run of
+  // consecutive main-set laps (a repeat's work leg, or both legs of an
+  // over/under, or a primary-zone block in a ride with no repeats). The
+  // first 90 s of each lap are dropped so HR lag doesn't flatter set one.
+  // A single long block is split into halves instead.
+  var HR_SET_LAG_SEC = 90, HR_SET_MIN_SAMPLES = 60;
+  function hrBySet(){
+    var wo = liveState.workout, laps = liveState.laps, s = liveState.samples;
+    if(!wo || wo.test || !laps.length) return null;
+    var hasRepeat = laps.some(function(l){ return l.work && !l.prep; });
+    function isMain(l){
+      if(l.prep || l.pct === null) return false;
+      return hasRepeat ? (l.type === wo.zone || l.work) : l.type === wo.zone;
+    }
+    // Group consecutive main laps.
+    var groups = [], cur = null;
+    laps.forEach(function(l){
+      if(isMain(l)){ if(!cur){ cur = []; groups.push(cur); } cur.push(l); }
+      else cur = null;
+    });
+    if(!groups.length) return null;
+
+    function avgHr(from, to){
+      var sum = 0, n = 0;
+      for(var i = from; i < to && i < s.length; i++){ if(s[i].hr !== null && s[i].hr !== undefined){ sum += s[i].hr; n++; } }
+      return n >= HR_SET_MIN_SAMPLES ? {hr:Math.round(sum / n), n:n} : null;
+    }
+    function groupHr(g){
+      var sum = 0, n = 0;
+      g.forEach(function(l){
+        var len = l.end - l.start;
+        var skip = len >= HR_SET_LAG_SEC * 3 ? HR_SET_LAG_SEC : Math.floor(len / 3);
+        for(var i = l.start + skip; i < l.end && i < s.length; i++){
+          if(s[i].hr !== null && s[i].hr !== undefined){ sum += s[i].hr; n++; }
+        }
+      });
+      return n >= HR_SET_MIN_SAMPLES ? Math.round(sum / n) : null;
+    }
+
+    if(groups.length === 1){
+      // One block: first half vs second half, after the lag.
+      var g = groups[0], from = g[0].start + Math.min(120, Math.floor((g[g.length - 1].end - g[0].start) / 4)), to = g[g.length - 1].end;
+      if(to - from < 600) return null;                       // under 10 min: not worth a verdict-free number even
+      var mid = Math.floor((from + to) / 2);
+      var a = avgHr(from, mid), b = avgHr(mid, to);
+      if(!a || !b) return null;
+      return {kind:'halves', values:[a.hr, b.hr]};
+    }
+    var vals = groups.map(groupHr);
+    if(vals.some(function(v){ return v === null; })) return null;   // micro-intervals or a strap drop-out
+    return {kind:'sets', values:vals};
+  }
+
+  function hrBySetText(){
+    var r = hrBySet();
+    if(!r) return '';
+    if(r.kind === 'halves') return 'HR ' + r.values[0] + ' → ' + r.values[1] + ' bpm (first half → second half of the block)';
+    var lo = Math.min.apply(null, r.values), hi = Math.max.apply(null, r.values);
+    return 'HR by set ' + r.values.join(' · ') + ' bpm' + (hi > lo ? ' (+' + (hi - lo) + ')' : '');
+  }
+
   function showSummary(){
     var stats = computeSummary(liveState.samples);
+    var hrLine = hrBySetText();
+    els.summaryHrSets.style.display = hrLine ? 'block' : 'none';
+    els.summaryHrSets.textContent = hrLine;
     els.summaryWorkoutName.textContent = liveState.workout ? liveState.workout.name : 'Live ride';
     var chips = [
       {lab:'Duration', val: mmss(stats.duration)},
