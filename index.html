@@ -450,29 +450,39 @@
   .ftp-chip input::-webkit-outer-spin-button,
   .ftp-chip input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
   .ftp-unit{font-family:var(--mono);font-size:11.5px;color:var(--text-faint);}
-  /* Stepper: two stacked nudge buttons so small FTP changes don't need typing. */
-  .ftp-step{display:flex;flex-direction:column;gap:2px;flex:none;}
+  /* Stepper: two stacked nudge arrows so small FTP changes don't need typing.
+     Bare glyphs — no box, no border; they tint on hover. */
+  .ftp-step{display:flex;flex-direction:column;gap:0;flex:none;}
   .ftp-step button{
-    width:22px;height:13px;padding:0;border-radius:4px;cursor:pointer;
-    background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);
-    display:flex;align-items:center;justify-content:center;
+    width:16px;height:11px;padding:0;border:0;background:none;cursor:pointer;
+    color:var(--text-faint);display:flex;align-items:center;justify-content:center;
   }
-  .ftp-step button:hover{background:var(--bg-card-hover);color:var(--text);border-color:var(--accent);}
-  .ftp-step button:active{background:var(--accent-soft);color:var(--accent);}
+  .ftp-step button:hover{color:var(--accent);}
+  .ftp-step button:active{color:var(--accent);transform:scale(0.88);}
 
-  /* FTP and Max HR sit side by side, each stacked label-over-value, so the
-     pinned rider block costs one row instead of two. */
-  .rider-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
-  /* No pill around these two: the input already carries its own box, and a
-     card behind it just doubled the framing. */
+  /* Both numbers on a single line, no heading, split by a hairline. No pills:
+     the label, the number and the arrows are the whole of it. */
+  .rider-row{display:flex;align-items:center;gap:0;}
   .rider-row .ftp-chip{
-    display:flex;flex-direction:column;align-items:stretch;gap:3px;
-    padding:0;min-width:0;background:none;border:0;border-radius:0;
+    display:flex;flex-direction:row;align-items:center;gap:5px;
+    flex:1 1 0;min-width:0;padding:0;background:none;border:0;border-radius:0;
   }
-  .rider-row .ftp-chip label{font-size:9.5px;letter-spacing:0.06em;}
-  .ftp-val{display:flex;align-items:center;gap:4px;min-width:0;}
+  .rider-row .ftp-chip + .ftp-chip{
+    border-left:1px solid var(--border-soft);padding-left:12px;margin-left:12px;
+  }
+  .rider-row .ftp-chip label{font-size:9.5px;letter-spacing:0.06em;flex:none;}
+  .ftp-val{display:flex;align-items:center;gap:2px;min-width:0;}
+  /* The number reads as a value, not a form field: no box until you reach for
+     it. Sized for three digits, which is all either of these ever is. */
   .rider-row .ftp-chip input{
-    width:100%;min-width:0;margin-left:0;font-size:13.5px;padding:3px 5px;
+    width:38px;min-width:0;margin-left:auto;padding:2px 3px;
+    font-size:15px;text-align:right;
+    background:none;border:1px solid transparent;border-radius:6px;
+    transition:border-color .12s,background .12s;
+  }
+  .rider-row .ftp-chip input:hover{border-color:var(--border);}
+  .rider-row .ftp-chip input:focus{
+    border-color:var(--accent);background:var(--bg-card);outline:none;
   }
 
   .ftp-help{
@@ -1045,16 +1055,10 @@
     <!-- Set-and-forget rider numbers: pinned at the bottom with the toggles,
          so scrolling the filters never hides them. -->
     <div class="side-group rider-group">
-        <div class="filter-head">
-          <span class="filter-label">Rider</span>
-          <span class="ftp-help" id="ftpHelp" tabindex="0" role="button" aria-label="Show power and heart-rate zone reference">?</span>
-        </div>
         <div class="rider-row">
-        <div class="device-chip ftp-chip">
+        <div class="ftp-chip">
           <label for="ftpInput">FTP</label>
-          <div class="ftp-val">
-          <input id="ftpInput" type="number" min="80" max="500" step="1" value="220">
-          <span class="ftp-unit">W</span>
+          <input id="ftpInput" type="number" min="80" max="500" step="1" value="220" title="FTP in watts">
           <span class="ftp-step" aria-hidden="false">
             <button type="button" id="ftpUp" title="FTP +1 W (hold to repeat)" aria-label="Increase FTP by one watt">
               <svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 5l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1063,13 +1067,10 @@
               <svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
           </span>
-          </div>
         </div>
-        <div class="device-chip ftp-chip">
+        <div class="ftp-chip">
           <label for="maxHrInput">Max HR</label>
-          <div class="ftp-val">
-          <input id="maxHrInput" type="number" min="120" max="230" step="1" placeholder="—">
-          <span class="ftp-unit">bpm</span>
+          <input id="maxHrInput" type="number" min="120" max="230" step="1" placeholder="—" title="Maximum heart rate in bpm">
           <span class="ftp-step" aria-hidden="false">
             <button type="button" id="maxHrUp" title="Max HR +1 (hold to repeat)" aria-label="Increase max heart rate by one">
               <svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 5l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -1078,7 +1079,6 @@
               <svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
           </span>
-          </div>
         </div>
         </div>
       </div>
@@ -1095,6 +1095,10 @@
       <button class="foot-btn guide-btn" id="guideBtn" aria-label="Quick guide" aria-describedby="guidePop">
         <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2.9-1.2 1.7v.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="17" r="1.1" fill="currentColor"/></svg>
         <span class="foot-label">Guide</span>
+      </button>
+      <button class="foot-btn" id="ftpHelp" type="button" aria-label="Show power and heart-rate zone reference">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><rect x="3.5" y="13" width="4.6" height="7.5" rx="1.3" fill="currentColor"/><rect x="9.7" y="8.5" width="4.6" height="12" rx="1.3" fill="currentColor"/><rect x="15.9" y="4" width="4.6" height="16.5" rx="1.3" fill="currentColor"/></svg>
+        <span class="foot-label">Zones</span>
       </button>
     </div>
   </aside>
