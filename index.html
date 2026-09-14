@@ -325,6 +325,10 @@
      track: segment 0 is a neutral "Any", and the knob snaps to the centre of
      whichever segment is chosen. */
   .filter-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  /* Filters that don't apply to the fitness tests, while those are selected. */
+  .side-group.filter-off{opacity:0.38;transition:opacity .15s;}
+  .side-group.filter-off .fsl,
+  .side-group.filter-off .shape-grid{pointer-events:none;}
   .filter-val{font-family:var(--mono);font-size:11.5px;color:var(--text);font-weight:650;}
   .filter-val.any{color:var(--text-faint);font-weight:500;}
   .fsl{
@@ -459,9 +463,11 @@
   /* FTP and Max HR sit side by side, each stacked label-over-value, so the
      pinned rider block costs one row instead of two. */
   .rider-row{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  /* No pill around these two: the input already carries its own box, and a
+     card behind it just doubled the framing. */
   .rider-row .ftp-chip{
     display:flex;flex-direction:column;align-items:stretch;gap:3px;
-    padding:7px 8px;min-width:0;
+    padding:0;min-width:0;background:none;border:0;border-radius:0;
   }
   .rider-row .ftp-chip label{font-size:9.5px;letter-spacing:0.06em;}
   .ftp-val{display:flex;align-items:center;gap:4px;min-width:0;}
@@ -684,6 +690,13 @@
   .action-btn.strava-sync .strava-wordmark{height:12px;margin-top:0;}
   .action-btn.strava-sync.busy .strava-wordmark{display:none;}
   .action-btn.strava-link{background:#FC4C02;border-color:#FC4C02;color:#fff;text-decoration:none;justify-content:center;}
+  .action-btn.strava-link:hover{background:#e14400;}
+  /* Light mode: darkening a saturated fill against white just reads muddy, so
+     these keep their brand colour and lift with a soft shadow instead. */
+  :root[data-theme="light"] .action-btn.strava-sync:hover,
+  :root[data-theme="light"] .action-btn.strava-link:hover{
+    background:#F04500;box-shadow:0 4px 12px -4px rgba(252,76,2,0.65);
+  }
   .strava-status{margin:-4px 0 0;font-size:12px;color:var(--text-dim);text-align:center;}
   .strava-status.err{color:var(--warn);}
   .ble-warning{
@@ -709,9 +722,14 @@
     box-shadow:0 6px 18px -8px rgba(110,139,255,0.9), inset 0 1px 0 rgba(255,255,255,0.22);
     text-shadow:0 1px 1px rgba(0,0,0,0.25);letter-spacing:0.01em;
   }
-  .action-btn.start-btn:hover{filter:brightness(1.1) saturate(1.1);box-shadow:0 8px 22px -8px rgba(110,139,255,1), inset 0 1px 0 rgba(255,255,255,0.25);}
   .action-btn.start-btn:active{filter:brightness(0.96);transform:translateY(1px);}
-  .action-btn:not(.primary):hover{background:var(--bg-card-hover);}
+  /* Only plain buttons get the neutral hover. Every coloured variant is
+     excluded because this rule outranks their own hovers and would repaint
+     them the card colour — which in light mode is near-white, leaving white
+     label text invisible. */
+  .action-btn:not(.primary):not(.start-btn):not(.strava-sync):not(.strava-link):not(.danger):hover{
+    background:var(--bg-card-hover);
+  }
 
   /* ---------- LIVE PLAYER ---------- */
   .live-player{
@@ -843,9 +861,27 @@
   .live-btn:hover{filter:brightness(1.08);}
 
   /* ---------- SUMMARY MODAL ---------- */
-  .summary-inner{max-width:580px;text-align:center;}
+  /* The summary reuses .live-inner, which clips to the viewport so the live
+     player's controls stay put. The summary has no flexible element, so the
+     stats scroll and the actions stay pinned — Close is never off-screen,
+     however tall the content gets (pies + a ramp-test estimate is the worst
+     case). */
+  /* Stats and pies sit side by side, which roughly halves the height and uses
+     the width the narrow card was leaving empty. Collapses back to one column
+     when there isn't room for two. */
+  .summary-inner{max-width:940px;text-align:center;}
+  .summary-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;}
+  .summary-cols{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start;margin:20px 0 16px;}
+  /* No pies (a ride with no samples): don't leave half the row empty. */
+  .summary-cols:has(> .summary-pies:empty){grid-template-columns:minmax(0,560px);justify-content:center;}
+  /* Held to a button-ish width and centred: stretched across the full 940px
+     card the actions read as banners rather than buttons. */
+  .summary-inner .summary-actions{
+    flex:none;padding-top:12px;margin:4px auto 0;width:100%;max-width:520px;
+    border-top:1px solid var(--border-soft);
+  }
   .summary-title{font-size:22px;font-weight:700;margin:0 0 4px;}
-  .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:20px 0;}
+  .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0;}
   .summary-chip{
     background:var(--bg-elev);border:1px solid var(--border-soft);border-radius:12px;
     padding:14px 10px;text-align:center;
@@ -857,8 +893,11 @@
   .summary-row .action-btn{flex:1 1 0;justify-content:center;}
   .action-btn.danger{background:#E8395A;border-color:#E8395A;color:#fff;justify-content:center;margin-top:8px;}
   .action-btn.danger:hover{background:#d02a4a;}
+  :root[data-theme="light"] .action-btn.danger:hover{
+    background:#E02A4E;box-shadow:0 4px 12px -4px rgba(232,57,90,0.6);
+  }
   /* time-in-zone pies */
-  .summary-pies{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 16px;}
+  .summary-pies{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0;}
   .summary-pies:empty{display:none;}
   .summary-pies:has(> :only-child){grid-template-columns:minmax(0,320px);justify-content:center;}
   .pie-card{background:var(--bg-elev);border:1px solid var(--border-soft);border-radius:12px;padding:12px 10px 10px;}
@@ -885,6 +924,11 @@
     .tr-grid{grid-template-columns:repeat(3,1fr);}
     .tr-val{font-size:22px;}
     .summary-grid{grid-template-columns:1fr 1fr;}
+  }
+
+  /* Not enough width for stats beside pies: stack them again. */
+  @media (max-width:900px){
+    .summary-cols{grid-template-columns:1fr;gap:16px;}
   }
 
   @media (max-width:680px){
@@ -1264,11 +1308,15 @@
 
 <div id="summaryModal" class="live-player no-print" style="display:none;" role="dialog" aria-modal="true" aria-label="Workout summary">
   <div class="live-inner summary-inner">
-    <p class="summary-title">Workout complete</p>
-    <p class="live-segment-index" id="summaryWorkoutName"></p>
-    <div class="summary-grid" id="summaryGrid"></div>
-    <div class="summary-pies" id="summaryPies"></div>
-    <div class="ftp-estimate" id="ftpEstimate" style="display:none;"></div>
+    <div class="summary-scroll">
+      <p class="summary-title">Workout complete</p>
+      <p class="live-segment-index" id="summaryWorkoutName"></p>
+      <div class="summary-cols">
+        <div class="summary-grid" id="summaryGrid"></div>
+        <div class="summary-pies" id="summaryPies"></div>
+      </div>
+      <div class="ftp-estimate" id="ftpEstimate" style="display:none;"></div>
+    </div>
     <div class="summary-actions">
       <button class="action-btn strava-sync" id="summaryStravaBtn">
         <span id="summaryStravaText">Sync to</span>
@@ -1736,6 +1784,17 @@
     [].forEach.call(els.shapeFilter.querySelectorAll('[data-shape]'), function(b){
       b.classList.toggle('on', filters.shape === b.getAttribute('data-shape'));
     });
+
+    // Time, Spice and Shape don't apply while the tests are selected (see
+    // filteredWorkouts), so show them standing down rather than leaving them
+    // looking active but inert.
+    var testsOnly = filters.zone === 'test';
+    [els.durFilter, els.spiceFilter, els.shapeFilter].forEach(function(el){
+      var g = el.closest('.side-group');
+      if(!g) return;
+      g.classList.toggle('filter-off', testsOnly);
+      g.title = testsOnly ? 'Not applied while Fitness test is selected' : '';
+    });
   }
 
   function setFilter(key, value){
@@ -1748,12 +1807,19 @@
 
   function filteredWorkouts(){
     var q = filters.search.trim().toLowerCase();
+    // Asking for the tests is an explicit "show me the tests": there are only
+    // two of them and they have fixed durations and structures, so leaving a
+    // stale time/shape/spice filter in place would strand the rider on an
+    // empty list. Those three stand down while the test zone is picked.
+    var testsOnly = filters.zone === 'test';
     var out = WORKOUTS.filter(function(w){
       if(filters.starredOnly && !isFav(w.key)) return false;
-      if(filters.duration !== null && w.durationMin !== filters.duration) return false;
       if(filters.zone !== null && w.zone !== filters.zone) return false;
-      if(filters.shape !== null && w.shape !== filters.shape) return false;
-      if(filters.spice !== null && w.spice !== filters.spice) return false;
+      if(!testsOnly){
+        if(filters.duration !== null && w.durationMin !== filters.duration) return false;
+        if(filters.shape !== null && w.shape !== filters.shape) return false;
+        if(filters.spice !== null && w.spice !== filters.spice) return false;
+      }
       if(q && (w.name + ' ' + w.short).toLowerCase().indexOf(q) < 0) return false;
       return true;
     });
