@@ -58,6 +58,9 @@
     --c-anaerobic:#FF5D75;
     --c-test:#FF5D75;
     --seg-any:#3A4152;          /* the neutral "Any" segment on the filter sliders */
+    /* The glow that points the way off an unavailable segment. `rest` is only
+       used by the reduced-motion fallback. */
+    --lure-off:rgba(255,255,255,0); --lure-halo:rgba(255,255,255,0.62); --lure-rest:rgba(255,255,255,0.30);
     color-scheme:dark;
   }
   /* Light: same structure, inverted surfaces. The accent and status colours
@@ -106,6 +109,9 @@
     --c-anaerobic:#E8395A;
     --c-test:#E8395A;
     --seg-any:#C4CAD8;
+    /* White is invisible against a near-white sidebar, so light mode lures with
+       ink instead — same "look here", opposite ink. */
+    --lure-off:rgba(27,32,48,0); --lure-halo:rgba(27,32,48,0.45); --lure-rest:rgba(27,32,48,0.20);
     color-scheme:light;
   }
 
@@ -341,8 +347,12 @@
   /* invisible grab area, 7px taller each side, so aiming at the knob is forgiving */
   .fsl::before{content:'';position:absolute;left:0;right:0;top:-7px;bottom:-7px;}
   .fsl.dragging{cursor:grabbing;}
-  .fsl .fbar{position:absolute;top:9px;left:0;right:0;height:9px;border-radius:5px;overflow:hidden;display:flex;}
-  .fsl .fbar span{flex:1;}
+  /* overflow stays visible so a lit segment's glow isn't clipped; the bar's
+     rounded ends move onto the end segments instead. */
+  .fsl .fbar{position:absolute;top:9px;left:0;right:0;height:9px;border-radius:5px;display:flex;}
+  .fsl .fbar span{flex:1;position:relative;}
+  .fsl .fbar span:first-child{border-radius:5px 0 0 5px;}
+  .fsl .fbar span:last-child{border-radius:0 5px 5px 0;}
   .fsl .fknob{
     position:absolute;top:4px;width:18px;height:18px;border-radius:50%;
     background:var(--bg-elev);border:2px solid var(--accent);
@@ -392,6 +402,22 @@
      land there — a slider whose segments refuse the handle feels broken. */
   .fsl .fbar span.dead{background:var(--seg-any) !important;opacity:.45;}
   .seglabels span.dead{color:var(--c-anaerobic);opacity:1;font-weight:700;font-size:10.5px;}
+
+  /* Parking the knob on a × leaves no way out on the control itself, so every
+     segment that still leads somewhere glows — two beats, then nothing. Glow
+     only, no ring: an outline would compete with the red ×s the dead segments
+     already carry. Saying it twice is enough; after that it's nagging, and the
+     ×s are still there to be read at leisure. */
+  @keyframes segLure{
+    0%,50%,100%{box-shadow:0 0 0 0 var(--lure-off);}
+    25%,75%    {box-shadow:0 0 11px 3px var(--lure-halo);}
+  }
+  .fsl .fbar span.lure{animation:segLure 3s ease-in-out;z-index:2;}
+  /* No pulse means no signal at all for these riders, so they get the halo
+     held steady instead — it stays while the knob is on a ×, and nothing moves. */
+  @media (prefers-reduced-motion:reduce){
+    .fsl .fbar span.lure{animation:none;box-shadow:0 0 7px 1px var(--lure-rest);}
+  }
   .shape-tile.dead{opacity:.34;}
   .shape-tile.dead:hover{opacity:.55;}
   /* Same mark on the tiles, so the two controls speak the same language. */
@@ -2118,9 +2144,9 @@
 
     // Mark the options that lead nowhere, so a dead end is visible before it's
     // reached rather than after.
-    paintAvail(els.durFilter,   els.durSegLabels,   'duration', o.durations);
-    paintAvail(els.zoneFilter,  els.zoneSegLabels,  'zone',     o.zones);
-    paintAvail(els.spiceFilter, els.spiceSegLabels, 'spice',    [1,2,3,4,5]);
+    paintAvail(els.durFilter,   els.durSegLabels,   'duration', o.durations, di);
+    paintAvail(els.zoneFilter,  els.zoneSegLabels,  'zone',     o.zones,     zi);
+    paintAvail(els.spiceFilter, els.spiceSegLabels, 'spice',    [1,2,3,4,5], si);
     paintShapeAvail();
 
     // Time, Spice and Shape don't apply while the tests are selected (see
@@ -2183,17 +2209,26 @@
     return n;
   }
   // `values[i]` is the filter value behind segment i+1; segment 0 is "Any",
-  // which is the way out and so is never marked.
-  function paintAvail(el, labelsEl, key, values){
-    var segs = el.querySelectorAll('.fbar span'), labs = labelsEl.children;
-    for(var i = 0; i < segs.length; i++){
-      // The tests bypass the other filters, so their segment is always live.
-      var live = i === 0 || (key === 'zone' && values[i-1] === 'test')
-        || anyMatch(probeFilters(key, values[i-1]));
-      segs[i].classList.toggle('dead', !live);
+  // which is the way out and so is never marked. `cur` is where the knob sits.
+  function paintAvail(el, labelsEl, key, values, cur){
+    var segs = el.querySelectorAll('.fbar span'), labs = labelsEl.children, i;
+    // The tests bypass the other filters, so their segment is always live.
+    function isTest(i){ return key === 'zone' && values[i-1] === 'test'; }
+    var live = [];
+    for(i = 0; i < segs.length; i++){
+      live[i] = i === 0 || isTest(i) || anyMatch(probeFilters(key, values[i-1]));
+    }
+    // Parked on a × and the control offers no way out on its own, so every
+    // segment that still leads somewhere lights up. The fitness test is left
+    // out: it's live whatever else is set, so it would glow every single time
+    // the top of the bar empties, and a test isn't the workout they came for.
+    var stuck = !live[cur];
+    for(i = 0; i < segs.length; i++){
+      segs[i].classList.toggle('dead', !live[i]);
+      segs[i].classList.toggle('lure', stuck && live[i] && !isTest(i));
       if(labs[i]){
-        labs[i].classList.toggle('dead', !live);
-        labs[i].textContent = live ? labs[i].getAttribute('data-txt') : '×';
+        labs[i].classList.toggle('dead', !live[i]);
+        labs[i].textContent = live[i] ? labs[i].getAttribute('data-txt') : '×';
       }
     }
   }
