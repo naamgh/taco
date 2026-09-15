@@ -325,6 +325,9 @@
      track: segment 0 is a neutral "Any", and the knob snaps to the centre of
      whichever segment is chosen. */
   .filter-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+  /* Separates the device row from the filters — they're different kinds of
+     control and ran together as one list. */
+  .side-group-first{border-top:1px solid var(--border-soft);padding-top:16px;}
   /* Filters that don't apply to the fitness tests, while those are selected. */
   .side-group.filter-off{opacity:0.38;transition:opacity .15s;}
   .side-group.filter-off .fsl,
@@ -380,6 +383,136 @@
     box-shadow:0 0 0 1px var(--accent);
   }
   .shape-tile.on .glyph rect{fill:var(--accent);}
+
+  /* ---------- UNAVAILABLE OPTIONS ----------
+     A segment whose combination has no workouts is notched out: the zone
+     colour drops out of the bar, leaving a gap in the colour run, and the
+     label underneath becomes a red ×. The gap says "nothing here"; the ×
+     says it's deliberate rather than a rendering fault. The knob can still
+     land there — a slider whose segments refuse the handle feels broken. */
+  .fsl .fbar span.dead{background:var(--seg-any) !important;opacity:.45;}
+  .seglabels span.dead{color:var(--c-anaerobic);opacity:1;font-weight:700;font-size:10.5px;}
+  .shape-tile.dead{opacity:.34;}
+  .shape-tile.dead:hover{opacity:.55;}
+  /* Same mark on the tiles, so the two controls speak the same language. */
+  .shape-tile.dead .name::after{content:' \00d7';color:var(--c-anaerobic);font-weight:700;}
+
+  /* Shape's readout doubles as the way back — it's the one filter with no
+     "Any" segment to slide to. Quiet while nothing is picked; once a shape is
+     chosen it becomes the name plus a red ×, the removable-chip pattern. The
+     × is circled because a bare red × now means "unavailable" elsewhere. */
+  .shape-any{
+    display:inline-flex;align-items:center;gap:6px;cursor:pointer;
+    font-family:var(--mono);font-size:11px;
+    background:none;border:1px solid transparent;border-radius:20px;padding:2px 8px;
+    max-width:172px;transition:background .12s;
+  }
+  .shape-any.is-any{color:var(--text-faint);font-weight:500;cursor:default;}
+  .shape-any.can-clear{color:var(--text);font-weight:650;}
+  .shape-any.can-clear:hover{background:rgba(255,93,117,0.10);}
+  .shape-any .sa-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .shape-any .sa-x{
+    flex:none;display:inline-flex;align-items:center;justify-content:center;
+    width:15px;height:15px;border-radius:50%;font-size:10px;font-weight:700;line-height:1;
+    color:var(--c-anaerobic);border:1.5px solid var(--c-anaerobic);
+    transition:background .12s,color .12s;
+  }
+  .shape-any.can-clear:hover .sa-x{background:var(--c-anaerobic);color:#fff;}
+  /* Lives with the filters it resets, rather than over in the list pane. */
+  .reset-btn{
+    width:100%;background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);
+    border-radius:10px;padding:9px 12px;font-size:12.5px;font-weight:650;cursor:pointer;
+    font-family:inherit;
+  }
+  .reset-btn:hover{background:var(--bg-card-hover);color:var(--text);border-color:var(--accent);}
+
+  /* ---------- GUIDED START ----------
+     The entry card sits first in the list and reads as an invitation rather
+     than a workout. */
+  .start-card{
+    background:linear-gradient(135deg,var(--accent-soft),transparent 70%);
+    border:1px dashed var(--accent);border-radius:12px;padding:14px 16px;
+    display:flex;align-items:center;gap:12px;cursor:pointer;font-family:inherit;
+    color:var(--text);text-align:left;width:100%;margin-bottom:9px;transition:background .12s;
+  }
+  .start-card:hover{background:var(--accent-hover);}
+  .start-card .sc-icon{font-size:20px;line-height:1;}
+  .start-card b{display:block;font-size:14.5px;font-weight:750;}
+  .start-card .sc-go{margin-left:auto;color:var(--accent);font-size:17px;font-weight:700;}
+  /* Once the rider has started filtering they've answered the question the
+     card was asking — so it steps back to a single quiet line rather than
+     vanishing, since they may still want it. */
+  .start-card.compact{padding:7px 10px;border-color:transparent;background:none;gap:9px;}
+  .start-card.compact:hover{background:var(--bg-card-hover);border-color:transparent;}
+  .start-card.compact .sc-icon{font-size:13px;}
+  .start-card.compact b{font-size:12px;font-weight:650;color:var(--text-dim);}
+  .start-card.compact .sc-go{font-size:14px;}
+
+  .wt-veil{
+    position:fixed;inset:0;background:rgba(4,6,10,0.74);z-index:200;
+    opacity:0;pointer-events:none;transition:opacity .22s ease;
+  }
+  :root[data-theme="light"] .wt-veil{background:rgba(20,24,36,0.52);}
+  body.wt-on .wt-veil{opacity:1;pointer-events:auto;}
+  /* The lit element is lifted above the veil and given its own ground, so it
+     stays readable rather than glowing through a scrim. */
+  .wt-lit{
+    position:relative;z-index:201;background:var(--bg);
+    border-radius:12px;padding:12px;margin:-12px;
+    box-shadow:0 0 0 2px var(--accent), 0 18px 50px -12px rgba(0,0,0,.8);
+  }
+  .wt-bubble{
+    position:fixed;z-index:202;width:280px;background:var(--bg-card);
+    border:1px solid var(--border);border-radius:14px;padding:15px 16px 13px;
+    box-shadow:0 26px 60px -22px rgba(0,0,0,0.85);
+    opacity:0;transform:translateY(4px);transition:opacity .18s ease, transform .18s ease;
+    pointer-events:none;
+  }
+  body.wt-on .wt-bubble{opacity:1;transform:none;pointer-events:auto;}
+  .wt-bubble::before{
+    content:'';position:absolute;left:-7px;top:var(--arrow,28px);width:12px;height:12px;
+    background:var(--bg-card);border-left:1px solid var(--border);border-bottom:1px solid var(--border);
+    transform:rotate(45deg);
+  }
+  .wt-step{font-family:var(--mono);font-size:10px;color:var(--text-faint);letter-spacing:.06em;margin:0 0 6px;}
+  .wt-bubble h4{margin:0 0 6px;font-size:15.5px;font-weight:750;color:var(--text-strong);line-height:1.25;}
+  .wt-bubble p{margin:0 0 13px;font-size:12.5px;line-height:1.5;color:var(--text-dim);}
+  /* Pick heat here or on the slider — same state either way. "Spice 3" means
+     nothing cold; easy/medium/hard does. */
+  .wt-choices{display:flex;gap:6px;margin:0 0 13px;}
+  .wt-choices button{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+    background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;
+    padding:8px 4px 7px;cursor:pointer;font-family:inherit;
+    font-size:12px;font-weight:650;color:var(--text-dim);transition:all .12s;
+  }
+  .wt-choices button:hover{background:var(--bg-card-hover);color:var(--text);border-color:var(--accent);}
+  .wt-choices button.on{
+    background:var(--accent-soft);border-color:var(--accent);color:var(--text);
+    box-shadow:0 0 0 1px var(--accent);
+  }
+  .wt-choices .ch-heat{display:flex;gap:1px;}
+  .wt-choices .ch-heat svg{width:11px;height:11px;display:block;}
+  /* Live consequence of the current picks, so a dead end is visible before
+     the rider reaches the end and finds an empty list. */
+  .wt-count{
+    margin:0 0 13px !important;font-family:var(--mono);font-size:11.5px;
+    color:var(--text-faint);border-top:1px solid var(--border-soft);padding-top:9px;
+  }
+  .wt-count b{color:var(--text);font-weight:650;}
+  .wt-count.none,.wt-count.none b{color:var(--c-anaerobic);}
+  .wt-actions{display:flex;align-items:center;gap:8px;}
+  .wt-btn{
+    border:1px solid var(--border);background:var(--bg-elev);color:var(--text-dim);
+    border-radius:9px;padding:7px 12px;font-size:12.5px;font-weight:650;cursor:pointer;font-family:inherit;
+  }
+  .wt-btn:hover{background:var(--bg-card-hover);color:var(--text);border-color:var(--accent);}
+  .wt-btn.primary{
+    background:linear-gradient(135deg,var(--accent),var(--lav));border-color:transparent;color:#fff;
+    box-shadow:0 6px 18px -8px rgba(110,139,255,.9), inset 0 1px 0 rgba(255,255,255,.22);
+  }
+  .wt-btn.ghost{background:none;border-color:transparent;color:var(--text-faint);margin-left:auto;padding:7px 4px;}
+  .wt-btn.ghost:hover{color:var(--text-dim);border-color:transparent;background:none;text-decoration:underline;}
 
   .icon-btn{
     background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);
@@ -1129,25 +1262,31 @@
         </div>
       </div>
 
-      <div class="side-group">
+      <div class="side-group side-group-first" id="gTime">
         <div class="filter-head"><span class="filter-label">Time</span><span class="filter-val any" id="durVal">Any</span></div>
         <div class="fsl" id="durFilter" role="slider" aria-label="Time" aria-valuemin="0" aria-valuenow="0"></div>
         <div class="seglabels" id="durSegLabels"></div>
       </div>
-      <div class="side-group">
+      <div class="side-group" id="gZone">
         <div class="filter-head"><span class="filter-label">Zone</span><span class="filter-val any" id="zoneVal">Any</span></div>
         <div class="fsl" id="zoneFilter" role="slider" aria-label="Zone" aria-valuemin="0" aria-valuenow="0"></div>
         <div class="seglabels" id="zoneSegLabels"></div>
       </div>
-      <div class="side-group">
+      <div class="side-group" id="gSpice">
         <div class="filter-head"><span class="filter-label" id="spiceLabel">Spice</span><span class="filter-val any" id="spiceVal">Any</span></div>
         <div class="fsl" id="spiceFilter" role="slider" aria-label="Spice" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0"></div>
         <div class="seglabels" id="spiceSegLabels"></div>
       </div>
-      <div class="side-group">
-        <span class="filter-label">Shape</span>
+      <div class="side-group" id="gShape">
+        <div class="filter-head">
+          <span class="filter-label">Shape</span>
+          <!-- Doubles as the readout and the way back: Shape is the only
+               filter with no "Any" segment to slide back to. -->
+          <button class="shape-any is-any" id="shapeAny" type="button" aria-label="Shape: any">Any</button>
+        </div>
         <div class="shape-grid" id="shapeFilter"></div>
       </div>
+      <button class="reset-btn" id="resetFilters" type="button">Reset Filters</button>
     </div>
 
     <!-- Set-and-forget rider numbers: pinned at the bottom with the toggles,
@@ -1229,11 +1368,6 @@
           </button>
           <div class="sort-menu" id="sortMenu" style="display:none;"></div>
         </div>
-        <button class="icon-btn" id="resetFilters" title="Clear filters" aria-label="Clear filters">
-          <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
-            <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
-          </svg>
-        </button>
       </div>
     </div>
     <div class="list-body">
@@ -1259,6 +1393,18 @@
 </div>
 
 <div class="ble-warning no-print" id="bleWarning" style="display:none;"></div>
+
+<!-- Guided start. Lives on <body> so the veil covers the whole shell and the
+     bubble can't be clipped by the sidebar's overflow; positioned in JS. -->
+<div class="wt-veil no-print" id="wtVeil"></div>
+<div class="wt-bubble no-print" id="wtBubble" role="dialog" aria-live="polite" aria-label="Guided workout finder">
+  <p class="wt-step" id="wtStep"></p>
+  <h4 id="wtTitle"></h4>
+  <p id="wtBody"></p>
+  <div class="wt-choices" id="wtChoices" style="display:none;"></div>
+  <p class="wt-count" id="wtCount"></p>
+  <div class="wt-actions" id="wtActions"></div>
+</div>
 
 <!-- Quick guide. Lives on <body> as position:fixed so it can never be clipped
      by the sidebar; positioned by JS next to the Guide button. -->
@@ -1609,6 +1755,15 @@
     zoneFilter: document.getElementById('zoneFilter'),
     spiceFilter: document.getElementById('spiceFilter'),
     shapeFilter: document.getElementById('shapeFilter'),
+    shapeAny: document.getElementById('shapeAny'),
+    wtVeil: document.getElementById('wtVeil'),
+    wtBubble: document.getElementById('wtBubble'),
+    wtStep: document.getElementById('wtStep'),
+    wtTitle: document.getElementById('wtTitle'),
+    wtBody: document.getElementById('wtBody'),
+    wtChoices: document.getElementById('wtChoices'),
+    wtCount: document.getElementById('wtCount'),
+    wtActions: document.getElementById('wtActions'),
     durVal: document.getElementById('durVal'),
     zoneVal: document.getElementById('zoneVal'),
     spiceVal: document.getElementById('spiceVal'),
@@ -1831,10 +1986,12 @@
     place();
   }
 
+  // data-txt keeps the original text so a segment marked unavailable (its
+  // label swapped for a ×) can be restored when the combination opens up again.
   function segLabels(el, labels){
     var n = labels.length;
     el.innerHTML = labels.map(function(t, i){
-      return '<span style="left:' + ((i + 0.5) / n * 100) + '%">' + t + '</span>';
+      return '<span data-txt="' + t + '" style="left:' + ((i + 0.5) / n * 100) + '%">' + t + '</span>';
     }).join('');
   }
   function markSegLabel(el, v){
@@ -1858,6 +2015,15 @@
       return '<rect x="' + b[0] + '" y="' + (base - b[2]) + '" width="' + b[1] + '" height="' + b[2] + '" rx="1.5"/>';
     }).join('') + '</svg>';
   }
+
+  // Coggan numbering, not 1-6 positions. The library has no Z1 recovery rides,
+  // so Endurance is Z2. Sweet Spot isn't a zone of its own — it's the 88-94%
+  // band across the top of Z3 and the bottom of Z4 — so it gets "SS", and a
+  // fitness test isn't a training zone at all, so it gets "T".
+  var ZONE_SEG_LABEL = {
+    endurance:'2', tempo:'3', sweetspot:'SS', threshold:'4',
+    vo2:'5', anaerobic:'6', test:'T'
+  };
 
   // The slider options, rebuilt only when the library's contents change.
   var filterOpts = null, filterSig = '';
@@ -1898,9 +2064,8 @@
         ? 'repeating-linear-gradient(45deg,' + ZONES[z].color + ' 0 4px,rgba(10,12,17,.42) 4px 8px)'
         : ZONES[z].color;
     })), function(v){ setFilter('zone', v === 0 ? null : zones[v - 1]); });
-    var zn = 0;
     segLabels(els.zoneSegLabels, ['Any'].concat(zones.map(function(z){
-      return z === 'test' ? 'T' : String(++zn);
+      return ZONE_SEG_LABEL[z] || '?';
     })));
 
     // Spice — the app's own per-rating chilli heat ramp.
@@ -1949,6 +2114,14 @@
     [].forEach.call(els.shapeFilter.querySelectorAll('[data-shape]'), function(b){
       b.classList.toggle('on', filters.shape === b.getAttribute('data-shape'));
     });
+    paintShapeAny();
+
+    // Mark the options that lead nowhere, so a dead end is visible before it's
+    // reached rather than after.
+    paintAvail(els.durFilter,   els.durSegLabels,   'duration', o.durations);
+    paintAvail(els.zoneFilter,  els.zoneSegLabels,  'zone',     o.zones);
+    paintAvail(els.spiceFilter, els.spiceSegLabels, 'spice',    [1,2,3,4,5]);
+    paintShapeAvail();
 
     // Time, Spice and Shape don't apply while the tests are selected (see
     // filteredWorkouts), so show them standing down rather than leaving them
@@ -1960,6 +2133,74 @@
       g.classList.toggle('filter-off', testsOnly);
       g.title = testsOnly ? 'Not applied while Fitness test is selected' : '';
     });
+
+    wtSync();   // no-op unless the guided start is open
+  }
+
+  // The readout is also the clear control: "Any" while nothing is picked, the
+  // shape's name plus a circled red × once one is.
+  function paintShapeAny(){
+    var a = els.shapeAny, on = filters.shape !== null;
+    a.classList.toggle('is-any', !on);
+    a.classList.toggle('can-clear', on);
+    if(!on){
+      a.textContent = 'Any';
+      a.removeAttribute('title');
+      a.setAttribute('aria-label', 'Shape: any');
+    } else {
+      var label = shapeLabel(filters.shape);
+      a.innerHTML = '<span class="sa-name">' + label + '</span><span class="sa-x">×</span>';
+      a.title = 'Clear shape filter';
+      a.setAttribute('aria-label', 'Clear shape filter: ' + label);
+    }
+  }
+  els.shapeAny.addEventListener('click', function(){
+    if(filters.shape === null) return;
+    filters.shape = null;
+    renderFilters();
+    renderWorkoutCards();
+  });
+
+  // ---- availability ----
+  // Whether a segment still leads somewhere, holding the *other* filters
+  // fixed. A facet must never constrain itself — otherwise picking one zone
+  // greys out every other zone and the control appears to lock.
+  function probeFilters(key, value){
+    var p = {
+      duration:filters.duration, zone:filters.zone, shape:filters.shape,
+      spice:filters.spice, search:filters.search, starredOnly:filters.starredOnly
+    };
+    p[key] = value;
+    return p;
+  }
+  function anyMatch(f){
+    for(var i = 0; i < WORKOUTS.length; i++) if(passesFilters(WORKOUTS[i], f)) return true;
+    return false;
+  }
+  function countMatching(f){
+    var n = 0;
+    for(var i = 0; i < WORKOUTS.length; i++) if(passesFilters(WORKOUTS[i], f)) n++;
+    return n;
+  }
+  // `values[i]` is the filter value behind segment i+1; segment 0 is "Any",
+  // which is the way out and so is never marked.
+  function paintAvail(el, labelsEl, key, values){
+    var segs = el.querySelectorAll('.fbar span'), labs = labelsEl.children;
+    for(var i = 0; i < segs.length; i++){
+      // The tests bypass the other filters, so their segment is always live.
+      var live = i === 0 || (key === 'zone' && values[i-1] === 'test')
+        || anyMatch(probeFilters(key, values[i-1]));
+      segs[i].classList.toggle('dead', !live);
+      if(labs[i]){
+        labs[i].classList.toggle('dead', !live);
+        labs[i].textContent = live ? labs[i].getAttribute('data-txt') : '×';
+      }
+    }
+  }
+  function paintShapeAvail(){
+    [].forEach.call(els.shapeFilter.querySelectorAll('[data-shape]'), function(b){
+      b.classList.toggle('dead', !anyMatch(probeFilters('shape', b.getAttribute('data-shape'))));
+    });
   }
 
   function setFilter(key, value){
@@ -1970,24 +2211,26 @@
     renderWorkoutCards();
   }
 
+  // Asking for the tests is an explicit "show me the tests": there are only
+  // two of them and they have fixed durations and structures, so leaving a
+  // stale time/shape/spice filter in place would strand the rider on an empty
+  // list. Those three stand down while the test zone is picked.
+  function passesFilters(w, f){
+    var testsOnly = f.zone === 'test';
+    if(f.starredOnly && !isFav(w.key)) return false;
+    if(f.zone !== null && w.zone !== f.zone) return false;
+    if(!testsOnly){
+      if(f.duration !== null && w.durationMin !== f.duration) return false;
+      if(f.shape !== null && w.shape !== f.shape) return false;
+      if(f.spice !== null && w.spice !== f.spice) return false;
+    }
+    var q = (f.search || '').trim().toLowerCase();
+    if(q && (w.name + ' ' + w.short).toLowerCase().indexOf(q) < 0) return false;
+    return true;
+  }
+
   function filteredWorkouts(){
-    var q = filters.search.trim().toLowerCase();
-    // Asking for the tests is an explicit "show me the tests": there are only
-    // two of them and they have fixed durations and structures, so leaving a
-    // stale time/shape/spice filter in place would strand the rider on an
-    // empty list. Those three stand down while the test zone is picked.
-    var testsOnly = filters.zone === 'test';
-    var out = WORKOUTS.filter(function(w){
-      if(filters.starredOnly && !isFav(w.key)) return false;
-      if(filters.zone !== null && w.zone !== filters.zone) return false;
-      if(!testsOnly){
-        if(filters.duration !== null && w.durationMin !== filters.duration) return false;
-        if(filters.shape !== null && w.shape !== filters.shape) return false;
-        if(filters.spice !== null && w.spice !== filters.spice) return false;
-      }
-      if(q && (w.name + ' ' + w.short).toLowerCase().indexOf(q) < 0) return false;
-      return true;
-    });
+    var out = WORKOUTS.filter(function(w){ return passesFilters(w, filters); });
     var s = filters.sort;
     out.sort(function(a, b){
       if(s === 'starred'){
@@ -2446,6 +2689,8 @@
       ? WORKOUTS.length + ' workouts'
       : list.length + ' of ' + WORKOUTS.length + ' workouts';
 
+    els.workoutCards.appendChild(buildStartCard());
+
     list.forEach(function(wo){
       els.workoutCards.appendChild(renderWorkoutCard(wo));
     });
@@ -2461,6 +2706,176 @@
       renderDetail();
     }
   }
+
+  // ============================================================
+  // GUIDED START
+  // Three questions a newcomer can actually answer, each lighting one filter
+  // while the rest of the page dims. Shape is deliberately not among them —
+  // it asks about interval structure, which is the last thing a beginner has a
+  // view on, and it's still there to fine-tune with afterwards.
+  // ============================================================
+  var STEPS = [
+    {el:'gTime', key:'duration', title:'Workout Duration',
+     body:'Pick the slot that fits today.'},
+    {el:'gZone', key:'zone', title:'What kind of effort?',
+     body:'Lower numbers for an aerobic workout, higher for anaerobic. If unsure, you can never go wrong with a Z2 Endurance workout.'},
+    {el:'gSpice', key:'spice', title:'How hard should it feel?',
+     body:'Heat within that zone. Pick one here, or slide it yourself.',
+     // "Spice 3" means nothing cold; easy/medium/hard does.
+     choices:[['Easy',1],['Medium',2],['Hard',4]]}
+  ];
+  var wtIdx = -1;
+
+  // The entry card sits first in the list. Once the rider has started
+  // filtering they've answered the question it was asking, so it steps back to
+  // a single quiet line rather than vanishing — they may still want it.
+  function buildStartCard(){
+    var touched = filters.duration !== null || filters.zone !== null ||
+                  filters.spice !== null || filters.shape !== null;
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'start-card' + (touched ? ' compact' : '');
+    b.innerHTML = '<span class="sc-icon">🚴</span>' +
+      '<span class="sc-txt"><b>' +
+      (touched ? 'Guide me instead' : 'Let’s find you a workout') +
+      '</b></span><span class="sc-go">›</span>';
+    b.addEventListener('click', startWalkthrough);
+    return b;
+  }
+
+  function clearAllFilters(){
+    filters.duration = null; filters.zone = null; filters.shape = null; filters.spice = null;
+    filters.search = ''; filters.sort = 'tss'; filters.starredOnly = false;
+    els.searchBox.value = '';
+    els.sortMenu.style.display = 'none';
+    renderSortMenu();
+    updateStarFilterUI();
+    render();
+  }
+  els.resetFilters.addEventListener('click', clearAllFilters);
+
+  // Starts from a clean slate: the guide walks through the choices, so leaving
+  // earlier picks in place would mean step 1 opens on an answer already given.
+  function startWalkthrough(){
+    if(railCollapsed()) setRail(false);   // nothing to light while it's a rail
+    clearAllFilters();
+    wtIdx = -1;
+    document.body.classList.add('wt-on');
+    wtNextStep();
+  }
+
+  function wtNextStep(){
+    if(wtIdx >= 0 && wtIdx < STEPS.length) wtUnlight(STEPS[wtIdx].el);
+    wtIdx++;
+    if(wtIdx >= STEPS.length){ wtFinish(); return; }
+    var s = STEPS[wtIdx];
+    wtLight(s.el);
+    wtShowBubble(s.el, (wtIdx + 1) + ' OF ' + STEPS.length, s.title, s.body,
+      '<button class="wt-btn primary" id="wtNext" type="button">Skip this</button>' +
+      '<button class="wt-btn ghost" id="wtQuit" type="button">Exit</button>', s.choices);
+    wtRefreshButton();
+    document.getElementById('wtNext').addEventListener('click', wtNextStep);
+    document.getElementById('wtQuit').addEventListener('click', endWalkthrough);
+  }
+
+  // A guided flow must never hand back an empty list. If the picks have boxed
+  // the rider in, drop the least important one until something matches and say
+  // plainly which was let go.
+  var WT_RELAX = [['shape','shape'],['spice','spice level'],['zone','zone']];
+  function wtRelaxIfEmpty(){
+    var dropped = [];
+    for(var i = 0; i < WT_RELAX.length && !anyMatch(filters); i++){
+      var k = WT_RELAX[i][0];
+      if(filters[k] === null) continue;
+      filters[k] = null;
+      dropped.push(WT_RELAX[i][1]);
+    }
+    if(dropped.length) render();
+    return dropped;
+  }
+
+  function wtFinish(){
+    var dropped = wtRelaxIfEmpty();
+    wtShowBubble('gSpice', 'DONE', 'That’s it',
+      dropped.length
+        ? 'Those picks left nothing, so I widened the ' + dropped.join(' and ') + '. Here’s what fits.'
+        : 'Your filters are set. Everything below matches what you asked for.',
+      '<button class="wt-btn primary" id="wtDone" type="button">Sweet, show me the workouts</button>');
+    document.getElementById('wtDone').addEventListener('click', endWalkthrough);
+  }
+
+  function wtUpdateCount(){
+    if(!document.body.classList.contains('wt-on')) return;
+    var n = countMatching(filters);
+    els.wtCount.classList.toggle('none', n === 0);
+    els.wtCount.innerHTML = n === 0
+      ? 'Nothing matches yet — that combination is empty'
+      : '<b>' + n + '</b> workout' + (n === 1 ? '' : 's') + ' match so far';
+  }
+
+  // Picking never advances on its own. A rider can mis-click, slide past the
+  // one they wanted, or change their mind — the step only moves when they say
+  // so. All a pick does is turn "Skip this" into "Next".
+  function wtRefreshButton(){
+    var b = document.getElementById('wtNext');
+    if(!b || wtIdx < 0 || wtIdx >= STEPS.length) return;
+    b.textContent = filters[STEPS[wtIdx].key] !== null ? 'Next' : 'Skip this';
+  }
+  function wtPaintChoices(){
+    [].forEach.call(els.wtChoices.querySelectorAll('button'), function(b){
+      b.classList.toggle('on', +b.getAttribute('data-v') === filters.spice);
+    });
+  }
+  // Called from renderFilters, so the card follows the slider and vice versa.
+  function wtSync(){
+    if(!document.body.classList.contains('wt-on')) return;
+    wtUpdateCount();
+    wtRefreshButton();
+    wtPaintChoices();
+  }
+
+  function wtLight(id){ document.getElementById(id).classList.add('wt-lit'); }
+  function wtUnlight(id){ document.getElementById(id).classList.remove('wt-lit'); }
+
+  function wtShowBubble(anchorId, step, title, body, actionsHtml, choices){
+    els.wtStep.textContent = step;
+    els.wtTitle.textContent = title;
+    els.wtBody.textContent = body;
+    if(choices){
+      els.wtChoices.innerHTML = choices.map(function(c){
+        var heat = '';
+        for(var i = 0; i < c[1]; i++) heat += chilliSvg(CHILLI_HEAT[c[1] - 1]);
+        return '<button type="button" data-v="' + c[1] + '">' + c[0] +
+               '<span class="ch-heat">' + heat + '</span></button>';
+      }).join('');
+      els.wtChoices.style.display = '';
+      [].forEach.call(els.wtChoices.querySelectorAll('button'), function(btn){
+        btn.addEventListener('click', function(){
+          filters.spice = +btn.getAttribute('data-v');
+          render();                 // sliders, labels, availability and the list
+        });
+      });
+      wtPaintChoices();
+    } else {
+      els.wtChoices.innerHTML = '';
+      els.wtChoices.style.display = 'none';
+    }
+    els.wtActions.innerHTML = actionsHtml;
+    wtUpdateCount();                // primed, so the bubble doesn't resize later
+    var r = document.getElementById(anchorId).getBoundingClientRect();
+    els.wtBubble.style.left = Math.round(r.right + 20) + 'px';
+    var top = Math.round(r.top - 6);
+    top = Math.max(12, Math.min(window.innerHeight - els.wtBubble.offsetHeight - 12, top));
+    els.wtBubble.style.top = top + 'px';
+    els.wtBubble.style.setProperty('--arrow', Math.max(14, Math.round(r.top + 18 - top)) + 'px');
+  }
+
+  function endWalkthrough(){
+    STEPS.forEach(function(s){ wtUnlight(s.el); });
+    document.body.classList.remove('wt-on');
+    wtIdx = -1;
+  }
+  els.wtVeil.addEventListener('click', endWalkthrough);
 
   // The reference table shows the standard Coggan seven, which is what Strava
   // reports against. The library's own categories differ in two deliberate
@@ -2698,16 +3113,6 @@
     renderWorkoutCards();
   });
 
-  els.resetFilters.addEventListener('click', function(){
-    filters.duration = null; filters.zone = null; filters.shape = null; filters.spice = null;
-    filters.search = ''; filters.sort = 'tss'; filters.starredOnly = false;
-    els.searchBox.value = '';
-    els.sortMenu.style.display = 'none';
-    renderSortMenu();
-    updateStarFilterUI();
-    render();
-  });
-
   // ---- keyboard ----
   // Left/right work the sidebar, up/down move through the list, Enter starts.
   // All of it stands down while typing, and while a workout is running (where
@@ -2719,6 +3124,13 @@
   document.addEventListener('keydown', function(e){
     if(liveState.active || typingInField()) return;
     if(e.metaKey || e.ctrlKey || e.altKey) return;
+
+    // The guided start owns the keyboard while it's up: Escape leaves it, and
+    // the list/rail shortcuts would move things the veil is hiding.
+    if(document.body.classList.contains('wt-on')){
+      if(e.key === 'Escape'){ e.preventDefault(); endWalkthrough(); }
+      return;
+    }
 
     if(e.key === 'ArrowLeft'){ e.preventDefault(); setRail(true); return; }
     if(e.key === 'ArrowRight'){ e.preventDefault(); setRail(false); return; }
