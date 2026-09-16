@@ -88,8 +88,11 @@
   // from being averaged down by its own primers.
   function prep(b){ b.prep = true; return b; }
 
-  function cooldown(totalMin){
+  function cooldown(totalMin, zoneKey){
     var m = totalMin <= 35 ? 4 : totalMin <= 50 ? 7 : totalMin <= 70 ? 8 : 10;
+    // Easy rides have nothing to come down from: five minutes is plenty, and
+    // the rest belongs to the ride.
+    if(ZONES[zoneKey].rank <= 1) m = Math.min(m, 5);
     return {min:m, block:prep(ramp('recovery', m, 58, 40, 'Cool-down'))};
   }
 
@@ -163,7 +166,29 @@
     function(){ return {min:0, blocks:[]}; }   // ramp only
   ];
 
-  // Spin-ups for easy sessions: short high-cadence bursts at moderate power.
+  // Easy rides get a short stepped opener whatever their length. The body
+  // sits at 62-75%, so there's nothing to prepare the legs *for* — the long
+  // progressive ramp the hard sessions need is just minutes taken from the
+  // ride. Three plateaus, five or six minutes, topping out a touch under the
+  // working intensity so the first working minute is a step up rather than a
+  // step down (the old shape held 68% before a 62% ride).
+  function easyOpener(totalMin, targetPct, seed){
+    var m = totalMin <= 35 ? 5 : 6;
+    var top = Math.min(68, targetPct - 2);
+    var mid = Math.round((50 + top) / 2);
+    var blocks = [prep(single('recovery', 2, 50, 'Easy')),
+                  prep(single('endurance', m === 5 ? 1.5 : 2, mid, 'Building'))];
+    if(m === 6 && ((seed >> 2) % 2) === 1){
+      // the last plateau carries the two short spin-ups the easy rides had
+      blocks.push(prep(repeat(2, leg('tempo', 10/60, 80, 'Spin-up'), leg('endurance', 50/60, top, 'Warm-up'), true)));
+    } else {
+      blocks.push(prep(single('endurance', m === 5 ? 1.5 : 2, top, 'Warm-up')));
+    }
+    return {min:m, blocks:blocks};
+  }
+
+  // Spin-ups for tempo sessions: short high-cadence bursts at moderate power.
+  // (Endurance rides used these too, before they got their own opener.)
   var EASY_PRIMERS = [
     function(){ return {min:3, blocks:[
       prep(repeat(3, leg('tempo', 10/60, 80, 'Spin-up'), leg('endurance', 50/60, 62, 'Easy'), true))]}; },
@@ -172,6 +197,7 @@
 
   function opener(totalMin, zoneKey, targetPct, seed){
     var rank = ZONES[zoneKey].rank;
+    if(rank <= 1) return easyOpener(totalMin, targetPct, seed);
     var m = rampMin(totalMin);
     var top = rank >= 4 ? 76 : rank === 3 ? 72 : 68;
     var blocks = RAMPS[seed % RAMPS.length](m, top).slice();
@@ -313,8 +339,15 @@
         out.push(single(zoneKey, 12, pct, 'Endurance'));
         out.push(single('tempo', 3, 84, 'Surge'));
       }
-      return {blocks: out, short: blocks + ' × (12 min @ ' + pct + '% + 3 min surge)',
-              workMin: blocks * 15, structure: 'surges'};
+      // Whatever the 15-minute blocks leave over is ridden at the working
+      // intensity, not spun off as padding — up to 14 minutes of easy spin
+      // before the cool-down was dead time on the longer sessions.
+      var tail = budget - blocks * 15;
+      if(tail >= 2) out.push(single(zoneKey, tail, pct, 'Endurance'));
+      else tail = 0;
+      return {blocks: out,
+              short: blocks + ' × (12 min @ ' + pct + '% + 3 min surge)' + (tail ? ' + ' + tail + ' min' : ''),
+              workMin: blocks * 15 + tail, structure: 'surges'};
     }
     if(flavour === 'progressive'){
       var seg = Math.round(budget / 3);
@@ -655,6 +688,40 @@
   }
 
   // ---------------------------------------------------------------
+  // Recommended workouts. A hand-picked shortlist for riders who don't yet
+  // know what they want — a judgement, not a rule, which is what makes the
+  // badge worth reading. Keyed by workout key, with the one-line reason the
+  // app shows in the detail pane.
+  //
+  // Keys are name-derived and names are handed out positionally, so a
+  // recipe change that drops or adds a workout would shift every name after
+  // it onto a different session. `expect` pins what the key is supposed to
+  // be (zone|spice|duration|structure); the build reports any entry whose
+  // key is missing or no longer matches, rather than badging the wrong ride.
+  //
+  //   flatwater: {why:'The Z2 ride to build on — long enough to matter, easy enough to finish.',
+  //               expect:'endurance|3|60|steady'},
+  // ---------------------------------------------------------------
+  var RECOMMENDED = {};
+
+  function applyRecommended(library){
+    var issues = [];
+    var byKey = {};
+    library.forEach(function(w){ byKey[w.key] = w; });
+    Object.keys(RECOMMENDED).forEach(function(key){
+      var r = RECOMMENDED[key], w = byKey[key];
+      if(!w){ issues.push({key:key, problem:'no workout with this key'}); return; }
+      var sig = w.zone + '|' + w.spice + '|' + w.durationMin + '|' + w.structure;
+      if(r.expect && r.expect !== sig){
+        issues.push({key:key, problem:'expected ' + r.expect + ' but the key now points at ' + sig});
+        return;
+      }
+      w.recommended = r.why || true;
+    });
+    return issues;
+  }
+
+  // ---------------------------------------------------------------
   // Generate
   // ---------------------------------------------------------------
   function generate(){
@@ -672,7 +739,7 @@
             // regeneration, while neighbours differ.
             var seed = (ZONES[zoneKey].rank * 131 + recipeIdx * 37 + totalMin * 7 + spice * 11) | 0;
             var wu = opener(totalMin, zoneKey, nominal, seed);
-            var cd = cooldown(totalMin);
+            var cd = cooldown(totalMin, zoneKey);
             var overhead = wu.min + cd.min;
             var budget = workBudget(zoneKey, totalMin, overhead);
             if(budget < 8) continue;
@@ -792,6 +859,8 @@
     // Tests go first so they're easy to find, with ids continuing the sequence.
     buildTests().forEach(function(t){ t.id = id++; library.unshift(t); });
 
+    var recommendedIssues = applyRecommended(library);
+
     return {
       generated: new Date().toISOString(),
       zones: ZONES,
@@ -801,6 +870,7 @@
       unsolved: unsolved,
       nameShortfall: nameShortfall,
       snapDropped: snapDropped,
+      recommendedIssues: recommendedIssues,
       workouts: library
     };
   }
@@ -813,7 +883,8 @@
     spicePct: spicePct,
     zoneOf: zoneOf,
     expandBlocks: expandBlocks,
-    NAMES: NAMES
+    NAMES: NAMES,
+    RECOMMENDED: RECOMMENDED
   };
 
 })(typeof window !== 'undefined' ? window : this);
