@@ -234,6 +234,7 @@
   .guide-pop ul,.guide-pop ol{margin:0;padding-left:17px;}
   .guide-pop li{margin:0 0 3px;}
   .guide-pop b{color:var(--text);font-weight:650;}
+  .guide-pop code{font-family:var(--mono);font-size:11px;color:var(--text);}
   .guide-keys{border-collapse:collapse;width:100%;}
   .guide-keys td{padding:2px 0;vertical-align:top;}
   .guide-keys td:first-child{white-space:nowrap;padding-right:10px;width:1%;}
@@ -897,18 +898,23 @@
 
 
   /* ---------- DEVICE BAR ---------- */
-  /* Two tiles side by side. Each is one button: "Connect trainer" until a
-     device is attached, then the device name; hovering a connected tile
-     swaps the name for "Disconnect". */
+  /* Two tiles side by side. Each is one button: just the device's glyph
+     until something is attached (the tooltip carries the words), then the
+     glyph and the device name; hovering a connected tile swaps the name for
+     "Disconnect". */
   .device-row{display:flex;gap:6px;}
   .device-tile{
     flex:1 1 0;min-width:0;display:flex;align-items:center;gap:6px;position:relative;
     background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);
-    border-radius:10px;padding:8px 7px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;letter-spacing:-0.01em;
+    border-radius:10px;padding:7px 7px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;letter-spacing:-0.01em;
   }
   .device-tile:hover{background:var(--bg-card-hover);border-color:var(--accent);color:var(--text);}
   .device-tile[disabled]{opacity:0.6;cursor:progress;}
   .device-tile.on{color:var(--text);border-color:var(--ok-line);}
+  .device-icon{width:18px;height:18px;flex:none;display:block;}
+  /* Nothing attached: the glyph sits centred with the status dot beside it. */
+  .device-tile.idle{justify-content:center;}
+  .device-tile.idle .device-name{display:none;}
   .device-tile .device-name,.device-tile .device-alt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .device-tile .device-alt{display:none;color:var(--warn);}
   .device-tile.on:hover .device-name{display:none;}
@@ -1313,22 +1319,31 @@
         <!-- One button per device: "Connect trainer" until attached, then the
              device name (hover: Disconnect). -->
         <div class="device-row">
-          <button class="device-tile" id="trainerBtn" type="button">
+          <button class="device-tile idle" id="trainerBtn" type="button" title="Connect trainer" aria-label="Connect trainer">
             <span class="device-dot" id="trainerDot"></span>
-            <span class="device-name" id="trainerLabel">Connect trainer</span>
+            <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="6" cy="16.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+              <circle cx="18" cy="16.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+              <path d="M6 16.5l3.6-7h5.2l3.2 7M9.6 9.5h-2M12.2 16.5l2.6-7M13.4 6.3l1.6-.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="device-name" id="trainerLabel"></span>
             <span class="device-alt">Disconnect</span>
           </button>
-          <button class="device-tile" id="hrBtn" type="button">
+          <button class="device-tile idle" id="hrBtn" type="button" title="Connect HR monitor" aria-label="Connect HR monitor">
             <span class="device-dot" id="hrDot"></span>
-            <span class="device-name" id="hrLabel">Connect HR</span>
+            <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 20.4S3.6 15.2 3.6 9.3A4.3 4.3 0 0112 7.1a4.3 4.3 0 018.4 2.2c0 5.9-8.4 11.1-8.4 11.1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+              <path d="M6.2 12.4h2.9l1.4-2.6 1.9 4.6 1.6-3.2 1 1.2h2.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span class="device-name" id="hrLabel"></span>
             <span class="device-alt">Disconnect</span>
           </button>
         </div>
         <!-- Strava: the official Connect with Strava button until connected,
              then a compact chip with the athlete's name. -->
-        <button class="device-tile strava-tile" id="stravaBtn" type="button" title="Connect with Strava">
+        <button class="device-tile strava-tile" id="stravaBtn" type="button" title="Log in with Strava">
           <span class="device-dot strava-dot-off"></span>
-          <span class="device-name">Connect to</span>
+          <span class="device-name">Log in</span>
           <svg class="strava-wordmark" viewBox="135 15 87 17.5" role="img" aria-label="Strava"><path fill-rule="evenodd" clip-rule="evenodd" d="M180.749 31.8195L180.748 31.8188H185.357L188.188 26.1268L191.019 31.8188H196.618L188.187 15.5403L180.184 30.9945L177.111 26.5078C179.008 25.5928 180.191 24.0081 180.191 21.7318V21.687C180.191 20.0803 179.7 18.9197 178.763 17.9822C177.669 16.8887 175.906 16.1968 173.139 16.1968H165.506V31.8195H170.728V27.3558H171.844L174.79 31.8195H180.749ZM212.954 15.5403L204.524 31.8188H210.124L212.955 26.1268L215.786 31.8188H221.385L212.954 15.5403ZM200.576 32.4593L209.006 16.1808H203.406L200.575 21.8729L197.744 16.1808H192.144L200.576 32.4593ZM172.982 23.6287C174.232 23.6287 174.991 23.0708 174.991 22.1112V22.0663C174.991 21.0621 174.21 20.5711 173.005 20.5711H170.728V23.6287H172.982ZM154.337 20.6158H149.74V16.1968H164.157V20.6158H159.56V31.8195H154.337V20.6158ZM137.015 26.1507L134.225 29.4761C136.211 31.2172 139.068 32.1097 142.237 32.1097C146.433 32.1097 149.133 30.101 149.133 26.82V26.7756C149.133 23.6287 146.455 22.468 142.46 21.7318C140.808 21.419 140.384 21.1515 140.384 20.7273V20.6827C140.384 20.3033 140.742 20.0355 141.523 20.0355C142.973 20.0355 144.737 20.5042 146.209 21.5754L148.754 18.0493C146.946 16.6209 144.714 15.9065 141.701 15.9065C137.394 15.9065 135.073 18.2055 135.073 21.1737V21.2185C135.073 24.5214 138.153 25.526 141.656 26.2398C143.33 26.5747 143.821 26.82 143.821 27.2665V27.3113C143.821 27.7352 143.42 27.9805 142.482 27.9805C140.652 27.9805 138.711 27.4452 137.015 26.1507Z" fill="#FC4C02"/></svg>
         </button>
         <div class="device-chip strava-chip" id="stravaChip" style="display:none;">
@@ -1490,8 +1505,8 @@
     <div>
       <h4>Before a ride</h4>
       <ol>
-        <li>Wake the trainer and strap, then <b>Connect trainer</b> / <b>Connect HR</b> and pick them from the list. Click a connected tile to disconnect.</li>
-        <li><b>Connect to Strava</b> once and rides can be uploaded straight from the summary.</li>
+        <li>Wake the trainer and strap, then click the <b>bike</b> and <b>heart</b> tiles and pick them from the list. Click a connected tile to disconnect.</li>
+        <li><b>Log in</b> to Strava once and rides can be uploaded straight from the summary.</li>
         <li>Set your <b>FTP</b> and <b>max HR</b> in the Rider box at the bottom (type, or nudge with ▲▼) — every target scales from FTP.</li>
         <li>Filter by time, zone, spice or shape; ★ marks favourites.</li>
         <li><b>Start Workout</b>, then pedal — the clock starts after a 3-2-1.</li>
@@ -3397,6 +3412,7 @@
     trainerState.connected = true;
     trainerState.reconnecting = false;
     trainerState.device = device;
+    rememberDevice(TRAINER_DEV_KEY, device);
     if(!device._ftpHooked){
       device._ftpHooked = true;
       device.addEventListener('gattserverdisconnected', function(){ onTrainerDropped(device); });
@@ -3419,6 +3435,7 @@
     hrState.connected = true;
     hrState.reconnecting = false;
     hrState.device = device;
+    rememberDevice(HR_DEV_KEY, device);
     if(!device._ftpHooked){
       device._ftpHooked = true;
       device.addEventListener('gattserverdisconnected', function(){ onHrDropped(device); });
@@ -3466,6 +3483,85 @@
     reconnectLoop(hrState, device, attachHr, 'HR monitor');
   }
 
+  // ---- auto-connect on open ----
+  // The first connection on a machine always goes through the browser's
+  // picker — a page can't touch a Bluetooth device the rider hasn't chosen.
+  // But Chrome can remember the choice: navigator.bluetooth.getDevices()
+  // returns previously permitted devices without a prompt, and
+  // watchAdvertisements() reports when one is powered on and in range, at
+  // which point gatt.connect() needs no picker. So from the second session
+  // on: open the app, switch the trainer on, it's connected.
+  //
+  // Both calls are still behind a flag (checked against Chrome 152):
+  //   chrome://flags/#enable-web-bluetooth-new-permissions-backend
+  // so this is feature-detected and silently absent where the flag is off —
+  // the tiles then behave exactly as before. Not yet confirmed against real
+  // hardware; the Guide stays quiet about it until it is.
+  var TRAINER_DEV_KEY = 'ftpPlan_trainerDev_v1';
+  var HR_DEV_KEY = 'ftpPlan_hrDev_v1';
+  var AUTO_LOOK_MS = 90000;   // how long to listen for a remembered device
+
+  function rememberDevice(key, device){
+    try{ if(device && device.id) localStorage.setItem(key, device.id); }catch(e){}
+  }
+  function rememberedId(key){
+    try{ return localStorage.getItem(key) || null; }catch(e){ return null; }
+  }
+  function autoConnectSupported(){
+    return bleAvailable() && typeof navigator.bluetooth.getDevices === 'function' &&
+           !!(window.BluetoothDevice && BluetoothDevice.prototype.watchAdvertisements);
+  }
+
+  async function autoConnectRemembered(){
+    if(!autoConnectSupported()) return;
+    var wantTrainer = rememberedId(TRAINER_DEV_KEY), wantHr = rememberedId(HR_DEV_KEY);
+    if(!wantTrainer && !wantHr) return;
+    var devices;
+    try{ devices = await navigator.bluetooth.getDevices(); }
+    catch(e){ console.log('getDevices failed:', e && e.message); return; }
+    devices.forEach(function(d){
+      if(d.id === wantTrainer) listenAndAttach(d, trainerState, attachTrainer, 'Trainer');
+      if(d.id === wantHr)      listenAndAttach(d, hrState, attachHr, 'HR monitor');
+    });
+  }
+
+  // Listen for the device's advertisements, connect on the first one, give
+  // up quietly after AUTO_LOOK_MS. Clicking the tile meanwhile cancels the
+  // listen and opens the picker as usual.
+  async function listenAndAttach(device, state, attach, label){
+    if(state.connected || state.busy || state.looking) return;
+    var ac = new AbortController();
+    state.looking = ac;
+    updateDeviceUI();
+    var done = false;
+    function finish(){
+      if(done) return;
+      done = true;
+      clearTimeout(timer);
+      if(!ac.signal.aborted) ac.abort();
+      if(state.looking === ac) state.looking = null;
+      updateDeviceUI();
+    }
+    var timer = setTimeout(function(){ console.log(label + ' not seen in time; stopped listening'); finish(); }, AUTO_LOOK_MS);
+    ac.signal.addEventListener('abort', finish);
+    device.addEventListener('advertisementreceived', async function(){
+      if(done) return;
+      finish();
+      setChipBusy(state, true);
+      try{ await attach(device); console.log(label + ' auto-connected'); }
+      catch(e){ console.log(label + ' auto-connect failed:', e && e.message); }
+      setChipBusy(state, false);
+    });
+    try{ await device.watchAdvertisements({signal:ac.signal}); }
+    catch(e){
+      if(e && e.name !== 'AbortError') console.log(label + ' watchAdvertisements failed:', e && e.message);
+      finish();
+    }
+  }
+  function stopLooking(state){
+    if(state.looking && !state.looking.signal.aborted) state.looking.abort();
+  }
+
   // ---- connect buttons ----
   // One button per device does both jobs: "Connect trainer" when there's
   // nothing attached, the device's name once there is (hover: Disconnect).
@@ -3473,6 +3569,7 @@
   // deliberate disconnect skips the picker; a fresh page load always picks.
   async function connectTrainer(){
     if(!bleAvailable()) return;
+    stopLooking(trainerState);   // the rider is choosing; stop waiting for the remembered one
     try{
       setChipBusy(trainerState, true);
       if(trainerState.device){
@@ -3490,6 +3587,7 @@
 
   async function connectHr(){
     if(!bleAvailable()) return;
+    stopLooking(hrState);
     try{
       setChipBusy(hrState, true);
       if(hrState.device){
@@ -3526,13 +3624,18 @@
     if(state.connected)    return {label:name, dotClass:'on', on:true};
     if(state.busy)         return {label:'Connecting…', dotClass:'retry', busy:true};
     if(state.reconnecting) return {label:'Reconnecting…', dotClass:'retry'};
-    return {label:'Connect ' + (fallback === 'HR' ? 'HR' : fallback.toLowerCase()), dotClass:''};
+    if(state.looking)      return {label:'Looking…', dotClass:'retry', looking:true};
+    return {label:'', dotClass:'', idle:true};   // the glyph says it; the tooltip spells it
   }
 
   function paintDeviceButton(btn, dot, label, s, longName){
     btn.classList.toggle('on', !!s.on);
+    btn.classList.toggle('idle', !!s.idle);
     btn.disabled = !!s.busy;
-    btn.title = s.on ? (longName + ' connected — click to disconnect') : ('Connect ' + longName.toLowerCase());
+    btn.title = s.on ? (longName + ' connected — click to disconnect')
+              : s.looking ? ('Listening for your ' + (longName === 'Trainer' ? 'trainer' : longName) + ' — click to pick a different one')
+              : ('Connect ' + (longName === 'Trainer' ? 'trainer' : longName));
+    btn.setAttribute('aria-label', btn.title);
     dot.className = 'device-dot ' + s.dotClass;
     label.textContent = s.label;
   }
@@ -5697,6 +5800,8 @@
     dismissLoadScreen();
     // After the library exists, so the prompt can name the real ramp test.
     maybeShowIntro();
+    // Needs no click, so it can start as soon as the page is up.
+    autoConnectRemembered();
   }
 
   // Fill the bar and fade the load screen out once the list is on screen.
