@@ -3142,7 +3142,22 @@
   function railCollapsed(){ return els.appShell.classList.contains('rail'); }
   els.railToggle.addEventListener('click', function(){ setRail(!railCollapsed()); });
 
+  // Hovering the magnifier opens the box ready to type, so a search is one
+  // motion rather than click-then-click. A short dwell keeps a cursor that's
+  // merely passing through from popping it open; the existing blur rule
+  // closes it again if nothing was typed.
+  var searchHoverTimer = null;
+  els.searchBtn.addEventListener('mouseenter', function(){
+    if(els.listActions.classList.contains('searching')) return;
+    searchHoverTimer = setTimeout(function(){
+      els.listActions.classList.add('searching');
+      els.searchBox.focus();
+    }, 120);
+  });
+  els.searchBtn.addEventListener('mouseleave', function(){ clearTimeout(searchHoverTimer); });
+
   els.searchBtn.addEventListener('click', function(){
+    clearTimeout(searchHoverTimer);
     var open = els.listActions.classList.contains('searching');
     if(open && els.searchBox.value){
       // Clear rather than hide: a hidden box that's still filtering is confusing.
@@ -3150,6 +3165,9 @@
       els.searchBox.focus();
       return;
     }
+    // Hover has usually opened it already by the time the click lands; a
+    // click on an open, empty box is "I want to type", not "close it".
+    if(open && document.activeElement === els.searchBox) return;
     els.listActions.classList.toggle('searching', !open);
     if(!open) els.searchBox.focus();
   });
@@ -3528,38 +3546,61 @@
   // Listen for the device's advertisements, connect on the first one, give
   // up quietly after AUTO_LOOK_MS. Clicking the tile meanwhile cancels the
   // listen and opens the picker as usual.
+  //
+  // The watch is re-armed rather than trusted: Windows stops scanning while
+  // a GATT connection is being made, so the moment the trainer connects the
+  // watch listening for the strap is killed underneath it (Chrome either
+  // rejects it or just goes quiet). Treating that as final meant only one
+  // device ever auto-connected per open. So every couple of seconds, if the
+  // watch isn't running, start it again, until something is seen or the
+  // deadline passes.
+  var WATCH_POLL_MS = 2000;
   async function listenAndAttach(device, state, attach, label){
     if(state.connected || state.busy || state.looking) return;
-    var ac = new AbortController();
-    state.looking = ac;
-    updateDeviceUI();
-    var done = false;
+    var done = false, current = null, armed = false;
+    var deadline = Date.now() + AUTO_LOOK_MS;
     function finish(){
       if(done) return;
       done = true;
-      clearTimeout(timer);
-      if(!ac.signal.aborted) ac.abort();
-      if(state.looking === ac) state.looking = null;
+      if(current && !current.signal.aborted) current.abort();
+      if(state.looking === job) state.looking = null;
       updateDeviceUI();
     }
-    var timer = setTimeout(function(){ console.log(label + ' not seen in time; stopped listening'); finish(); }, AUTO_LOOK_MS);
-    ac.signal.addEventListener('abort', finish);
+    var job = {cancel:finish};
+    state.looking = job;
+    updateDeviceUI();
     device.addEventListener('advertisementreceived', async function(){
       if(done) return;
       finish();
       setChipBusy(state, true);
       try{ await attach(device); console.log(label + ' auto-connected'); }
-      catch(e){ console.log(label + ' auto-connect failed:', e && e.message); }
+      catch(e){ console.log(label + ' auto-connect failed (' + ((e && e.name) || '?') + '): ' + (e && e.message)); }
       setChipBusy(state, false);
     });
-    try{ await device.watchAdvertisements({signal:ac.signal}); }
-    catch(e){
-      if(e && e.name !== 'AbortError') console.log(label + ' watchAdvertisements failed:', e && e.message);
+    while(!done && Date.now() < deadline){
+      // Chrome reports whether the watch is live; fall back to our own flag
+      // where it doesn't.
+      var live = typeof device.watchingAdvertisements === 'boolean' ? device.watchingAdvertisements : armed;
+      if(!live){
+        current = new AbortController();
+        try{
+          await device.watchAdvertisements({signal:current.signal});
+          armed = true;
+          console.log(label + ': listening');
+        }catch(e){
+          armed = false;
+          if(!done) console.log(label + ': watch failed (' + ((e && e.name) || '?') + '): ' + (e && e.message) + ' — will retry');
+        }
+      }
+      await sleepMs(WATCH_POLL_MS);
+    }
+    if(!done){
+      console.log(label + ' not seen within ' + Math.round(AUTO_LOOK_MS / 1000) + ' s; stopped listening');
       finish();
     }
   }
   function stopLooking(state){
-    if(state.looking && !state.looking.signal.aborted) state.looking.abort();
+    if(state.looking) state.looking.cancel();
   }
 
   // ---- connect buttons ----
