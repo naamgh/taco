@@ -419,8 +419,12 @@
   @media (prefers-reduced-motion:reduce){
     .fsl .fbar span.lure{animation:none;box-shadow:0 0 7px 1px var(--lure-rest);}
   }
-  .shape-tile.dead{opacity:.34;}
-  .shape-tile.dead:hover{opacity:.55;}
+  /* Greyed out AND unclickable: picking a dead shape was the commonest dead
+     end, and a tile that refuses the click teaches the rule faster than a
+     list that comes back empty. (The sliders stay clickable — a handle that
+     won't land feels broken.) */
+  .shape-tile.dead{opacity:.34;cursor:not-allowed;}
+  .shape-tile.dead:hover{opacity:.34;background:var(--bg-card);color:var(--text-dim);}
   /* Same mark on the tiles, so the two controls speak the same language. */
   .shape-tile.dead .name::after{content:' \00d7';color:var(--c-anaerobic);font-weight:700;}
 
@@ -575,7 +579,15 @@
   .sort-menu button:hover{background:var(--bg-elev);color:var(--text);}
   .sort-menu button.on{color:var(--accent);font-weight:650;}
 
-  .no-results{color:var(--text-faint);font-size:14px;text-align:center;padding:36px 0;}
+  .no-results{color:var(--text-faint);font-size:14px;text-align:center;padding:36px 16px;line-height:1.5;}
+  .no-results b{color:var(--text);font-weight:650;}
+  /* One button per filter whose removal would actually bring results back. */
+  .nr-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:14px;}
+  .nr-btn{
+    background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);
+    border-radius:9px;padding:7px 13px;font-size:12.5px;font-weight:650;cursor:pointer;font-family:inherit;
+  }
+  .nr-btn:hover{background:var(--bg-card-hover);color:var(--text);border-color:var(--accent);}
 
   /* chilli rating */
   .chillies{display:inline-flex;gap:1px;vertical-align:middle;}
@@ -1538,6 +1550,7 @@
       <h4>Good to know</h4>
       <ul>
         <li>Use <b>Chrome or Edge</b> — Bluetooth pairing isn't available in Firefox or Safari.</li>
+        <li><b>Skip the picker next time:</b> enable <code>chrome://flags/#enable-web-bluetooth-new-permissions-backend</code>, relaunch, connect once — from then on the app finds your trainer and strap by itself when you open it (the tiles show <i>Looking…</i>).</li>
         <li>Chilli rating is heat <i>within</i> a focus area, not across them: a 🌶🌶🌶🌶🌶 sweet spot ride is still easier than a 🌶 threshold ride.</li>
         <li><b>Sweet Spot</b> is a training focus, not a Strava zone — those rides show as Tempo/Threshold (Z3/Z4) time on Strava. See the <b>?</b> next to FTP.</li>
         <li>Est. avg power and Normalised on a workout are what the plan asks for at your FTP, not a prediction of your ride.</li>
@@ -2299,7 +2312,13 @@
   }
   function paintShapeAvail(){
     [].forEach.call(els.shapeFilter.querySelectorAll('[data-shape]'), function(b){
-      b.classList.toggle('dead', !anyMatch(probeFilters('shape', b.getAttribute('data-shape'))));
+      var k = b.getAttribute('data-shape');
+      var dead = !anyMatch(probeFilters('shape', k));
+      b.classList.toggle('dead', dead);
+      // The selected tile is never disabled, even if a later filter change
+      // emptied it — it has to stay clickable so it can be deselected.
+      b.disabled = dead && filters.shape !== k;
+      b.title = dead ? 'No ' + shapeLabel(k).toLowerCase() + ' workouts match the current time, zone and spice' : '';
     });
   }
 
@@ -2795,11 +2814,69 @@
     });
   }
 
+  // The empty state names the combination that came up empty and offers one
+  // button per filter whose removal would actually bring workouts back — so
+  // "Micro, then 120 min" is as clear a dead end as "120 min, then Micro",
+  // where the tile is already greyed out. Nothing is cleared for the rider;
+  // they choose which pick to let go.
+  var EMPTY_CLEARS = [
+    ['shape',       'Clear shape'],
+    ['zone',        'Clear zone'],
+    ['duration',    'Clear time'],
+    ['spice',       'Clear spice'],
+    ['search',      'Clear search'],
+    ['starredOnly', 'Show all, not just starred']
+  ];
+  function clearOneFilter(key){
+    if(key === 'search'){
+      filters.search = ''; els.searchBox.value = '';
+      els.listActions.classList.remove('searching');
+    } else if(key === 'starredOnly'){
+      filters.starredOnly = false; updateStarFilterUI();
+    } else {
+      filters[key] = null;
+    }
+    render();
+  }
+  function paintEmptyState(){
+    var f = filters, adj = [], tail = [];
+    if(f.shape !== null) adj.push(shapeLabel(f.shape));
+    if(f.zone !== null && ZONES[f.zone]) adj.push(ZONES[f.zone].label);
+    if(f.duration !== null) tail.push('at ' + f.duration + ' min');
+    if(f.spice !== null) tail.push('spice ' + f.spice);
+    var q = f.search.trim();
+    if(q) tail.push('matching “' + q + '”');
+    var sentence = 'No ' + (f.starredOnly ? 'starred ' : '') + (adj.length ? adj.join(' ') + ' ' : '') + 'workouts' +
+                   (tail.length ? ' ' + tail.join(', ') : '') + '.';
+
+    // Offer only the clears that work on their own.
+    var offers = EMPTY_CLEARS.filter(function(c){
+      var k = c[0];
+      var set = k === 'search' ? !!q : k === 'starredOnly' ? f.starredOnly : f[k] !== null;
+      if(!set) return false;
+      var probe = probeFilters(k, k === 'search' ? '' : k === 'starredOnly' ? false : null);
+      return anyMatch(probe);
+    });
+    var btns = offers.length
+      ? offers.map(function(c){ return '<button type="button" class="nr-btn" data-clear="' + c[0] + '">' + c[1] + '</button>'; }).join('')
+      : '<button type="button" class="nr-btn" data-clear="all">Reset filters</button>';
+    els.noResults.innerHTML = '<b>' + sentence + '</b>' +
+      (offers.length ? '' : ' No single filter is the cause.') +
+      '<div class="nr-btns">' + btns + '</div>';
+    [].forEach.call(els.noResults.querySelectorAll('[data-clear]'), function(b){
+      b.addEventListener('click', function(){
+        var k = b.getAttribute('data-clear');
+        if(k === 'all') clearAllFilters(); else clearOneFilter(k);
+      });
+    });
+  }
+
   function renderWorkoutCards(){
     var list = filteredWorkouts();
     visibleKeys = list.map(function(w){ return w.key; });
     els.workoutCards.innerHTML = '';
     els.noResults.style.display = list.length ? 'none' : 'block';
+    if(!list.length) paintEmptyState();
     els.resultCount.textContent = list.length === WORKOUTS.length
       ? WORKOUTS.length + ' workouts'
       : list.length + ' of ' + WORKOUTS.length + ' workouts';
@@ -3513,8 +3590,8 @@
   // Both calls are still behind a flag (checked against Chrome 152):
   //   chrome://flags/#enable-web-bluetooth-new-permissions-backend
   // so this is feature-detected and silently absent where the flag is off —
-  // the tiles then behave exactly as before. Not yet confirmed against real
-  // hardware; the Guide stays quiet about it until it is.
+  // the tiles then behave exactly as before. Confirmed on real hardware
+  // (KICKR + TICKR, Windows, Chrome 152).
   var TRAINER_DEV_KEY = 'ftpPlan_trainerDev_v1';
   var HR_DEV_KEY = 'ftpPlan_hrDev_v1';
   var AUTO_LOOK_MS = 90000;   // how long to listen for a remembered device
@@ -5173,9 +5250,24 @@
     ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
   }
 
-  // The effort ribbon: smoothed power line with a gradient wash, HR line over
-  // it. No blocks, no legend — deliberately unlike a plan timeline.
-  function drawRibbon(ctx, ox, oy, W, H){
+  // Brand blue, everywhere on the poster.
+  var IMG_ACCENT = '#6E8BFF';        // focus slices, focus zone tag
+  var IMG_BLOCK = '#6479E6';         // the power blocks: a tad darker than the accent
+  var IMG_HR = '#FF453A';
+  function imgMix(h1, h2, t){
+    var a = h1.replace('#', ''), b = h2.replace('#', '');
+    function ch(s, i){ return parseInt(s.slice(i, i + 2), 16); }
+    var r = Math.round(ch(a, 0) + (ch(b, 0) - ch(a, 0)) * t);
+    var g = Math.round(ch(a, 2) + (ch(b, 2) - ch(a, 2)) * t);
+    var bl = Math.round(ch(a, 4) + (ch(b, 4) - ch(a, 4)) * t);
+    return '#' + ((1 << 24) + (r << 16) + (g << 8) + bl).toString(16).slice(1);
+  }
+
+  // The effort plot: solid power blocks in the brand blue, on a floor, with
+  // the Coggan zone bands behind for a y-axis, and the HR line over the top.
+  // One colour, one shape — the pie below it is the same blue, so the big
+  // slice reads as these blocks summed.
+  function drawRibbon(ctx, ox, oy, W, H, focusZone){
     var total = liveState.totalSeconds, samples = liveState.samples;
     ctx.save();
     ctx.translate(ox, oy);
@@ -5185,31 +5277,72 @@
     samples.forEach(function(s){ if(s.power !== null) peak = Math.max(peak, s.power / ftp * 100); });
     liveState.flat.forEach(function(s){ if(s.pct !== null) peak = Math.max(peak, s.pct, s.pctEnd || 0); });
     var pmin = 40, pmax = Math.max(120, Math.ceil((peak + 8) / 5) * 5);
-    function pMap(w){ var pct = ftp > 0 ? w / ftp * 100 : 0; return H - Math.max(0, Math.min(1, (pct - pmin) / (pmax - pmin))) * H; }
+    function yPct(pct){ return H - Math.max(0, Math.min(1, (pct - pmin) / (pmax - pmin))) * H; }
+    function pMap(w){ return yPct(ftp > 0 ? w / ftp * 100 : 0); }
 
+    // Zone bands: hairlines at the boundaries, a tag at the left edge, the
+    // focus zone's tag in the accent so axis, blocks and slice agree.
+    ctx.font = '700 24px ' + IMG_SANS;
+    ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    var lo = pmin;
+    POWER_PIE_ZONES.forEach(function(z, i){
+      var hi = z.hi === null ? pmax : Math.min(z.hi, pmax);
+      if(hi <= lo) return;
+      var y1 = yPct(hi), y0 = yPct(lo);
+      if(i > 0){
+        ctx.strokeStyle = 'rgba(255,255,255,0.13)'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.moveTo(0, y0); ctx.lineTo(W, y0); ctx.stroke();
+      }
+      if(y0 - y1 > 26){
+        ctx.fillStyle = i === focusZone ? IMG_ACCENT : 'rgba(255,255,255,0.55)';
+        ctx.fillText(z.z, -14, (y0 + y1) / 2);
+      }
+      lo = hi;
+    });
+
+    // The blocks, as a single shape so there are no seams at the edges.
     var pwr = ribbonPoints(samples, 'power', 25, W, total, pMap);
     if(pwr.length > 1){
-      var grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, 'rgba(110,139,255,0.45)');
-      grad.addColorStop(1, 'rgba(110,139,255,0)');
+      var g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, imgMix(IMG_BLOCK, '#FFFFFF', 0.12));
+      g.addColorStop(0.5, IMG_BLOCK);
+      g.addColorStop(1, shadeHex(IMG_BLOCK, 0.68));
       ctx.beginPath(); ribbonPath(ctx, pwr);
       ctx.lineTo(pwr[pwr.length - 1].x, H); ctx.lineTo(pwr[0].x, H); ctx.closePath();
-      ctx.fillStyle = grad; ctx.fill();
+      ctx.fillStyle = g; ctx.fill();
+      // a light top edge, so the blocks read as lit solids like the pie faces
       ctx.beginPath(); ribbonPath(ctx, pwr);
-      ctx.strokeStyle = '#6E8BFF'; ctx.lineWidth = 6; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
+      ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 3; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
     }
 
-    // HR on its own range, sitting in the upper band.
+    // Floor: a baseline and a soft plinth, so the plot sits on the same ground
+    // as the pies rather than dissolving into the background.
+    ctx.strokeStyle = 'rgba(255,255,255,0.18)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(0, H); ctx.lineTo(W, H); ctx.stroke();
+    var fl = ctx.createLinearGradient(0, H, 0, H + 56);
+    fl.addColorStop(0, 'rgba(255,255,255,0.07)'); fl.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.fillStyle = fl; ctx.fillRect(0, H, W, 56);
+
+    // HR on its own range, sitting in the upper band — the one signal colour.
     var hrs = samples.map(function(s){ return s.hr; }).filter(function(v){ return v !== null; });
     if(hrs.length > 30){
       var hlo = Math.min.apply(null, hrs) - 4, hhi = Math.max.apply(null, hrs) + 4;
       var hr = ribbonPoints(samples, 'hr', 15, W, total, function(v){ return H - 10 - ((v - hlo) / (hhi - hlo)) * (H - 20); });
       if(hr.length > 1){
         ctx.beginPath(); ribbonPath(ctx, hr);
-        ctx.strokeStyle = '#FF453A'; ctx.lineWidth = 3.5; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
+        ctx.strokeStyle = IMG_HR; ctx.lineWidth = 4; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
       }
     }
     ctx.restore();
+  }
+
+  // The headline is the workout's structure with the percentages turned into
+  // the rider's actual watts — "5 × 6 min @ 207 W" says more on a feed than
+  // "@ 94%" does, and the name is on the Strava post already.
+  function structureHeadline(wo){
+    if(!wo) return '';
+    if(wo.test || !hasFtp()) return wo.short || '';
+    return String(wo.short || '').replace(/(\d+)%/g, function(m, p){ return Math.round(ftp * p / 100) + ' W'; });
   }
 
   // Letter-spaced centred text. Canvas has no tracking of its own, and the
@@ -5304,14 +5437,22 @@
     // exported pie and the small one in the summary.
     var fPct = rx * 0.223, fZone = rx * 0.158, fOther = rx * 0.187;
     var a3 = -Math.PI / 2;
+    ctx.save();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+    // Ink on the zone-coloured summary pies; white with a soft shadow on the
+    // exported poster, where the slices are blue and slate.
+    if(opts.whiteLabels){
+      ctx.fillStyle = '#FFFFFF';
+      ctx.shadowColor = 'rgba(0,0,0,0.6)'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 2;
+    } else {
+      ctx.fillStyle = '#0A0C11';
+    }
     slices.forEach(function(s, i){
       if(!s.sec){ return; }
       var frac = s.sec / total, a2 = a3 + frac * 2 * Math.PI, mid = (a3 + a2) / 2;
       var pct = Math.round(frac * 100);
       var lx = cx + rx * 0.58 * Math.cos(mid), ly = cy + ry * 0.58 * Math.sin(mid);
-      ctx.fillStyle = '#0A0C11';
       if(i === focusIdx && pct >= 12){
         // The zone that matters gets the full readout.
         ctx.font = '800 ' + fPct.toFixed(1) + 'px ' + IMG_SANS;
@@ -5326,10 +5467,23 @@
       }
       a3 = a2;
     });
+    ctx.restore();
   }
 
-  // Heading, pie and a caption naming the dominant zone.
-  function drawPieBlock(ctx, cx, cy, rx, ry, depth, heading, slices, total, focusIdx, opts){
+  // Heading, pie and a caption naming the dominant zone. `caption` is the
+  // rider's own name for the effort (the workout's zone for power, the HR
+  // zone's name for heart rate); the line under it says which Coggan zone
+  // that landed in, so the two vocabularies meet instead of competing.
+  function drawPieBlock(ctx, cx, cy, rx, ry, depth, heading, slices, total, focusIdx, opts, caption){
+    // Ground shadow, so the pie sits the way the plot does.
+    var gy = cy + depth + 12;
+    var sh = ctx.createRadialGradient(cx, gy, 10, cx, gy, rx * 1.15);
+    sh.addColorStop(0, 'rgba(0,0,0,0.55)'); sh.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.save();
+    ctx.translate(0, gy); ctx.scale(1, 0.32); ctx.translate(0, -gy);
+    ctx.fillStyle = sh; ctx.fillRect(cx - rx * 1.3, gy - rx * 1.3, rx * 2.6, rx * 2.6);
+    ctx.restore();
+
     ctx.textAlign = 'center';
     ctx.textBaseline = 'alphabetic';
     ctx.fillStyle = '#7E869E';
@@ -5344,12 +5498,12 @@
     if(f && f.sec){
       ctx.textAlign = 'center';
       ctx.textBaseline = 'alphabetic';
-      ctx.fillStyle = f.color;
+      ctx.fillStyle = '#8FA6FF';
       ctx.font = '800 46px ' + IMG_SANS;
-      ctx.fillText(f.z + '  ' + f.label.toUpperCase(), cx, cy + ry + depth + 90);
-      ctx.fillStyle = '#B9BFD4';
-      ctx.font = '600 38px ' + IMG_SANS;
-      ctx.fillText(Math.round(f.sec / 60) + ' MIN', cx, cy + ry + depth + 140);
+      trackedText(ctx, (caption || f.label).toUpperCase(), cx, cy + ry + depth + 90, 3);
+      ctx.fillStyle = '#7E869E';
+      ctx.font = '600 36px ' + IMG_SANS;
+      trackedText(ctx, Math.round(f.sec / 60) + ' MIN IN ' + f.z, cx, cy + ry + depth + 140, 2);
     }
   }
 
@@ -5361,6 +5515,14 @@
     var samples = liveState.samples, wo = liveState.workout;
 
     ctx.fillStyle = '#0A0C11';
+    ctx.fillRect(0, 0, IMG_W, IMG_H);
+    // A soft brand-blue haze behind the plot, gone by the pies: tonal rather
+    // than textured, so it survives the feed's shrink where a pattern wouldn't.
+    var haze = ctx.createRadialGradient(IMG_W / 2, 480, 80, IMG_W / 2, 480, 1100);
+    haze.addColorStop(0, 'rgba(110,139,255,0.16)');
+    haze.addColorStop(0.5, 'rgba(110,139,255,0.05)');
+    haze.addColorStop(1, 'rgba(110,139,255,0)');
+    ctx.fillStyle = haze;
     ctx.fillRect(0, 0, IMG_W, IMG_H);
 
     // Zone seconds.
@@ -5374,44 +5536,41 @@
     var hTotal = hSecs.reduce(function(a, b){ return a + b; }, 0);
     var hasHr = hTotal >= 60 && maxHr;
 
-    // ---- hero ----
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = '#FFFFFF';
-    ctx.font = '800 100px ' + IMG_SANS;
-    ctx.fillText(fitText(ctx, wo ? wo.name : 'Ride', W), IMG_W / 2, 152);
-
-    var zoneKey = wo && wo.zone, zdef = zoneKey && ZONES[zoneKey];
-    var sub = wo && wo.test ? 'Fitness Test' : (zdef ? zdef.label : '');
-    if(sub){
-      ctx.fillStyle = zdef ? zdef.hex : '#B9BFD4';
-      ctx.font = '700 46px ' + IMG_SANS;
-      trackedText(ctx, sub.toUpperCase(), IMG_W / 2, 216, 8);
-    }
-
-    // ---- effort ribbon (unchanged) ----
-    drawRibbon(ctx, pad, 255, W, 470);
-
-    // ---- time in zone, as chunky pies ----
-    var pSlices = POWER_PIE_ZONES.map(function(z, i){
-      return {z:z.z, label:z.label, sec:pSecs[i], color:z.color || ZONES[z.key].hex};
-    });
-    var hSlices = HR_ZONES.map(function(z, i){
-      return {z:z.z, label:z.label, sec:hSecs[i], color:z.color};
-    });
     var pFocus = focusZoneIndex(wo, pSecs);
     if(pFocus < 0 || !pSecs[pFocus]) pFocus = pSecs.indexOf(Math.max.apply(null, pSecs));
     var hFocus = hSecs.indexOf(Math.max.apply(null, hSecs));
 
-    // Held back deliberately: muted faces, a soft highlight and a modest size,
-    // so the effort ribbon above stays the thing you look at first.
+    // ---- headline: the structure, in watts, quiet grey ----
+    // No name — Strava shows it on the post, and doubling up wastes the space.
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = '#A9B0C4';
+    ctx.font = '800 70px ' + IMG_SANS;
+    ctx.fillText(fitText(ctx, structureHeadline(wo) || 'Ride', W), IMG_W / 2, 130);
+
+    // ---- effort plot ----
+    drawRibbon(ctx, pad + 40, 235, W - 40, 490, pFocus);
+
+    // ---- time in zone, as chunky pies: the focus slice in the block blue, the rest slate ----
+    function sliceColor(i, focus){ return focus ? IMG_ACCENT : imgMix('#1E2740', '#4A5578', Math.min(1, i / 5)); }
+    var pSlices = POWER_PIE_ZONES.map(function(z, i){
+      return {z:z.z, label:z.label, sec:pSecs[i], color:sliceColor(i, i === pFocus)};
+    });
+    var hSlices = HR_ZONES.map(function(z, i){
+      return {z:z.z, label:z.label, sec:hSecs[i], color:sliceColor(i, i === hFocus)};
+    });
+    // The power caption is the ride's own name for the effort; a test, or a
+    // ride whose focus zone got no time, falls back to the Coggan name.
+    var zdef = wo && !wo.test && ZONES[wo.zone];
+    var pCaption = (zdef && focusZoneIndex(wo, pSecs) === pFocus) ? zdef.label : null;
+
     var cy = 1050, rx = 235, ry = 130, depth = 44;
-    var pieOpts = {gloss:0.09, tint:0.78};
+    var pieOpts = {gloss:0.14, tint:0.92, whiteLabels:true};
     if(hasHr){
-      drawPieBlock(ctx, IMG_W * 0.27, cy, rx, ry, depth, 'POWER', pSlices, pTotal, pFocus, pieOpts);
-      drawPieBlock(ctx, IMG_W * 0.73, cy, rx, ry, depth, 'HEART RATE', hSlices, hTotal, hFocus, pieOpts);
+      drawPieBlock(ctx, IMG_W * 0.27, cy, rx, ry, depth, 'POWER', pSlices, pTotal, pFocus, pieOpts, pCaption);
+      drawPieBlock(ctx, IMG_W * 0.73, cy, rx, ry, depth, 'HEART RATE', hSlices, hTotal, hFocus, pieOpts, null);
     } else {
-      drawPieBlock(ctx, IMG_W / 2, cy, rx * 1.12, ry * 1.12, depth + 6, 'POWER', pSlices, pTotal, pFocus, pieOpts);
+      drawPieBlock(ctx, IMG_W / 2, cy, rx * 1.12, ry * 1.12, depth + 6, 'POWER', pSlices, pTotal, pFocus, pieOpts, pCaption);
     }
     return c;
   }
