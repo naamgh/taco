@@ -774,16 +774,17 @@
     .rec .sheen::before,.rec .tw{animation:none;}
     .rec .tw.a{opacity:.9;}
   }
-  /* The list-pane toggle: the same pill, bigger, wrapped in a button. Off
-     it sits back a little; on it gets the accent ring the other toggles use. */
+  /* The list-pane toggle: the same pill, bigger, wrapped in a button. It's a
+     switch for the badges themselves — lit gold while they're showing, and
+     grey and still while the rider has them off. */
   .rec-toggle{
     background:none;border:0;padding:0;cursor:pointer;flex:none;height:30px;
-    display:flex;align-items:center;opacity:.72;transition:opacity .12s;
+    display:flex;align-items:center;transition:opacity .12s,filter .12s;
   }
-  .rec-toggle:hover{opacity:1;}
   .rec-toggle .rec{font-size:10px;padding:6px 10px;letter-spacing:.1em;}
-  .rec-toggle.on{opacity:1;}
-  .rec-toggle.on .rec{box-shadow:inset 0 1px 0 rgba(255,255,255,.35), 0 0 0 2px var(--accent), 0 1px 4px rgba(0,0,0,.28);}
+  .rec-toggle:not(.on){opacity:.45;filter:grayscale(.9);}
+  .rec-toggle:not(.on):hover{opacity:.7;}
+  .rec-toggle:not(.on) .sheen::before,.rec-toggle:not(.on) .tw{animation:none;}
   /* In the list the name row becomes a flex line so the pill sits beside
      the name and wraps under it only when there's genuinely no room. */
   .workout-titles h3{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
@@ -2002,7 +2003,15 @@
   // ============================================================
   // LIBRARY FILTERING
   // ============================================================
-  var filters = {duration:null, zone:null, shape:null, spice:null, search:'', sort:'tss', starredOnly:false, recommendedOnly:false};
+  var filters = {duration:null, zone:null, shape:null, spice:null, search:'', sort:'tss', starredOnly:false};
+
+  // Whether the recommended badges are shown at all. A preference, not a
+  // filter: on, the badged rides wear the pill and lead the list; off, the
+  // library is just the library and the rider picks their own way through.
+  // On by default, so a newcomer gets the guidance; remembered once changed.
+  var SHOW_REC_KEY = 'ftpPlan_showRec_v1';
+  var showRec = true;
+  try{ showRec = localStorage.getItem(SHOW_REC_KEY) !== '0'; }catch(e){}
 
   // Display order for the Shape filter. Labels come from the library so the
   // app and generator can't disagree about what a shape is called.
@@ -2306,8 +2315,7 @@
   function probeFilters(key, value){
     var p = {
       duration:filters.duration, zone:filters.zone, shape:filters.shape,
-      spice:filters.spice, search:filters.search, starredOnly:filters.starredOnly,
-      recommendedOnly:filters.recommendedOnly
+      spice:filters.spice, search:filters.search, starredOnly:filters.starredOnly
     };
     p[key] = value;
     return p;
@@ -2372,7 +2380,6 @@
   function passesFilters(w, f){
     var testsOnly = f.zone === 'test';
     if(f.starredOnly && !isFav(w.key)) return false;
-    if(f.recommendedOnly && !w.recommended) return false;
     if(f.zone !== null && w.zone !== f.zone) return false;
     if(!testsOnly){
       if(f.duration !== null && w.durationMin !== f.duration) return false;
@@ -2388,10 +2395,12 @@
     var out = WORKOUTS.filter(function(w){ return passesFilters(w, filters); });
     var s = filters.sort;
     out.sort(function(a, b){
-      // Recommended rides lead whatever the sort, so a newcomer's first pick
-      // is at the top of the list rather than somewhere in it.
-      var ra = a.recommended ? 0 : 1, rb = b.recommended ? 0 : 1;
-      if(ra !== rb) return ra - rb;
+      // With recommendations on, badged rides lead whatever the sort, so a
+      // newcomer's first pick is at the top of the list rather than in it.
+      if(showRec){
+        var ra = a.recommended ? 0 : 1, rb = b.recommended ? 0 : 1;
+        if(ra !== rb) return ra - rb;
+      }
       if(s === 'starred'){
         var fa = isFav(a.key) ? 0 : 1, fb = isFav(b.key) ? 0 : 1;
         if(fa !== fb) return fa - fb;
@@ -2611,7 +2620,7 @@
   // so callers can concatenate it blind.
   var REC_STAR = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0C5.4 3 7 4.6 10 5C7 5.4 5.4 7 5 10C4.6 7 3 5.4 0 5C3 4.6 4.6 3 5 0Z"/></svg>';
   function recPill(wo){
-    if(!wo.recommended) return '';
+    if(!showRec || !wo.recommended) return '';
     return '<span class="rec" title="Recommended"><span class="sheen"></span>Recommended' +
       '<i class="tw a">' + REC_STAR + '</i><i class="tw b">' + REC_STAR + '</i><i class="tw c">' + REC_STAR + '</i></span>';
   }
@@ -2795,7 +2804,7 @@
         (wo.test ? '' : chillies(wo.spice)) +
       '</div>' +
       // The pill says *that*; this says *why*, in the curator's words.
-      (typeof wo.recommended === 'string' ? '<p class="rec-why">' + wo.recommended + '</p>' : '') +
+      (showRec && typeof wo.recommended === 'string' ? '<p class="rec-why">' + wo.recommended + '</p>' : '') +
       (wo.test
         ? '<div class="plan-stats">' + planStat('Duration', wo.durationMin, 'min') + '</div>' +
           '<p class="plan-note">' + (wo.test === 'ramp' ? 'FTP = 75% of your best 1-minute power.' : 'FTP = 95% of your 20-minute average.') + '</p>'
@@ -2861,8 +2870,7 @@
     ['duration',    'Clear time'],
     ['spice',       'Clear spice'],
     ['search',      'Clear search'],
-    ['starredOnly', 'Show all, not just starred'],
-    ['recommendedOnly', 'Show all, not just recommended']
+    ['starredOnly', 'Show all, not just starred']
   ];
   function clearOneFilter(key){
     if(key === 'search'){
@@ -2870,8 +2878,6 @@
       els.listActions.classList.remove('searching');
     } else if(key === 'starredOnly'){
       filters.starredOnly = false; updateStarFilterUI();
-    } else if(key === 'recommendedOnly'){
-      filters.recommendedOnly = false; updateRecFilterUI();
     } else {
       filters[key] = null;
     }
@@ -2885,17 +2891,15 @@
     if(f.spice !== null) tail.push('spice ' + f.spice);
     var q = f.search.trim();
     if(q) tail.push('matching “' + q + '”');
-    var sentence = 'No ' + (f.starredOnly ? 'starred ' : '') + (f.recommendedOnly ? 'recommended ' : '') +
-                   (adj.length ? adj.join(' ') + ' ' : '') + 'workouts' +
+    var sentence = 'No ' + (f.starredOnly ? 'starred ' : '') + (adj.length ? adj.join(' ') + ' ' : '') + 'workouts' +
                    (tail.length ? ' ' + tail.join(', ') : '') + '.';
 
     // Offer only the clears that work on their own.
     var offers = EMPTY_CLEARS.filter(function(c){
       var k = c[0];
-      var bool = k === 'starredOnly' || k === 'recommendedOnly';
-      var set = k === 'search' ? !!q : bool ? f[k] : f[k] !== null;
+      var set = k === 'search' ? !!q : k === 'starredOnly' ? f.starredOnly : f[k] !== null;
       if(!set) return false;
-      var probe = probeFilters(k, k === 'search' ? '' : bool ? false : null);
+      var probe = probeFilters(k, k === 'search' ? '' : k === 'starredOnly' ? false : null);
       return anyMatch(probe);
     });
     var btns = offers.length
@@ -2978,13 +2982,12 @@
 
   function clearAllFilters(){
     filters.duration = null; filters.zone = null; filters.shape = null; filters.spice = null;
-    filters.search = ''; filters.sort = 'tss'; filters.starredOnly = false; filters.recommendedOnly = false;
+    filters.search = ''; filters.sort = 'tss'; filters.starredOnly = false;
     els.searchBox.value = '';
     els.sortMenu.style.display = 'none';
     renderSortMenu();
     updateStarFilterUI();
-    updateRecFilterUI();
-    render();
+    render();   // recommendations on/off is a preference, not a filter — it stays
   }
   els.resetFilters.addEventListener('click', clearAllFilters);
 
@@ -3365,18 +3368,21 @@
     renderWorkoutCards();
   });
 
-  // Recommended-only toggle. The pill inside is the same one the cards wear.
+  // Recommendations on/off. The pill inside is the same one the cards wear;
+  // lit while the badges are showing, dimmed while the rider has them off.
   [].forEach.call(els.recFilterBtn.querySelectorAll('.tw'), function(i){ i.innerHTML = REC_STAR; });
   function updateRecFilterUI(){
-    els.recFilterBtn.classList.toggle('on', filters.recommendedOnly);
-    els.recFilterBtn.setAttribute('aria-pressed', filters.recommendedOnly ? 'true' : 'false');
-    els.recFilterBtn.title = filters.recommendedOnly ? 'Showing recommended only — click to show all' : 'Show recommended only';
+    els.recFilterBtn.classList.toggle('on', showRec);
+    els.recFilterBtn.setAttribute('aria-pressed', showRec ? 'true' : 'false');
+    els.recFilterBtn.title = showRec ? 'Recommendations on — click to hide the badges' : 'Recommendations off — click to show the badges';
   }
   els.recFilterBtn.addEventListener('click', function(){
-    filters.recommendedOnly = !filters.recommendedOnly;
+    showRec = !showRec;
+    try{ localStorage.setItem(SHOW_REC_KEY, showRec ? '1' : '0'); }catch(e){}
     updateRecFilterUI();
-    render();   // availability marks change too: a dead segment may only be dead among the recommended
+    renderWorkoutCards();   // pills, order and the detail's reason line all follow
   });
+  updateRecFilterUI();
 
   // ---- keyboard ----
   // Left/right work the sidebar, up/down move through the list, Enter starts.
