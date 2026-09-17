@@ -62,17 +62,26 @@
   }
   function leg(zone, min, pct, label){ return {zone:zone, min:min, pct:pct, label:label}; }
 
+  // Coaching text the player shows for a segment. On a repeat's legs it can
+  // be one string for every rep or an array with one entry per rep, so rep 1
+  // can say "settle in" and rep 4 can say "empty it".
+  function cued(block, cue){ block.cue = cue; return block; }
+  function cueFor(leg, i){
+    if(!leg || leg.cue === undefined) return undefined;
+    return Array.isArray(leg.cue) ? leg.cue[i] : leg.cue;
+  }
+
   function expandBlocks(blocks){
     var out = [];
     blocks.forEach(function(b){
       if(b.kind === 'single'){
-        out.push({type:b.zone, min:b.min, pct:b.pct, pctEnd:b.pctEnd, label:b.label, prep:b.prep});
+        out.push({type:b.zone, min:b.min, pct:b.pct, pctEnd:b.pctEnd, label:b.label, prep:b.prep, cue:b.cue});
         return;
       }
       for(var i = 0; i < b.reps; i++){
-        out.push({type:b.work.zone, min:b.work.min, pct:b.work.pct, pctEnd:b.work.pctEnd, label:b.work.label + ' ' + (i+1), prep:b.prep});
+        out.push({type:b.work.zone, min:b.work.min, pct:b.work.pct, pctEnd:b.work.pctEnd, label:b.work.label + ' ' + (i+1), prep:b.prep, cue:cueFor(b.work, i)});
         if(b.rest && (i < b.reps - 1 || b.trailingRest)){
-          out.push({type:b.rest.zone, min:b.rest.min, pct:b.rest.pct, pctEnd:b.rest.pctEnd, label:b.rest.label, prep:b.prep});
+          out.push({type:b.rest.zone, min:b.rest.min, pct:b.rest.pct, pctEnd:b.rest.pctEnd, label:b.rest.label, prep:b.prep, cue:cueFor(b.rest, i)});
         }
       }
     });
@@ -559,6 +568,63 @@
     };
   }
 
+  // ---------------------------------------------------------------
+  // Signature sessions. Hand-authored like the tests: named protocols
+  // rather than recipe output, with their own names, so they never take a
+  // name from the pools and can't shift the generated ones.
+  // ---------------------------------------------------------------
+  function norwegian4x4(){
+    // Helgerud's 4×4: four 4-minute efforts at 90-95% of max HR with three
+    // minutes of active recovery — short enough that HR carries over into
+    // the next rep. 110% FTP is where that HR band lands for most riders on
+    // a four-minute effort; the purpose text hands the fine-tuning to HR.
+    var blocks = [
+      cued(prep(single('recovery', 2, 50, 'Easy')),
+        'Easy spinning. Let the legs wake up — nothing to prove yet.'),
+      cued(prep(single('endurance', 3, 62, 'Building')),
+        'Lift the cadence a touch. Breathing should still be easy.'),
+      cued(prep(single('endurance', 3, 72, 'Warm-up')),
+        'Last easy minutes. Find the cadence you’ll use for the reps — 90+ suits most people.'),
+      cued(prep(single('threshold', 1, 95, 'Opener')),
+        'One minute to open the legs. This isn’t a rep — don’t chase it.'),
+      cued(prep(single('recovery', 2, 55, 'Settle')),
+        'Ease right off and let the heart rate drop. Rep 1 starts fresh.'),
+      repeat(4,
+        cued(leg('vo2', 4, 110, 'VO₂'), [
+          'Settle into it. Heart rate climbs slowly — aim for about 90% of max by the end, not the start.',
+          'Same power. HR should reach 90%+ by the end of this one. If it isn’t close, nudge the intensity up 2–3%.',
+          'The hardest one. Hold the number and let HR sit in the 90–95% band.',
+          'Last rep — empty it. HR 92–95% in the final minute. If you can’t finish, start lower next time.'
+        ]),
+        cued(leg('recovery', 3, 55, 'Recovery'), [
+          'Keep pedalling, easy. HR won’t come all the way down — that’s the design.',
+          'Easy. Breathe. Halfway.',
+          'One to go. Keep the legs moving.',
+          'Done. Spin it out.'
+        ]), true),
+      cued(prep(ramp('recovery', 6, 55, 40, 'Cool-down')),
+        'Ease down. Let the heart rate drift back under 70% of max.')
+    ];
+    return {
+      key:'norwegian-4x4', name:'Norwegian 4×4', short:'4 × 4 min @ 110% / 3\' rest',
+      purpose:'Governed by heart rate, not power: aim to reach 90–95% of your max HR by the end of each rep, climbing into it rather than starting there. 110% FTP gets most riders there. If HR isn’t at 90% by the end of rep 2, nudge the intensity up; if rep 4 is unfinishable, start lower next time. Keep pedalling through the recoveries — they’re deliberately short.',
+      zone:'vo2', structure:'short reps', shape:'short',
+      durationMin:45, targetPct:110, blocks:blocks
+    };
+  }
+
+  function buildSignatures(){
+    return [norwegian4x4()].map(function(w){
+      var m = classify(w.blocks);
+      w.spice = m.derivedSpice;   // the classifier's call, so the rating can't drift from the blocks
+      w.tss = m.tss; w.if = m.if; w.primaryZone = m.primaryZone;
+      w.primaryZoneMin = m.primaryZoneMin; w.workMeanPct = m.workMeanPct; w.workMin = m.workMin;
+      w.timeInZone = m.timeInZone; w.derivedSpice = m.derivedSpice;
+      if(m.durationMin !== w.durationMin) throw new Error(w.name + ' is ' + m.durationMin + ' min, not ' + w.durationMin);
+      return w;
+    });
+  }
+
   function buildTests(){
     return [rampTest(), ftp20Test()].map(function(t){
       var m = classify(t.blocks);
@@ -702,7 +768,12 @@
   //   flatwater: {why:'The Z2 ride to build on — long enough to matter, easy enough to finish.',
   //               expect:'endurance|3|60|steady'},
   // ---------------------------------------------------------------
-  var RECOMMENDED = {};
+  var RECOMMENDED = {
+    'norwegian-4x4': {
+      why:'The VO₂max session with the research behind it: four 4-minute efforts you can actually finish, with your heart rate doing the coaching.',
+      expect:'vo2|2|45|short reps'
+    }
+  };
 
   function applyRecommended(library){
     var issues = [];
@@ -856,6 +927,7 @@
       });
     });
 
+    buildSignatures().forEach(function(w){ w.id = id++; library.push(w); });
     // Tests go first so they're easy to find, with ids continuing the sequence.
     buildTests().forEach(function(t){ t.id = id++; library.unshift(t); });
 
