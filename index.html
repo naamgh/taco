@@ -1520,6 +1520,31 @@
   .pie-key span{display:inline-flex;align-items:center;gap:5px;}
   .pie-key i{width:8px;height:8px;border-radius:2px;flex:none;}
   .pie-key b{color:var(--text);font-weight:650;}
+
+  /* ---------- ACTIVITY DETAIL (read-only, in the side panel) ---------- */
+  .log-detail{
+    background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:16px 18px;
+    display:flex;flex-direction:column;gap:14px;
+  }
+  .dv-title{display:flex;flex-direction:column;gap:4px;min-width:0;}
+  .dv-name{font-size:17px;font-weight:750;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;}
+  .dv-sub{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-dim);}
+  .dv-sub i{width:8px;height:8px;border-radius:50%;flex:none;}
+  .dv-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .dv-stat{
+    background:var(--bg-card);border:1px solid var(--border-soft);border-radius:9px;padding:7px 10px;
+    display:flex;flex-direction:column;gap:1px;min-width:0;
+  }
+  .dv-stat span{font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
+  .dv-stat b{font-family:var(--mono);font-size:14px;color:var(--text-strong);font-weight:650;white-space:nowrap;}
+  .dv-pies{display:flex;flex-direction:column;gap:12px;}
+  .dv-pie{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:12px 10px 10px;text-align:center;}
+  .dv-pie h4{margin:0 0 4px;font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+  .dv-pie canvas{display:block;margin:0 auto;}
+  .dv-rpe{font-size:12px;color:var(--text-dim);}
+  .dv-rpe b{font-family:var(--mono);color:var(--text-strong);font-weight:700;}
+  .dv-rpe.none{font-size:11px;color:var(--text-faint);line-height:1.5;}
+  .dv-note{margin:0;font-size:12.5px;color:var(--text-dim);line-height:1.5;}
   .ftp-estimate{
     background:rgba(255,93,117,0.07);border:1px dashed rgba(255,93,117,0.45);border-radius:14px;
     padding:16px 18px;margin-bottom:14px;text-align:center;
@@ -6748,16 +6773,14 @@
     var en = e.target.closest('.log-entry');
     if(!en) return;
     var id = +en.getAttribute('data-id');
-    rideGet(id).then(function(r){
-      if(!r) return;
-      if(r.type === 'indoor') openSavedRide(id); else showLogForm(r);
-    });
+    rideGet(id).then(function(r){ if(r) showDetail(r); });
   });
 
   var PENCIL_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 16v4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M13.3 6.7l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
   var CHECK_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.2 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var TRASH_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4.5 7h15M9.5 7V5.2A1.2 1.2 0 0110.7 4h2.6a1.2 1.2 0 011.2 1.2V7M6.5 7l.8 11.2A1.6 1.6 0 008.9 20h6.2a1.6 1.6 0 001.6-1.8L17.5 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var CLOSE_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
+  var EXPAND_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M14 5h5v5M19 5l-6 6M10 19H5v-5M5 19l6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
   function prettyDate(day){
     var p = String(day).split('-').map(Number), d = new Date(p[0], p[1]-1, p[2]);
@@ -6804,6 +6827,107 @@
       '</svg>';
   }
 
+  // ---- read-only detail view ----
+  // Clicking any entry opens this in the side panel: the ride at a glance, with
+  // nothing editable until the pencil is pressed. Indoor rides also get their
+  // zone pies here and a button through to the full summary (exports, sync).
+  function gymLabel(g){ var o = MANUAL_TYPES.gym.fields[1].options.filter(function(x){ return x[0] === g; })[0]; return o ? o[1] : g; }
+  function statChip(lab, val){ return '<div class="dv-stat"><span>' + lab + '</span><b>' + val + '</b></div>'; }
+  function detailStats(rec){
+    function w(v, u){ return (v !== null && v !== undefined) ? v + (u || '') : '—'; }
+    if(rec.type === 'indoor'){
+      var s = rec.stats || {};
+      return [
+        statChip('Duration', secToClock(rec.durationSec)),
+        statChip('TSS', rec.tss != null ? rec.tss : '—'),
+        statChip('IF', s.IF != null ? s.IF : '—'),
+        statChip('Norm power', w(s.np, ' W')),
+        statChip('Avg power', w(s.avgPower, ' W')),
+        statChip('Max power', w(s.maxPower, ' W')),
+        statChip('Avg HR', w(s.avgHr, ' bpm')),
+        statChip('Max HR', w(s.maxHr, ' bpm')),
+        statChip('Avg cad', w(s.avgCadence, ' rpm')),
+        statChip('Work', w(s.kj, ' kJ'))
+      ].join('');
+    }
+    var f = rec.fields || {}, out = [statChip('Duration', secToClock(rec.durationSec))];
+    if(f.distanceKm) out.push(statChip('Distance', f.distanceKm + ' km'));
+    if(rec.type === 'run' && f.paceSec) out.push(statChip('Pace', secToClock(f.paceSec) + '/km'));
+    if(rec.type === 'ride' && f.avgSpeedKmh) out.push(statChip('Avg speed', f.avgSpeedKmh + ' km/h'));
+    if(f.avgPower) out.push(statChip('Avg power', f.avgPower + ' W'));
+    if(f.elevationM) out.push(statChip('Elevation', f.elevationM + ' m'));
+    if(rec.tss != null) out.push(statChip('TSS', rec.tss));
+    if(f.groups && f.groups.length) out.push(statChip('Focus', f.groups.map(gymLabel).join(', ')));
+    return out.join('');
+  }
+  var detailPieSpecs = [];
+  function detailPies(rec){
+    detailPieSpecs = [];
+    if(rec.type !== 'indoor' || !rec.tiz) return '';
+    var tp = rec.tiz.power || [], th = rec.tiz.hr || [];
+    var pTotal = tp.reduce(function(a, b){ return a + b; }, 0), hTotal = th.reduce(function(a, b){ return a + b; }, 0);
+    var cvHtml = '<canvas class="dv-pie-cv" aria-hidden="true"></canvas>', cards = '';
+    if(pTotal >= 30){
+      var pSlices = POWER_PIE_ZONES.map(function(z, i){ return {z:z.z, label:z.label, sec:tp[i] || 0, color:z.color || ZONES[z.key].hex}; });
+      var pFocus = tp.indexOf(Math.max.apply(null, tp));
+      cards += '<div class="dv-pie"><h4>Power zones</h4>' + cvHtml + pieKey(pSlices, pFocus) + '</div>';
+      detailPieSpecs.push({slices:pSlices, total:pTotal, focus:pFocus});
+    }
+    if(hTotal >= 30){
+      var hSlices = HR_ZONES.map(function(z, i){ return {z:z.z, label:z.label, sec:th[i] || 0, color:z.color}; });
+      var hFocus = th.indexOf(Math.max.apply(null, th));
+      cards += '<div class="dv-pie"><h4>Heart rate zones</h4>' + cvHtml + pieKey(hSlices, hFocus) + '</div>';
+      detailPieSpecs.push({slices:hSlices, total:hTotal, focus:hFocus});
+    }
+    return cards ? '<div class="dv-pies">' + cards + '</div>' : '';
+  }
+  function paintDetailPies(){
+    var cvs = els.logAdd.querySelectorAll('canvas.dv-pie-cv'), dpr = Math.min(3, window.devicePixelRatio || 1), W = 196, H = 116;
+    detailPieSpecs.forEach(function(spec, i){
+      var cv = cvs[i]; if(!cv) return;
+      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
+      var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      drawPie3d(ctx, W / 2, 50, 76, 42, 15, spec.slices, spec.total, spec.focus);
+    });
+  }
+  function showDetail(rec){
+    els.logAdd.style.display = '';
+    var indoor = rec.type === 'indoor';
+    var typeLabel = indoor ? 'Indoor ride' : typeSpec(rec.type).label;
+    var editBtn = indoor
+      ? '<button type="button" class="lf-hbtn edit" id="dvFull" title="Open full view — export, Strava sync" aria-label="Full view">' + EXPAND_SVG + '</button>'
+      : '<button type="button" class="lf-hbtn edit" id="dvEdit" title="Edit this activity" aria-label="Edit">' + PENCIL_SVG + '</button>';
+    var routeHtml = rec.route ? '<div class="lf-route">' + routeSvg(decodePolyline(rec.route), 246, 120) + '</div>' : '';
+    var rpeHtml = rec.rpe ? '<div class="dv-rpe">RPE <b>' + rec.rpe + '</b> / 10</div>'
+      : (!rec.tss ? '<div class="dv-rpe none">No RPE yet — ' + (indoor ? 'add one in the full view' : 'edit to add one') + ' so it counts toward Fitness &amp; Form.</div>' : '');
+    var noteHtml = rec.note ? '<p class="dv-note">' + esc(rec.note) + '</p>' : '';
+    els.logAdd.innerHTML =
+      '<div class="log-detail">' +
+        '<div class="log-side-head">' +
+          '<div class="dv-title">' +
+            '<span class="dv-name">' + esc(entryName(rec)) + '</span>' +
+            '<span class="dv-sub"><i style="background:' + entryColor(rec) + '"></i>' + typeLabel + ' · ' + prettyDate(rec.day) + '</span>' +
+          '</div>' +
+          '<div class="lf-head-btns">' + editBtn +
+            '<button type="button" class="lf-hbtn del" id="dvDelete" title="Delete" aria-label="Delete">' + TRASH_SVG + '</button>' +
+            '<button type="button" class="lf-hbtn cancel" id="dvClose" title="Close" aria-label="Close">' + CLOSE_SVG + '</button>' +
+          '</div>' +
+        '</div>' +
+        routeHtml +
+        '<div class="dv-stats">' + detailStats(rec) + '</div>' +
+        detailPies(rec) +
+        rpeHtml + noteHtml +
+      '</div>';
+    paintDetailPies();
+    var full = els.logAdd.querySelector('#dvFull'); if(full) full.addEventListener('click', function(){ openSavedRide(rec.id); });
+    var edit = els.logAdd.querySelector('#dvEdit'); if(edit) edit.addEventListener('click', function(){ showLogForm(rec); });
+    els.logAdd.querySelector('#dvClose').addEventListener('click', function(){ els.logAdd.style.display = 'none'; });
+    els.logAdd.querySelector('#dvDelete').addEventListener('click', function(){
+      if(!confirm('Delete this activity?')) return;
+      rideDelete(rec.id).then(function(){ els.logAdd.style.display = 'none'; renderLog(); refreshDoneMarks(); });
+    });
+  }
+
   // ---- quick-log form (ride / run / gym) ----
   // The type picker rebuilds the fields; new and existing entries share the
   // form, and an existing one also gets Delete. On an existing entry the
@@ -6814,7 +6938,7 @@
     var type = seed.type === 'outdoor' ? 'ride' : (seed.type && MANUAL_TYPES[seed.type] ? seed.type : 'ride');
     var rpe = seed.rpe || null;
     var name = seed.name || '';
-    var idLocked = editing;   // new entries start editable
+    var idLocked = false;   // in edit mode everything is editable
 
     els.logAdd.style.display = '';
     els.logAdd.innerHTML =
@@ -6822,10 +6946,9 @@
         '<div class="log-side-head">' +
           '<h3>' + (editing ? 'Edit activity' : 'Log an activity') + '</h3>' +
           '<div class="lf-head-btns">' +
-            (editing ? '<button type="button" class="lf-hbtn edit" id="lfEdit" title="Edit name, date and type" aria-label="Edit name, date and type">' + PENCIL_SVG + '</button>' : '') +
-            '<button type="button" class="lf-hbtn save" id="lfSave" title="Save" aria-label="Save">' + CHECK_SVG + '</button>' +
+            '<button type="button" class="lf-hbtn save" id="lfSave" title="Save" aria-label="Save" style="display:none;">' + CHECK_SVG + '</button>' +
             '<button type="button" class="lf-hbtn del" id="lfDelete" title="Delete" aria-label="Delete"' + (editing ? '' : ' style="display:none;"') + '>' + TRASH_SVG + '</button>' +
-            '<button type="button" class="lf-hbtn cancel" id="lfCancel" title="Close" aria-label="Close">' + CLOSE_SVG + '</button>' +
+            '<button type="button" class="lf-hbtn cancel" id="lfCancel" title="' + (editing ? 'Back' : 'Close') + '" aria-label="' + (editing ? 'Back' : 'Close') + '">' + CLOSE_SVG + '</button>' +
           '</div>' +
         '</div>' +
         '<div class="lf-identity" id="lfIdentity"></div>' +
@@ -6871,6 +6994,7 @@
         var g = b.getAttribute('data-g'), i = groups.indexOf(g);
         if(i >= 0) groups.splice(i, 1); else groups.push(g);
         b.classList.toggle('on', groups.indexOf(g) >= 0);
+        markDirty();
       });
     }
 
@@ -6925,6 +7049,7 @@
         type = b.getAttribute('data-type'); groups = []; trioTouched = [];
         [].forEach.call(box.querySelectorAll('[data-type]'), function(x){ x.classList.toggle('on', x === b); });
         renderFields();
+        markDirty();
       });
       var nm = box.querySelector('#lfName');
       if(nm) nm.addEventListener('input', function(){ name = this.value; });
@@ -6934,14 +7059,22 @@
     renderFields();
     paintRpeBtns(els.logAdd.querySelector('#lfRpe'), rpe);
 
-    var edit = els.logAdd.querySelector('#lfEdit');
-    if(edit) edit.addEventListener('click', function(){ idLocked = false; this.style.display = 'none'; renderIdentity(); });
+    // Save only appears once something's been changed. Any field input, or a
+    // type / focus / RPE tap, marks the form dirty.
+    function markDirty(){ var sb = els.logAdd.querySelector('#lfSave'); if(sb) sb.style.display = ''; }
+    var formEl = els.logAdd.querySelector('.log-form');
+    formEl.addEventListener('input', markDirty);
+    formEl.addEventListener('change', markDirty);
     els.logAdd.querySelector('#lfRpe').addEventListener('click', function(e){
       var b = e.target.closest('[data-rpe]'); if(!b) return;
       var v = +b.getAttribute('data-rpe'); rpe = rpe === v ? null : v;
-      paintRpeBtns(this, rpe);
+      paintRpeBtns(this, rpe); markDirty();
     });
-    els.logAdd.querySelector('#lfCancel').addEventListener('click', function(){ els.logAdd.style.display = 'none'; });
+    // Close: back to the read-only detail for an existing entry (discarding any
+    // unsaved edits), or shut the panel for a brand-new one.
+    els.logAdd.querySelector('#lfCancel').addEventListener('click', function(){
+      if(currentId != null) showDetail(seed); else els.logAdd.style.display = 'none';
+    });
     els.logAdd.querySelector('#lfSave').addEventListener('click', function(){
       // Date comes from the field when the identity is unlocked, else it's
       // unchanged from the existing entry.
@@ -6984,8 +7117,10 @@
         renderLog(); refreshDoneMarks();
         var delBtn = els.logAdd.querySelector('#lfDelete');
         if(delBtn) delBtn.style.display = '';
+        // Flash the tick, then hide Save again — nothing to save until the next edit.
         var saveBtn = els.logAdd.querySelector('#lfSave');
         saveBtn.classList.remove('saved'); void saveBtn.offsetWidth; saveBtn.classList.add('saved');
+        setTimeout(function(){ var sb = els.logAdd.querySelector('#lfSave'); if(sb){ sb.classList.remove('saved'); sb.style.display = 'none'; } }, 850);
       });
     });
     els.logAdd.querySelector('#lfDelete').addEventListener('click', function(){
