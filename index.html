@@ -1306,12 +1306,12 @@
   .imp-row:hover{border-color:var(--border);}
   .imp-row.in-log{opacity:.5;cursor:default;}
   .imp-row input{width:15px;height:15px;accent-color:var(--accent);flex:none;cursor:inherit;}
+  /* Date, then type, then name — nothing else. */
+  .imp-date{font-size:11.5px;color:var(--text-dim);font-family:var(--mono);flex:none;width:46px;}
   .imp-dot{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none;}
-  .imp-name{font-size:13px;font-weight:650;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
-  .imp-meta{font-size:11.5px;color:var(--text-faint);font-family:var(--mono);margin-left:auto;white-space:nowrap;}
-  .imp-type{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);flex:none;}
+  .imp-type{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);flex:none;width:38px;}
+  .imp-name{font-size:13px;font-weight:650;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0;}
   .imp-tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ok);flex:none;}
-  @media (max-width:720px){ .imp-meta{display:none;} }
   .log-spacer{flex:1;}
   .log-head .action-btn.danger{margin-top:0;}
   /* The modal body: a scrolling calendar on the left, a full-height side
@@ -1370,11 +1370,19 @@
   }
   .log-side-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
   .log-form h3{margin:0;font-size:15px;font-weight:700;}
-  .lf-edit{
-    flex:none;width:30px;height:30px;border-radius:8px;border:1px solid var(--border);
-    background:var(--bg-card);color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  /* Icon action buttons, top-right of the panel. Each carries its own colour. */
+  .lf-head-btns{display:flex;gap:6px;flex:none;}
+  .lf-hbtn{
+    width:32px;height:32px;border-radius:8px;border:1px solid var(--border);
+    background:var(--bg-card);cursor:pointer;display:flex;align-items:center;justify-content:center;
+    color:var(--text-dim);transition:background .12s,border-color .12s,color .12s;
   }
-  .lf-edit:hover{color:var(--text);border-color:var(--accent);}
+  .lf-hbtn.edit:hover{color:var(--text);border-color:var(--accent);}
+  .lf-hbtn.save{background:var(--ok);border-color:var(--ok);color:#04240F;}
+  .lf-hbtn.save:hover{filter:brightness(1.08);}
+  .lf-hbtn.del{color:#E8395A;border-color:rgba(232,57,90,0.4);}
+  .lf-hbtn.del:hover{background:#E8395A;border-color:#E8395A;color:#fff;}
+  .lf-hbtn.cancel:hover{color:var(--text);border-color:var(--text-faint);}
   /* Locked identity: name big, type + date beneath. */
   .lf-identity{display:flex;flex-direction:column;gap:12px;}
   .lf-id-view{display:flex;flex-direction:column;gap:4px;padding:2px 0;}
@@ -6475,6 +6483,9 @@
   });
 
   var PENCIL_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 16v4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M13.3 6.7l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  var CHECK_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.2 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var TRASH_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4.5 7h15M9.5 7V5.2A1.2 1.2 0 0110.7 4h2.6a1.2 1.2 0 011.2 1.2V7M6.5 7l.8 11.2A1.6 1.6 0 008.9 20h6.2a1.6 1.6 0 001.6-1.8L17.5 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var CLOSE_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
   function prettyDate(day){
     var p = String(day).split('-').map(Number), d = new Date(p[0], p[1]-1, p[2]);
@@ -6499,7 +6510,12 @@
       '<div class="log-form">' +
         '<div class="log-side-head">' +
           '<h3>' + (editing ? 'Edit activity' : 'Log an activity') + '</h3>' +
-          (editing ? '<button type="button" class="lf-edit" id="lfEdit" title="Edit name, date and type" aria-label="Edit name, date and type">' + PENCIL_SVG + '</button>' : '') +
+          '<div class="lf-head-btns">' +
+            (editing ? '<button type="button" class="lf-hbtn edit" id="lfEdit" title="Edit name, date and type" aria-label="Edit name, date and type">' + PENCIL_SVG + '</button>' : '') +
+            '<button type="button" class="lf-hbtn save" id="lfSave" title="Save" aria-label="Save">' + CHECK_SVG + '</button>' +
+            (editing ? '<button type="button" class="lf-hbtn del" id="lfDelete" title="Delete" aria-label="Delete">' + TRASH_SVG + '</button>' : '') +
+            '<button type="button" class="lf-hbtn cancel" id="lfCancel" title="Cancel" aria-label="Cancel">' + CLOSE_SVG + '</button>' +
+          '</div>' +
         '</div>' +
         '<div class="lf-identity" id="lfIdentity"></div>' +
         '<div class="lf-fields" id="lfFields"></div>' +
@@ -6507,11 +6523,6 @@
         '<label class="lf-note">Note <input type="text" id="lfNote" maxlength="80" placeholder="optional" value="' + (seed.note ? String(seed.note).replace(/"/g, '&quot;') : '') + '"></label>' +
         '<div class="rpe-row" id="lfRpe"><span class="rpe-label">RPE <em>1–10</em></span><span class="rpe-btns">' +
           [1,2,3,4,5,6,7,8,9,10].map(function(n){ return '<button type="button" data-rpe="' + n + '">' + n + '</button>'; }).join('') + '</span></div>' +
-        '<div class="log-form-actions">' +
-          '<button type="button" class="action-btn primary" id="lfSave">Save</button>' +
-          (editing ? '<button type="button" class="action-btn danger" id="lfDelete">Delete</button>' : '') +
-          '<button type="button" class="action-btn" id="lfCancel">Cancel</button>' +
-        '</div>' +
       '</div>';
 
     var groups = (seed.fields && seed.fields.groups) ? seed.fields.groups.slice() : [];
@@ -6726,21 +6737,18 @@
   function renderImportRows(rows, days){
     var newCount = rows.filter(function(r){ return !r.inLog; }).length;
     var body = rows.length ? rows.map(function(r, i){
-      var f = r.rec.fields, bits = [];
-      if(f.distanceKm) bits.push(f.distanceKm + ' km');
-      if(f.avgPower) bits.push(f.avgPower + ' W');
-      if(r.rec.tss) bits.push('TSS ' + r.rec.tss);
       return '<label class="imp-row' + (r.inLog ? ' in-log' : '') + '">' +
         '<input type="checkbox" data-i="' + i + '"' + (r.inLog ? ' disabled' : ' checked') + '>' +
+        '<span class="imp-date">' + fmtDayShort(r.rec.startDateMs) + '</span>' +
         '<span class="imp-dot" style="--c:' + typeSpec(r.rec.type).color + '"></span>' +
-        '<span class="imp-name">' + (r.a.name || typeSpec(r.rec.type).label) + '</span>' +
-        '<span class="imp-meta">' + fmtDayShort(r.rec.startDateMs) + ' · ' + fmtHours(r.rec.durationSec) + (bits.length ? ' · ' + bits.join(' · ') : '') + '</span>' +
-        (r.inLog ? '<span class="imp-tag">in log</span>' : '<span class="imp-type">' + typeSpec(r.rec.type).label + '</span>') +
+        '<span class="imp-type">' + typeSpec(r.rec.type).label + '</span>' +
+        '<span class="imp-name">' + esc(r.a.name || typeSpec(r.rec.type).label) + '</span>' +
+        (r.inLog ? '<span class="imp-tag">in log</span>' : '') +
       '</label>';
     }).join('') : '<p class="log-import-msg">No activities in the last ' + days + ' days.</p>';
     els.logAdd.querySelector('.log-import').innerHTML =
       '<h3>Import from Strava <span class="imp-count">' + newCount + ' new · last ' + days + ' days</span></h3>' +
-      (newCount ? '<div class="imp-bulk"><button type="button" class="imp-link" id="impAll">Select all</button><button type="button" class="imp-link" id="impNone">Select none</button></div>' : '') +
+      (newCount ? '<div class="imp-bulk"><button type="button" class="imp-link" id="impAll">Select all</button><button type="button" class="imp-link" id="impNone">Clear selection</button></div>' : '') +
       '<div class="imp-list">' + body + '</div>' +
       '<div class="log-form-actions">' +
         (newCount ? '<button type="button" class="action-btn primary" id="impSave">Import selected</button>' : '') +
