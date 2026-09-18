@@ -1601,6 +1601,8 @@
   .tr-legend .k.ctl{color:var(--accent);}
   .tr-legend .k.atl{color:var(--c-threshold);}
   .tr-legend .k.tsb{color:var(--ok);}
+  .tr-legend .k.fresh{color:var(--ok);}
+  .tr-legend .k.fatig{color:var(--c-anaerobic);}
   .tr-canvas{display:block;width:100%;}
   .tr-note{margin:10px 0 0;font-size:11px;line-height:1.5;color:var(--text-faint);}
 
@@ -7111,65 +7113,88 @@
     var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     return ctx;
   }
-  function niceMax(v){ if(v <= 0) return 10; var p = Math.pow(10, Math.floor(Math.log10(v))); var f = v / p; return (f <= 2 ? 2 : f <= 5 ? 5 : 10) * p; }
+  function niceMax(v){ if(v <= 0) return 10; var p = Math.pow(10, Math.floor(Math.log10(v))); var f = v / p; return (f <= 1 ? 1 : f <= 1.5 ? 1.5 : f <= 2 ? 2 : f <= 3 ? 3 : f <= 4 ? 4 : f <= 5 ? 5 : f <= 6 ? 6 : f <= 8 ? 8 : 10) * p; }
 
-  function drawPMC(cv, series, rangeDays){
-    var W = cv.clientWidth || 720, H = 300, ctx = setupCanvas(cv, W, H);
-    var padL = 38, padR = 44, padT = 14, padB = 26;
+  function rangeView(series, rangeDays){ return rangeDays ? series.slice(Math.max(0, series.length - rangeDays)) : series; }
+  function monthTicks(ctx, view, x, H, faint){
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    var mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], lastM = -1;
+    view.forEach(function(d){ var dt = new Date(d.t); if(dt.getMonth() !== lastM && dt.getDate() <= 7){ lastM = dt.getMonth(); ctx.fillStyle = faint; ctx.fillText(mons[dt.getMonth()], x(d.t), H - 8); } });
+  }
+
+  // Fitness (CTL) and Fatigue (ATL) share one axis, scaled to just those two so
+  // the lines fill the chart. The vertical gap between them is Form — shaded
+  // green where fitness leads (fresh), red where fatigue leads (buried).
+  function drawFitness(cv, series, rangeDays){
+    var W = cv.clientWidth || 720, H = 210, ctx = setupCanvas(cv, W, H);
+    var padL = 38, padR = 14, padT = 12, padB = 24;
     var accent = cssVar('--accent') || '#6E8BFF', warn = cssVar('--c-threshold') || '#F2764A';
+    var faint = cssVar('--text-faint') || '#7E869E', grid = 'rgba(255,255,255,0.06)';
+    ctx.clearRect(0, 0, W, H);
+    if(series.length < 2){ ctx.fillStyle = faint; ctx.font = '13px ' + IMG_SANS; ctx.textAlign = 'center'; ctx.fillText('Not enough history yet', W/2, H/2); return; }
+    var view = rangeView(series, rangeDays);
+    var t0 = view[0].t, t1 = view[view.length - 1].t, span = Math.max(1, t1 - t0);
+    var vMax = niceMax(Math.max.apply(null, view.map(function(d){ return Math.max(d.ctl, d.atl); })) || 10);
+    function x(t){ return padL + (t - t0) / span * (W - padL - padR); }
+    function y(v){ return H - padB - v / vMax * (H - padT - padB); }
+    ctx.font = '10px ' + IMG_MONO; ctx.fillStyle = faint; ctx.textBaseline = 'middle';
+    for(var g = 0; g <= 4; g++){
+      var lv = vMax * g / 4, gy = y(lv);
+      ctx.strokeStyle = grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W - padR, gy); ctx.stroke();
+      ctx.textAlign = 'right'; ctx.fillText(Math.round(lv), padL - 6, gy);
+    }
+    // the gap = Form, filled per segment by which line is on top
+    for(var i = 1; i < view.length; i++){
+      var a = view[i-1], b = view[i];
+      ctx.beginPath();
+      ctx.moveTo(x(a.t), y(a.ctl)); ctx.lineTo(x(b.t), y(b.ctl));
+      ctx.lineTo(x(b.t), y(b.atl)); ctx.lineTo(x(a.t), y(a.atl)); ctx.closePath();
+      ctx.fillStyle = ((a.ctl + b.ctl) >= (a.atl + b.atl)) ? 'rgba(95,227,154,0.16)' : 'rgba(255,93,117,0.16)';
+      ctx.fill();
+    }
+    function line(key, colour, width){
+      ctx.beginPath();
+      view.forEach(function(d, i){ var px = x(d.t), py = y(d[key]); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
+      ctx.strokeStyle = colour; ctx.lineWidth = width; ctx.lineJoin = 'round'; ctx.stroke();
+    }
+    line('atl', warn, 1.8);
+    line('ctl', accent, 2.6);
+    monthTicks(ctx, view, x, H, faint);
+  }
+
+  // Form (TSB = Fitness − Fatigue) on its own zero-centred axis, coloured by
+  // sign: green above the line (fresh), red below (fatigued).
+  function drawForm(cv, series, rangeDays){
+    var W = cv.clientWidth || 720, H = 168, ctx = setupCanvas(cv, W, H);
+    var padL = 38, padR = 14, padT = 12, padB = 24;
     var ok = cssVar('--ok') || '#5FE39A', danger = cssVar('--c-anaerobic') || '#FF5D75';
     var faint = cssVar('--text-faint') || '#7E869E', grid = 'rgba(255,255,255,0.06)';
     ctx.clearRect(0, 0, W, H);
     if(series.length < 2){ ctx.fillStyle = faint; ctx.font = '13px ' + IMG_SANS; ctx.textAlign = 'center'; ctx.fillText('Not enough history yet', W/2, H/2); return; }
-    var view = rangeDays ? series.slice(Math.max(0, series.length - rangeDays)) : series;
+    var view = rangeView(series, rangeDays);
     var t0 = view[0].t, t1 = view[view.length - 1].t, span = Math.max(1, t1 - t0);
-    var loadMax = niceMax(Math.max.apply(null, view.map(function(d){ return Math.max(d.ctl, d.atl, d.load); })) || 10);
     var tsbAbs = Math.max(10, Math.max.apply(null, view.map(function(d){ return Math.abs(d.tsb); })) || 10);
     function x(t){ return padL + (t - t0) / span * (W - padL - padR); }
-    function yL(v){ return H - padB - v / loadMax * (H - padT - padB); }
-    function yR(v){ return padT + (tsbAbs - v) / (2 * tsbAbs) * (H - padT - padB); }
-
-    // left grid + labels
-    ctx.font = '10px ' + IMG_MONO; ctx.fillStyle = faint; ctx.textBaseline = 'middle';
-    for(var g = 0; g <= 4; g++){
-      var lv = loadMax * g / 4, gy = yL(lv);
-      ctx.strokeStyle = grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W - padR, gy); ctx.stroke();
-      ctx.textAlign = 'right'; ctx.fillText(Math.round(lv), padL - 6, gy);
-    }
-    // zero line for form (right axis)
-    ctx.strokeStyle = 'rgba(255,255,255,0.14)'; ctx.setLineDash([3,3]); ctx.beginPath(); ctx.moveTo(padL, yR(0)); ctx.lineTo(W - padR, yR(0)); ctx.stroke(); ctx.setLineDash([]);
-
-    // weekly load bars behind
-    var perWeek = {};
-    view.forEach(function(d){ var w = mondayOf(d.t); perWeek[w] = (perWeek[w] || 0) + d.load; });
-    var bw = Math.max(3, (W - padL - padR) / (span / (7 * DAY_MS)) - 3);
-    ctx.fillStyle = 'rgba(255,255,255,0.05)';
-    Object.keys(perWeek).forEach(function(w){ var wx = x(+w), wy = yL(perWeek[w]); if(wx >= padL) ctx.fillRect(wx, wy, bw, H - padB - wy); });
-
-    function line(key, colour, width, fill){
-      ctx.beginPath();
-      view.forEach(function(d, i){ var px = x(d.t), py = yL(d[key]); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
-      if(fill){ ctx.lineTo(x(t1), yL(0)); ctx.lineTo(x(t0), yL(0)); ctx.closePath();
-        var grd = ctx.createLinearGradient(0, padT, 0, H - padB); grd.addColorStop(0, colour + '44'); grd.addColorStop(1, colour + '05');
-        ctx.fillStyle = grd; ctx.fill();
-      } else { ctx.strokeStyle = colour; ctx.lineWidth = width; ctx.lineJoin = 'round'; ctx.stroke(); }
-    }
-    line('ctl', accent, 2.4, true); line('ctl', accent, 2.4, false);
-    line('atl', warn, 1.8, false);
-
-    // form line, coloured by sign, on the right axis
+    function y(v){ return padT + (tsbAbs - v) / (2 * tsbAbs) * (H - padT - padB); }
+    ctx.font = '10px ' + IMG_MONO; ctx.textBaseline = 'middle';
+    [tsbAbs, tsbAbs/2, 0, -tsbAbs/2, -tsbAbs].forEach(function(lv){
+      var gy = y(lv);
+      ctx.strokeStyle = (lv === 0) ? 'rgba(255,255,255,0.16)' : grid; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W - padR, gy); ctx.stroke();
+      ctx.fillStyle = faint; ctx.textAlign = 'right'; ctx.fillText((lv > 0 ? '+' : '') + Math.round(lv), padL - 6, gy);
+    });
+    // fill each segment down to the zero line, coloured by sign
     for(var i = 1; i < view.length; i++){
-      var a = view[i-1], b = view[i];
-      ctx.beginPath(); ctx.moveTo(x(a.t), yR(a.tsb)); ctx.lineTo(x(b.t), yR(b.tsb));
-      ctx.strokeStyle = (b.tsb >= 0 ? ok : danger); ctx.lineWidth = 1.6; ctx.stroke();
+      var a = view[i-1], b = view[i], pos = b.tsb >= 0;
+      ctx.beginPath();
+      ctx.moveTo(x(a.t), y(a.tsb)); ctx.lineTo(x(b.t), y(b.tsb));
+      ctx.lineTo(x(b.t), y(0)); ctx.lineTo(x(a.t), y(0)); ctx.closePath();
+      ctx.fillStyle = pos ? 'rgba(95,227,154,0.18)' : 'rgba(255,93,117,0.18)';
+      ctx.fill();
+      ctx.beginPath(); ctx.moveTo(x(a.t), y(a.tsb)); ctx.lineTo(x(b.t), y(b.tsb));
+      ctx.strokeStyle = pos ? ok : danger; ctx.lineWidth = 1.8; ctx.lineJoin = 'round'; ctx.stroke();
     }
-    // right axis labels
-    ctx.fillStyle = faint; ctx.font = '10px ' + IMG_MONO; ctx.textAlign = 'left';
-    ctx.fillText('+' + Math.round(tsbAbs), W - padR + 5, yR(tsbAbs)); ctx.fillText('0', W - padR + 5, yR(0)); ctx.fillText('-' + Math.round(tsbAbs), W - padR + 5, yR(-tsbAbs));
-    // month ticks
-    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    var mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'], lastM = -1;
-    view.forEach(function(d){ var dt = new Date(d.t); if(dt.getMonth() !== lastM && dt.getDate() <= 7){ lastM = dt.getMonth(); ctx.fillStyle = faint; ctx.fillText(mons[dt.getMonth()], x(d.t), H - 8); } });
+    monthTicks(ctx, view, x, H, faint);
   }
 
   // unit: 'w' (watts) or 'wkg' (watts per kilo). W/kg needs a body weight;
@@ -7241,10 +7266,15 @@
 
       els.trendsBody.innerHTML =
         '<div class="tr-tiles">' + tiles + weekTiles + '</div>' +
-        '<div class="tr-card"><div class="tr-card-head"><h3>Fitness &amp; Form</h3>' +
-          '<div class="tr-legend"><span class="k ctl">Fitness</span><span class="k atl">Fatigue</span><span class="k tsb">Form</span></div></div>' +
-          '<canvas class="tr-canvas" id="pmcCanvas"></canvas>' +
-          '<p class="tr-note">Load is TSS where power was recorded, otherwise estimated from RPE. Form is Fitness minus Fatigue: positive means fresh, deeply negative means overreached.</p>' +
+        '<div class="tr-card"><div class="tr-card-head"><h3>Fitness &amp; Fatigue</h3>' +
+          '<div class="tr-legend"><span class="k ctl">Fitness</span><span class="k atl">Fatigue</span></div></div>' +
+          '<canvas class="tr-canvas" id="fitCanvas"></canvas>' +
+          '<p class="tr-note">Fitness is a 42-day average of daily load; Fatigue a 7-day. The shaded gap between them is your Form — green when fitness leads, red when fatigue does. Load is TSS where power was recorded, otherwise estimated from RPE.</p>' +
+        '</div>' +
+        '<div class="tr-card"><div class="tr-card-head"><h3>Form</h3>' +
+          '<div class="tr-legend"><span class="k fresh">Fresh</span><span class="k fatig">Fatigued</span></div></div>' +
+          '<canvas class="tr-canvas" id="formCanvas"></canvas>' +
+          '<p class="tr-note">Form is Fitness minus Fatigue. Above zero you’re fresh (tapered); a touch below (−10 to −30) is productive overload; deeply negative means overreached.</p>' +
         '</div>' +
         '<div class="tr-card"><div class="tr-card-head"><h3>Power curve</h3>' +
           '<div class="pc-head-right">' +
@@ -7260,7 +7290,8 @@
           '<canvas class="tr-canvas" id="pcCanvas"></canvas>' +
           '<p class="tr-note">Your best average power held for each duration, across every indoor ride. Gold points are new bests.</p>' +
         '</div>';
-      drawPMC(document.getElementById('pmcCanvas'), pmc.series, trendsRange);
+      drawFitness(document.getElementById('fitCanvas'), pmc.series, trendsRange);
+      drawForm(document.getElementById('formCanvas'), pmc.series, trendsRange);
       drawPowerCurve(document.getElementById('pcCanvas'), curve, pcUnit);
     }).catch(function(e){
       els.trendsBody.innerHTML = '<p class="log-error">Charts couldn’t be built: ' + (e && e.message) + '</p>';
