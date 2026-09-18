@@ -1537,10 +1537,14 @@
   }
   .dv-stat span{font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
   .dv-stat b{font-family:var(--mono);font-size:14px;color:var(--text-strong);font-weight:650;white-space:nowrap;}
-  .dv-pies{display:flex;flex-direction:column;gap:12px;}
-  .dv-pie{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:12px 10px 10px;text-align:center;}
-  .dv-pie h4{margin:0 0 4px;font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
-  .dv-pie canvas{display:block;margin:0 auto;}
+  .dv-graph{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:12px 12px 8px;}
+  .dv-ghead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;}
+  .dv-ghead h4{margin:0;font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
+  .dv-glegend{display:flex;gap:12px;}
+  .dv-glegend .k{font-size:10px;font-weight:600;display:flex;align-items:center;gap:5px;}
+  .dv-glegend .k::before{content:"";width:11px;height:2.5px;border-radius:2px;background:currentColor;}
+  .dv-graph-cv{display:block;width:100%;}
+  .dv-nodata{margin:0;font-size:11.5px;color:var(--text-faint);text-align:center;line-height:1.5;padding:14px 8px;background:var(--bg-card);border:1px dashed var(--border);border-radius:10px;}
   .dv-rpe{font-size:12px;color:var(--text-dim);}
   .dv-rpe b{font-family:var(--mono);color:var(--text-strong);font-weight:700;}
   .dv-rpe.none{font-size:11px;color:var(--text-faint);line-height:1.5;}
@@ -4453,6 +4457,31 @@
     return out;
   }
 
+  // Time-series for one activity, normalised and downsampled (~300 points) for
+  // the detail-pane graph: heart rate, watts and pace (from velocity). Returns
+  // null when the activity has no streams (e.g. a manual entry on Strava).
+  async function stravaFetchStreams(id){
+    var token = await stravaAccessToken();
+    var url = 'https://www.strava.com/api/v3/activities/' + id + '/streams?keys=time,heartrate,watts,velocity_smooth&key_by_type=true';
+    var res = await fetch(url, {headers:{Authorization:'Bearer ' + token}});
+    if(res.status === 404) return null;
+    if(!res.ok){ var j = await res.json().catch(function(){ return {}; }); throw new Error(j.message || ('HTTP ' + res.status)); }
+    var d = await res.json();
+    var t = (d.time && d.time.data) || [];
+    if(!t.length) return null;
+    var hr = (d.heartrate && d.heartrate.data) || [], w = (d.watts && d.watts.data) || [], v = (d.velocity_smooth && d.velocity_smooth.data) || [];
+    var n = t.length, step = Math.max(1, Math.ceil(n / 300));
+    function bucket(arr, i){ if(!arr.length) return null; var s = 0, c = 0; for(var k = i; k < i + step && k < n; k++){ if(arr[k] != null){ s += arr[k]; c++; } } return c ? s / c : null; }
+    var T = [], H = [], P = [], PA = [];
+    for(var i = 0; i < n; i += step){
+      T.push(t[i]);
+      var hv = bucket(hr, i); H.push(hv != null ? Math.round(hv) : null);
+      var wv = bucket(w, i); P.push(wv != null ? Math.round(wv) : null);
+      var vv = bucket(v, i); PA.push(vv && vv > 0.5 ? Math.round(1000 / vv) : null);   // m/s → sec/km
+    }
+    return {t:T, hr:H, watts:P, pace:PA};
+  }
+
   // Access tokens last six hours; refresh a minute early.
   async function stravaAccessToken(){
     if(!stravaConnected()) throw new Error('Strava is not connected');
@@ -6855,40 +6884,113 @@
     if(rec.type === 'run' && f.paceSec) out.push(statChip('Pace', secToClock(f.paceSec) + '/km'));
     if(rec.type === 'ride' && f.avgSpeedKmh) out.push(statChip('Avg speed', f.avgSpeedKmh + ' km/h'));
     if(f.avgPower) out.push(statChip('Avg power', f.avgPower + ' W'));
+    if(rec.avgHr) out.push(statChip('Avg HR', rec.avgHr + ' bpm'));
+    if(rec.maxHr) out.push(statChip('Max HR', rec.maxHr + ' bpm'));
     if(f.elevationM) out.push(statChip('Elevation', f.elevationM + ' m'));
     if(rec.tss != null) out.push(statChip('TSS', rec.tss));
     if(f.groups && f.groups.length) out.push(statChip('Focus', f.groups.map(gymLabel).join(', ')));
     return out.join('');
   }
-  var detailPieSpecs = [];
-  function detailPies(rec){
-    detailPieSpecs = [];
-    if(rec.type !== 'indoor' || !rec.tiz) return '';
-    var tp = rec.tiz.power || [], th = rec.tiz.hr || [];
-    var pTotal = tp.reduce(function(a, b){ return a + b; }, 0), hTotal = th.reduce(function(a, b){ return a + b; }, 0);
-    var cvHtml = '<canvas class="dv-pie-cv" aria-hidden="true"></canvas>', cards = '';
-    if(pTotal >= 30){
-      var pSlices = POWER_PIE_ZONES.map(function(z, i){ return {z:z.z, label:z.label, sec:tp[i] || 0, color:z.color || ZONES[z.key].hex}; });
-      var pFocus = tp.indexOf(Math.max.apply(null, tp));
-      cards += '<div class="dv-pie"><h4>Power zones</h4>' + cvHtml + pieKey(pSlices, pFocus) + '</div>';
-      detailPieSpecs.push({slices:pSlices, total:pTotal, focus:pFocus});
+
+  // ---- activity graph ----
+  // A time series in the detail pane, whatever the activity recorded: power &
+  // HR for rides, pace & HR for runs, HR alone for the gym. Indoor rides read
+  // their per-second samples; Strava imports fetch streams on demand and cache.
+  function some(arr){ return arr && arr.some(function(v){ return v !== null && v !== undefined; }); }
+  function activityGraphData(rec){
+    if(rec.type === 'indoor' && rec.samples && rec.samples.length){
+      var t = [], p = [], h = [];
+      rec.samples.forEach(function(s, i){ t.push(i); p.push(s.power == null ? null : s.power); h.push(s.hr == null ? null : s.hr); });
+      return {t:t, power:p, hr:h, pace:[]};
     }
-    if(hTotal >= 30){
-      var hSlices = HR_ZONES.map(function(z, i){ return {z:z.z, label:z.label, sec:th[i] || 0, color:z.color}; });
-      var hFocus = th.indexOf(Math.max.apply(null, th));
-      cards += '<div class="dv-pie"><h4>Heart rate zones</h4>' + cvHtml + pieKey(hSlices, hFocus) + '</div>';
-      detailPieSpecs.push({slices:hSlices, total:hTotal, focus:hFocus});
+    if(rec.streams && rec.streams.t && rec.streams.t.length){
+      return {t:rec.streams.t, power:rec.streams.watts || [], hr:rec.streams.hr || [], pace:rec.streams.pace || []};
     }
-    return cards ? '<div class="dv-pies">' + cards + '</div>' : '';
+    return null;
   }
-  function paintDetailPies(){
-    var cvs = els.logAdd.querySelectorAll('canvas.dv-pie-cv'), dpr = Math.min(3, window.devicePixelRatio || 1), W = 196, H = 116;
-    detailPieSpecs.forEach(function(spec, i){
-      var cv = cvs[i]; if(!cv) return;
-      cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
-      var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      drawPie3d(ctx, W / 2, 50, 76, 42, 15, spec.slices, spec.total, spec.focus);
-    });
+  // Which axes to draw for this activity, given what the data actually holds.
+  function graphSpec(rec, data){
+    var hasHr = some(data.hr), hasPower = some(data.power), hasPace = some(data.pace);
+    var left = null, right = hasHr ? {key:'hr', label:'HR', unit:'bpm', color:'var(--c-anaerobic)'} : null;
+    if(rec.type === 'run' && hasPace) left = {key:'pace', label:'Pace', unit:'/km', color:'var(--accent)', invert:true, fmt:secToClock};
+    else if(hasPower) left = {key:'power', label:'Power', unit:'W', color:'var(--accent)'};
+    if(!left && hasHr){ left = right; right = null; }   // gym: HR alone, on the left
+    return left ? {left:left, right:right} : null;
+  }
+  function graphLegend(spec){
+    var items = [spec.left]; if(spec.right) items.push(spec.right);
+    return '<div class="dv-glegend">' + items.map(function(s){
+      return '<span class="k" style="color:' + s.color + '">' + s.label + '</span>';
+    }).join('') + '</div>';
+  }
+  function drawActivityGraph(cv, data, spec){
+    var W = cv.clientWidth || 260, H = 150, dpr = Math.min(3, window.devicePixelRatio || 1);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
+    var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var faint = 'var(--text-faint)', grid = 'rgba(255,255,255,0.06)';
+    var padL = 34, padR = spec.right ? 34 : 12, padT = 10, padB = 20;
+    var t = data.t, t0 = t[0], t1 = t[t.length - 1], span = Math.max(1, t1 - t0);
+    function xAt(tt){ return padL + (tt - t0) / span * (W - padL - padR); }
+    function axisRange(arr, invert){
+      var vals = arr.filter(function(v){ return v !== null && v !== undefined; });
+      var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
+      if(lo === hi){ lo -= 1; hi += 1; }
+      var pad = (hi - lo) * 0.1; lo -= pad; hi += pad;
+      return invert ? {lo:hi, hi:lo} : {lo:lo, hi:hi};
+    }
+    function yFn(rng){ return function(v){ return H - padB - (v - rng.lo) / (rng.hi - rng.lo) * (H - padT - padB); }; }
+    var lRange = axisRange(data[spec.left.key], spec.left.invert), yL = yFn(lRange);
+    ctx.font = '9px ' + IMG_MONO; ctx.fillStyle = faint.indexOf('var') === 0 ? getComputedStyle(document.documentElement).getPropertyValue('--text-faint').trim() : faint;
+    var faintC = ctx.fillStyle;
+    // left gridlines + labels
+    for(var g = 0; g <= 3; g++){
+      var lv = lRange.lo + (lRange.hi - lRange.lo) * g / 3, gy = yL(lv);
+      ctx.strokeStyle = grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W - padR, gy); ctx.stroke();
+      ctx.fillStyle = faintC; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+      ctx.fillText(spec.left.fmt ? spec.left.fmt(Math.round(lv)) : Math.round(lv), padL - 5, gy);
+    }
+    function stroke(arr, yf, colorVar){
+      var col = colorVar.indexOf('var') === 0 ? getComputedStyle(document.documentElement).getPropertyValue(colorVar.slice(4, -1)).trim() : colorVar;
+      ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.lineJoin = 'round'; ctx.beginPath();
+      var pen = false;
+      arr.forEach(function(v, i){ if(v == null){ pen = false; return; } var px = xAt(t[i]), py = yf(v); if(pen) ctx.lineTo(px, py); else ctx.moveTo(px, py); pen = true; });
+      ctx.stroke();
+    }
+    if(spec.right){
+      var rRange = axisRange(data[spec.right.key]), yR = yFn(rRange);
+      ctx.fillStyle = faintC; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+      [rRange.lo, (rRange.lo + rRange.hi) / 2, rRange.hi].forEach(function(v){ ctx.fillText(Math.round(v), W - padR + 5, yFn(rRange)(v)); });
+      stroke(data[spec.right.key], yR, spec.right.color);
+    }
+    stroke(data[spec.left.key], yL, spec.left.color);
+    // x-axis time ticks
+    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = faintC;
+    for(var xi = 0; xi <= 3; xi++){ var tt = t0 + span * xi / 3; ctx.fillText(secToClock(Math.round(tt)), xAt(tt), H - 7); }
+  }
+  function renderDetailGraph(rec){
+    var box = els.logAdd.querySelector('#dvGraph'); if(!box) return;
+    function paint(data){
+      var spec = graphSpec(rec, data);
+      if(!spec){ box.innerHTML = '<p class="dv-nodata">No power or heart-rate data recorded for this activity.</p>'; return; }
+      box.innerHTML = '<div class="dv-graph"><div class="dv-ghead"><h4>Over time</h4>' + graphLegend(spec) + '</div><canvas class="dv-graph-cv"></canvas></div>';
+      drawActivityGraph(box.querySelector('.dv-graph-cv'), data, spec);
+    }
+    var data = activityGraphData(rec);
+    if(data){ paint(data); return; }
+    // No local series. Strava imports can fetch their streams once, then cache.
+    if(rec.imported && rec.stravaActivityId && typeof stravaCanRead === 'function' && stravaCanRead()){
+      box.innerHTML = '<p class="dv-nodata">Loading graph from Strava…</p>';
+      stravaFetchStreams(rec.stravaActivityId).then(function(sr){
+        if(!sr){ box.innerHTML = '<p class="dv-nodata">No time-series recorded for this activity on Strava.</p>'; return; }
+        rec.streams = sr; ridePatch(rec.id, {streams:sr});
+        var d = activityGraphData(rec);
+        if(d) paint(d); else box.innerHTML = '<p class="dv-nodata">No power or heart-rate data recorded for this activity.</p>';
+      }).catch(function(e){
+        box.innerHTML = '<p class="dv-nodata">Couldn’t load the graph: ' + (e && e.message || 'Strava error') + '</p>';
+      });
+      return;
+    }
+    box.innerHTML = '<p class="dv-nodata">No time-series data for this activity.</p>';
   }
   function showDetail(rec){
     els.logAdd.style.display = '';
@@ -6915,10 +7017,10 @@
         '</div>' +
         routeHtml +
         '<div class="dv-stats">' + detailStats(rec) + '</div>' +
-        detailPies(rec) +
+        '<div class="dv-graph-wrap" id="dvGraph"></div>' +
         rpeHtml + noteHtml +
       '</div>';
-    paintDetailPies();
+    renderDetailGraph(rec);
     var full = els.logAdd.querySelector('#dvFull'); if(full) full.addEventListener('click', function(){ openSavedRide(rec.id); });
     var edit = els.logAdd.querySelector('#dvEdit'); if(edit) edit.addEventListener('click', function(){ showLogForm(rec); });
     els.logAdd.querySelector('#dvClose').addEventListener('click', function(){ els.logAdd.style.display = 'none'; });
@@ -7105,10 +7207,13 @@
         note: document.getElementById('lfNote').value.trim() || null,
         name: finalName, fields: fields, savedAt: Date.now()
       };
-      // Preserve the Strava link and route on an imported entry being edited.
+      // Preserve the Strava link, route, HR and cached streams on an edit.
       if(seed.stravaActivityId) rec.stravaActivityId = seed.stravaActivityId;
       if(seed.imported) rec.imported = true;
       if(seed.route) rec.route = seed.route;
+      if(seed.avgHr != null) rec.avgHr = seed.avgHr;
+      if(seed.maxHr != null) rec.maxHr = seed.maxHr;
+      if(seed.streams) rec.streams = seed.streams;
       rideSave(rec).then(function(){
         // Save only — the panel stays open; the rider clicks X to close.
         // Track this record so a second save updates it instead of duplicating,
@@ -7169,6 +7274,9 @@
     // The route shape, so the rider recognises the ride. Only GPS activities
     // carry one; the list endpoint returns it as map.summary_polyline.
     if(a.map && a.map.summary_polyline) rec.route = a.map.summary_polyline;
+    // Summary heart rate, so the detail pane isn't missing HR entirely.
+    if(a.average_heartrate) rec.avgHr = Math.round(a.average_heartrate);
+    if(a.max_heartrate) rec.maxHr = Math.round(a.max_heartrate);
     return rec;
   }
   function showImportPanel(){
