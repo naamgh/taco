@@ -198,6 +198,8 @@
     border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;gap:2px;
     box-shadow:0 18px 40px -20px rgba(0,0,0,0.7);
   }
+  /* [hidden] alone can't beat the display:flex above, so hide it explicitly. */
+  .side-menu[hidden]{display:none;}
   .menu-item{
     display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border-radius:8px;
     background:none;border:0;color:var(--text-dim);font-size:13px;font-weight:600;cursor:pointer;
@@ -209,8 +211,30 @@
   :root[data-theme="light"] #themeToggle .ico-sun{display:block;}
   :root[data-theme="light"] #themeToggle .ico-moon{display:none;}
   .menu-sep{height:1px;background:var(--border-soft);margin:5px 4px;}
+  /* Rider numbers: FTP, Max HR and Weight side by side, each a column with its
+     title above the input so all three fit the menu width. */
   .menu-rider{display:flex;gap:8px;padding:4px 6px 2px;}
-  .menu-rider .ftp-chip{flex:1;}
+  .menu-rider .ftp-chip{
+    flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:4px;padding:0;
+  }
+  .menu-rider .ftp-chip label{font-size:9.5px;letter-spacing:0.05em;}
+  /* Input and its stepper on one line, the arrows tucked to the right. */
+  .menu-rider .ftp-field{
+    display:flex;align-items:center;gap:2px;
+    background:var(--bg-card);border:1px solid var(--border);border-radius:7px;padding:2px 3px 2px 6px;
+  }
+  .menu-rider .ftp-field:focus-within{border-color:var(--accent);}
+  .menu-rider .ftp-chip input{
+    width:100%;min-width:0;margin-left:0;padding:2px 0;
+    background:none;border:0;border-radius:0;font-size:14px;
+  }
+  .menu-rider .ftp-chip input:focus{outline:none;}
+  /* W/kg readout under the row, shown once both FTP and weight are known. */
+  .menu-wkg{
+    padding:6px 6px 2px;font-family:var(--mono);font-size:11.5px;color:var(--text-dim);
+    display:flex;align-items:baseline;gap:5px;
+  }
+  .menu-wkg b{color:var(--accent);font-weight:700;font-size:13px;}
   .side-title{
     font-size:11px;color:var(--text-faint);text-transform:uppercase;
     letter-spacing:0.09em;font-weight:650;white-space:nowrap;
@@ -1568,6 +1592,9 @@
   .tr-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
   .tr-card-head h3{margin:0;font-size:14px;font-weight:700;color:var(--text-strong);}
   .tr-sub{font-size:11px;color:var(--text-faint);font-family:var(--mono);}
+  .pc-head-right{display:flex;align-items:center;gap:12px;}
+  .pc-unit{padding:2px;}
+  .pc-unit .tr-range-btn{padding:3px 8px;}
   .tr-legend{display:flex;gap:12px;}
   .tr-legend .k{font-size:10.5px;color:var(--text-dim);display:flex;align-items:center;gap:5px;}
   .tr-legend .k::before{content:"";width:12px;height:3px;border-radius:2px;background:currentColor;}
@@ -1637,21 +1664,36 @@
       <div class="menu-rider">
         <div class="ftp-chip">
           <label for="ftpInput">FTP</label>
-          <input id="ftpInput" type="number" min="80" max="500" step="1" value="220" title="FTP in watts">
-          <span class="ftp-step">
-            <button type="button" id="ftpUp" title="FTP +1 W (hold to repeat)" aria-label="Increase FTP by one watt"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 5l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-            <button type="button" id="ftpDown" title="FTP −1 W (hold to repeat)" aria-label="Decrease FTP by one watt"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-          </span>
+          <div class="ftp-field">
+            <input id="ftpInput" type="number" min="80" max="500" step="1" value="220" title="FTP in watts">
+            <span class="ftp-step">
+              <button type="button" id="ftpUp" title="FTP +1 W (hold to repeat)" aria-label="Increase FTP by one watt"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 5l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <button type="button" id="ftpDown" title="FTP −1 W (hold to repeat)" aria-label="Decrease FTP by one watt"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </span>
+          </div>
         </div>
         <div class="ftp-chip">
           <label for="maxHrInput">Max HR</label>
-          <input id="maxHrInput" type="number" min="120" max="230" step="1" placeholder="—" title="Maximum heart rate in bpm">
-          <span class="ftp-step">
-            <button type="button" id="maxHrUp" title="Max HR +1 (hold to repeat)" aria-label="Increase max heart rate by one"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 5l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-            <button type="button" id="maxHrDown" title="Max HR −1 (hold to repeat)" aria-label="Decrease max heart rate by one"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-          </span>
+          <div class="ftp-field">
+            <input id="maxHrInput" type="number" min="120" max="230" step="1" placeholder="—" title="Maximum heart rate in bpm">
+            <span class="ftp-step">
+              <button type="button" id="maxHrUp" title="Max HR +1 (hold to repeat)" aria-label="Increase max heart rate by one"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 5l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <button type="button" id="maxHrDown" title="Max HR −1 (hold to repeat)" aria-label="Decrease max heart rate by one"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </span>
+          </div>
+        </div>
+        <div class="ftp-chip">
+          <label for="weightInput">Weight</label>
+          <div class="ftp-field">
+            <input id="weightInput" type="number" min="30" max="200" step="0.1" placeholder="—" title="Body weight in kg (for W/kg)">
+            <span class="ftp-step">
+              <button type="button" id="weightUp" title="Weight +0.1 kg (hold to repeat)" aria-label="Increase weight by a tenth of a kilogram"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 5l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              <button type="button" id="weightDown" title="Weight −0.1 kg (hold to repeat)" aria-label="Decrease weight by a tenth of a kilogram"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </span>
+          </div>
         </div>
       </div>
+      <div class="menu-wkg" id="menuWkg" hidden></div>
     </div>
 
     <div class="side-scroll">
@@ -2211,10 +2253,21 @@
     if(storedHr && storedHr >= 120 && storedHr <= 230) maxHr = storedHr;
   }catch(e){}
 
+  // Body weight in kg: optional, kept to one decimal, drives the W/kg readout.
+  var WEIGHT_KEY = 'ftpPlan_weight_v1';
+  var weight = null;
+  try{
+    var storedWt = parseFloat(localStorage.getItem(WEIGHT_KEY));
+    if(storedWt && storedWt >= 30 && storedWt <= 200) weight = Math.round(storedWt * 10) / 10;
+  }catch(e){}
+  function hasWeight(){ return weight !== null && weight > 0; }
+
 
   var els = {
     ftpInput: document.getElementById('ftpInput'),
     maxHrInput: document.getElementById('maxHrInput'),
+    weightInput: document.getElementById('weightInput'),
+    menuWkg: document.getElementById('menuWkg'),
     hrZoneTable: document.getElementById('hrZoneTable'),
     summaryPies: document.getElementById('summaryPies'),
     summaryStravaText: document.getElementById('summaryStravaText'),
@@ -3555,6 +3608,7 @@
     try{ localStorage.setItem(FTP_KEY, String(ftp)); }catch(e){}
     if(parseInt(els.ftpInput.value, 10) !== ftp) els.ftpInput.value = ftp;
     render();
+    renderWkg();
   }
   els.ftpInput.addEventListener('input', function(){
     var v = parseInt(this.value, 10);
@@ -3574,6 +3628,30 @@
     var v = parseInt(this.value, 10);
     if(!v || v < 120) return;
     setMaxHr(v);
+  });
+
+  // Body weight, to one decimal. Feeds the W/kg line under the rider numbers.
+  function renderWkg(){
+    if(hasFtp() && hasWeight()){
+      els.menuWkg.hidden = false;
+      els.menuWkg.innerHTML = '<b>' + (ftp / weight).toFixed(2) + '</b> W/kg at FTP';
+    } else {
+      els.menuWkg.hidden = true;
+    }
+  }
+  function setWeight(v){
+    v = Math.round(v * 10) / 10;
+    if(!(v >= 30 && v <= 200)) return;
+    weight = v;
+    try{ localStorage.setItem(WEIGHT_KEY, String(weight)); }catch(e){}
+    if(parseFloat(els.weightInput.value) !== weight) els.weightInput.value = weight;
+    renderWkg();
+  }
+  els.weightInput.value = hasWeight() ? weight : '';
+  els.weightInput.addEventListener('input', function(){
+    var v = parseFloat(this.value);
+    if(!v || v < 30) return;
+    setWeight(v);
   });
 
   // Nudge buttons: one unit per click, and holding either one repeats after
@@ -3598,6 +3676,10 @@
   // Nudging an unset max HR starts from a sensible middle rather than 120.
   bindNudge(document.getElementById('maxHrUp'), 1, setMaxHr, function(){ return maxHr; }, 179);
   bindNudge(document.getElementById('maxHrDown'), -1, setMaxHr, function(){ return maxHr; }, 181);
+  // Weight moves in tenths; an unset weight starts near a sensible middle.
+  bindNudge(document.getElementById('weightUp'), 0.1, setWeight, function(){ return weight; }, 69.9);
+  bindNudge(document.getElementById('weightDown'), -0.1, setWeight, function(){ return weight; }, 70.1);
+  renderWkg();
 
   var searchTimer = null;
   els.searchBox.addEventListener('input', function(){
@@ -6991,7 +7073,7 @@
 
   // Best average power for each target duration, across every ride with
   // samples. Also flags a target where the most recent ride beat all before it.
-  var PC_TARGETS = [[5,'5s'],[15,'15s'],[30,'30s'],[60,'1m'],[300,'5m'],[480,'8m'],[1200,'20m'],[3600,'60m']];
+  var PC_TARGETS = [[15,'15s'],[30,'30s'],[60,'1m'],[120,'2m'],[300,'5m'],[480,'8m'],[1200,'20m'],[3600,'60m']];
   function bestForRide(powers, d){
     if(powers.length < d) return null;
     var sum = 0, i;
@@ -7090,38 +7172,46 @@
     view.forEach(function(d){ var dt = new Date(d.t); if(dt.getMonth() !== lastM && dt.getDate() <= 7){ lastM = dt.getMonth(); ctx.fillStyle = faint; ctx.fillText(mons[dt.getMonth()], x(d.t), H - 8); } });
   }
 
-  function drawPowerCurve(cv, curve){
+  // unit: 'w' (watts) or 'wkg' (watts per kilo). W/kg needs a body weight;
+  // falls back to watts when none is set.
+  function drawPowerCurve(cv, curve, unit){
     var W = cv.clientWidth || 720, H = 260, ctx = setupCanvas(cv, W, H);
     var padL = 44, padR = 14, padT = 14, padB = 34;
     var accent = cssVar('--accent') || '#6E8BFF', gold = '#F2A93B', faint = cssVar('--text-faint') || '#7E869E', grid = 'rgba(255,255,255,0.06)';
+    var wkg = unit === 'wkg' && hasWeight();
+    function val(w){ return wkg ? w / weight : w; }
+    function axisLabel(v){ return wkg ? v.toFixed(1) : Math.round(v); }
+    function ptLabel(w){ return wkg ? (w / weight).toFixed(2) : w; }
     ctx.clearRect(0, 0, W, H);
     var pts = curve.points.map(function(p, i){ return p ? {sec:PC_TARGETS[i][0], label:PC_TARGETS[i][1], w:Math.round(p.w)} : null; }).filter(Boolean);
     if(pts.length < 2){ ctx.fillStyle = faint; ctx.font = '13px ' + IMG_SANS; ctx.textAlign = 'center'; ctx.fillText('Ride indoors with power to build your curve', W/2, H/2); return; }
     var lx0 = Math.log(pts[0].sec), lx1 = Math.log(pts[pts.length-1].sec), lspan = Math.max(0.1, lx1 - lx0);
-    var wMax = niceMax(Math.max.apply(null, pts.map(function(p){ return p.w; })));
+    var vMax = niceMax(Math.max.apply(null, pts.map(function(p){ return val(p.w); })));
     function x(sec){ return padL + (Math.log(sec) - lx0) / lspan * (W - padL - padR); }
-    function y(w){ return H - padB - w / wMax * (H - padT - padB); }
+    function y(v){ return H - padB - v / vMax * (H - padT - padB); }
     ctx.font = '10px ' + IMG_MONO; ctx.fillStyle = faint; ctx.textBaseline = 'middle';
-    for(var g = 0; g <= 4; g++){ var lv = wMax*g/4, gy = y(lv); ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W-padR, gy); ctx.stroke(); ctx.textAlign = 'right'; ctx.fillText(Math.round(lv), padL - 6, gy); }
+    for(var g = 0; g <= 4; g++){ var lv = vMax*g/4, gy = y(lv); ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W-padR, gy); ctx.stroke(); ctx.textAlign = 'right'; ctx.fillText(axisLabel(lv), padL - 6, gy); }
     // line + fill
-    ctx.beginPath(); pts.forEach(function(p, i){ i ? ctx.lineTo(x(p.sec), y(p.w)) : ctx.moveTo(x(p.sec), y(p.w)); });
+    ctx.beginPath(); pts.forEach(function(p, i){ i ? ctx.lineTo(x(p.sec), y(val(p.w))) : ctx.moveTo(x(p.sec), y(val(p.w))); });
     ctx.lineTo(x(pts[pts.length-1].sec), y(0)); ctx.lineTo(x(pts[0].sec), y(0)); ctx.closePath();
     var grd = ctx.createLinearGradient(0, padT, 0, H-padB); grd.addColorStop(0, accent+'44'); grd.addColorStop(1, accent+'05'); ctx.fillStyle = grd; ctx.fill();
-    ctx.beginPath(); pts.forEach(function(p, i){ i ? ctx.lineTo(x(p.sec), y(p.w)) : ctx.moveTo(x(p.sec), y(p.w)); }); ctx.strokeStyle = accent; ctx.lineWidth = 2.4; ctx.lineJoin = 'round'; ctx.stroke();
-    // dots + duration labels + watt values
+    ctx.beginPath(); pts.forEach(function(p, i){ i ? ctx.lineTo(x(p.sec), y(val(p.w))) : ctx.moveTo(x(p.sec), y(val(p.w))); }); ctx.strokeStyle = accent; ctx.lineWidth = 2.4; ctx.lineJoin = 'round'; ctx.stroke();
+    // dots + duration labels + values
     var prLabels = {}; curve.prs.forEach(function(p){ prLabels[p.label] = true; });
     ctx.textAlign = 'center';
     pts.forEach(function(p){
-      var isPr = prLabels[p.label];
-      ctx.beginPath(); ctx.arc(x(p.sec), y(p.w), isPr ? 4.5 : 3, 0, Math.PI*2); ctx.fillStyle = isPr ? gold : accent; ctx.fill();
+      var isPr = prLabels[p.label], py = y(val(p.w));
+      ctx.beginPath(); ctx.arc(x(p.sec), py, isPr ? 4.5 : 3, 0, Math.PI*2); ctx.fillStyle = isPr ? gold : accent; ctx.fill();
       ctx.fillStyle = faint; ctx.textBaseline = 'alphabetic'; ctx.font = '10px ' + IMG_MONO; ctx.fillText(p.label, x(p.sec), H - 8);
-      ctx.fillStyle = isPr ? gold : cssVar('--text-strong'); ctx.textBaseline = 'middle'; ctx.font = '600 11px ' + IMG_MONO; ctx.fillText(p.w, x(p.sec), y(p.w) - 12);
+      ctx.fillStyle = isPr ? gold : cssVar('--text-strong'); ctx.textBaseline = 'middle'; ctx.font = '600 11px ' + IMG_MONO; ctx.fillText(ptLabel(p.w), x(p.sec), py - 12);
     });
   }
 
   // ---- the view ----
   var trendsRange = 90;   // days; 0 = all
   var RANGES = [[42,'6w'],[90,'3m'],[180,'6m'],[365,'1y'],[0,'All']];
+  var pcUnit = 'w';       // power-curve unit: 'w' or 'wkg'
+  var lastCurve = null;   // kept so the unit toggle can redraw without recomputing
   function fmtHrs(sec){ var h = Math.floor(sec/3600), m = Math.round((sec%3600)/60); return h ? h + 'h ' + (m<10?'0':'') + m + 'm' : m + 'm'; }
   function formWord(tsb){
     if(tsb > 15) return 'Fresh'; if(tsb > 5) return 'Rested'; if(tsb >= -10) return 'Neutral';
@@ -7131,6 +7221,8 @@
   function renderTrends(){
     rideAll().then(function(acts){
       var pmc = computePMC(acts), curve = powerCurve(acts);
+      lastCurve = curve;
+      if(!hasWeight()) pcUnit = 'w';   // W/kg needs a weight
       var wk = weekStats(acts, mondayOf(Date.now())), lastWk = weekStats(acts, mondayOf(Date.now() - 7*DAY_MS));
       var today = pmc.today;
 
@@ -7155,13 +7247,21 @@
           '<p class="tr-note">Load is TSS where power was recorded, otherwise estimated from RPE. Form is Fitness minus Fatigue: positive means fresh, deeply negative means overreached.</p>' +
         '</div>' +
         '<div class="tr-card"><div class="tr-card-head"><h3>Power curve</h3>' +
-          '<span class="tr-sub">' + curve.rides + (curve.rides===1?' ride':' rides') + ' with power</span></div>' +
+          '<div class="pc-head-right">' +
+            '<span class="tr-sub">' + curve.rides + (curve.rides===1?' ride':' rides') + ' with power</span>' +
+            (hasWeight()
+              ? '<div class="trends-range pc-unit">' +
+                  '<button type="button" class="tr-range-btn pc-unit-btn' + (pcUnit==='w'?' on':'') + '" data-unit="w">W</button>' +
+                  '<button type="button" class="tr-range-btn pc-unit-btn' + (pcUnit==='wkg'?' on':'') + '" data-unit="wkg">W/kg</button>' +
+                '</div>'
+              : '') +
+          '</div></div>' +
           prHtml +
           '<canvas class="tr-canvas" id="pcCanvas"></canvas>' +
           '<p class="tr-note">Your best average power held for each duration, across every indoor ride. Gold points are new bests.</p>' +
         '</div>';
       drawPMC(document.getElementById('pmcCanvas'), pmc.series, trendsRange);
-      drawPowerCurve(document.getElementById('pcCanvas'), curve);
+      drawPowerCurve(document.getElementById('pcCanvas'), curve, pcUnit);
     }).catch(function(e){
       els.trendsBody.innerHTML = '<p class="log-error">Charts couldn’t be built: ' + (e && e.message) + '</p>';
     });
@@ -7179,6 +7279,13 @@
   els.trendsRange.addEventListener('click', function(e){
     var b = e.target.closest('[data-days]'); if(!b) return;
     trendsRange = +b.getAttribute('data-days'); paintRangeButtons(); renderTrends();
+  });
+  // Watts vs W/kg: only redraws the power curve, no recompute.
+  els.trendsBody.addEventListener('click', function(e){
+    var b = e.target.closest('.pc-unit-btn'); if(!b) return;
+    pcUnit = b.getAttribute('data-unit');
+    els.trendsBody.querySelectorAll('.pc-unit-btn').forEach(function(x){ x.classList.toggle('on', x === b); });
+    if(lastCurve) drawPowerCurve(document.getElementById('pcCanvas'), lastCurve, pcUnit);
   });
   els.trendsBtn.addEventListener('click', openTrends);
   els.trendsCloseBtn.addEventListener('click', closeTrends);
