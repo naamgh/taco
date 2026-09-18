@@ -1332,6 +1332,9 @@
   .log-add-btn{margin-left:8px;}
   .log-import-btn{display:flex;align-items:center;gap:7px;}
   .log-import-btn svg{display:block;}
+  /* Back-Up / Load log: icon + label, sitting after the spacer. */
+  .log-io-btn{display:flex;align-items:center;gap:6px;}
+  .log-io-btn svg{display:block;}
   /* Import-from-Strava checklist, shown in the same scratch area as the form. */
   .log-import{
     background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:16px 18px;
@@ -1393,6 +1396,20 @@
   .log-entry i{width:7px;height:7px;border-radius:50%;background:var(--c);flex:none;}
   .log-entry span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .log-entry b{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);font-weight:650;}
+  /* "RPE" flag: this activity has no TSS or RPE, so it's invisible to the
+     Fitness/Fatigue/Form charts until one is added. Amber, quietly nagging. */
+  .log-entry .rpe-flag{
+    flex:none;font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:.04em;font-style:normal;
+    color:var(--amber-ink,#8A5A00);background:var(--amber,#F2A93B);
+    padding:1px 4px;border-radius:4px;line-height:1.35;
+  }
+  .log-entry.needs-rpe{border-style:dashed;}
+  /* Route-map preview in the activity panel. */
+  .lf-route{
+    display:flex;justify-content:center;
+    background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:6px;
+  }
+  .route-map{display:block;}
   /* Shows on hover so the grid stays clean. */
   .log-day-add{
     position:absolute;right:5px;bottom:5px;width:18px;height:18px;border-radius:6px;
@@ -2171,11 +2188,13 @@
         Import
       </button>
       <span class="log-spacer"></span>
-      <button class="icon-btn" id="logExportBtn" type="button" title="Download the whole log as a file" aria-label="Export log">
-        <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M12 3.5v11M12 14.5l-4.2-4.2M12 14.5l4.2-4.2M4.5 16.5v2.2a1.8 1.8 0 001.8 1.8h11.4a1.8 1.8 0 001.8-1.8v-2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <button class="action-btn log-io-btn" id="logExportBtn" type="button" title="Download the whole log as a file">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 3.5v11M12 14.5l-4.2-4.2M12 14.5l4.2-4.2M4.5 16.5v2.2a1.8 1.8 0 001.8 1.8h11.4a1.8 1.8 0 001.8-1.8v-2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Back-Up Log</span>
       </button>
-      <button class="icon-btn" id="logImportBtn" type="button" title="Import a log file" aria-label="Import log">
-        <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M12 14.5v-11M12 3.5L7.8 7.7M12 3.5l4.2 4.2M4.5 16.5v2.2a1.8 1.8 0 001.8 1.8h11.4a1.8 1.8 0 001.8-1.8v-2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <button class="action-btn log-io-btn" id="logImportBtn" type="button" title="Load a log file back in">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 14.5v-11M12 3.5L7.8 7.7M12 3.5l4.2 4.2M4.5 16.5v2.2a1.8 1.8 0 001.8 1.8h11.4a1.8 1.8 0 001.8-1.8v-2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Load Log</span>
       </button>
       <input type="file" id="logImportFile" accept="application/json,.json" style="display:none;">
       <button class="action-btn danger" id="logCloseBtn" type="button">Close</button>
@@ -6704,9 +6723,12 @@
             '<span class="log-date">' + d.getDate() + '</span>' +
             list.map(function(r){
               var det = entryDetail(r);
-              var tip = entryName(r) + (det ? ' · ' + det : '') + (r.tss ? ' · TSS ' + r.tss : '');
-              return '<button type="button" class="log-entry" data-id="' + r.id + '" style="--c:' + entryColor(r) + '" title="' + tip.replace(/"/g, '&quot;') + '">' +
-                '<i></i><span>' + entryName(r) + '</span>' + (r.tss ? '<b>' + r.tss + '</b>' : '') + '</button>';
+              // An activity feeds Fitness/Fatigue/Form only through TSS, or failing
+              // that an RPE. With neither it's invisible to those charts — flag it.
+              var needsRpe = !r.tss && !r.rpe;
+              var tip = entryName(r) + (det ? ' · ' + det : '') + (r.tss ? ' · TSS ' + r.tss : needsRpe ? ' · needs an RPE to count toward Fitness/Form' : '');
+              return '<button type="button" class="log-entry' + (needsRpe ? ' needs-rpe' : '') + '" data-id="' + r.id + '" style="--c:' + entryColor(r) + '" title="' + tip.replace(/"/g, '&quot;') + '">' +
+                '<i></i><span>' + entryName(r) + '</span>' + (r.tss ? '<b>' + r.tss + '</b>' : needsRpe ? '<em class="rpe-flag">RPE</em>' : '') + '</button>';
             }).join('') +
             '<button type="button" class="log-day-add" data-add="' + k + '" title="Log an activity on this day" aria-label="Log an activity">+</button>' +
           '</div>';
@@ -6743,6 +6765,45 @@
     return days[d.getDay()] + ' ' + d.getDate() + ' ' + mons[d.getMonth()] + ' ' + d.getFullYear();
   }
 
+  // ---- route map ----
+  // Strava's summary_polyline is a Google-encoded polyline; decode to [lat,lng]
+  // pairs, then draw the shape so a rider recognises the route at a glance.
+  function decodePolyline(str){
+    if(!str) return [];
+    var index = 0, lat = 0, lng = 0, out = [], len = str.length;
+    while(index < len){
+      var b, shift = 0, result = 0;
+      do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while(b >= 0x20);
+      lat += (result & 1) ? ~(result >> 1) : (result >> 1);
+      shift = 0; result = 0;
+      do { b = str.charCodeAt(index++) - 63; result |= (b & 0x1f) << shift; shift += 5; } while(b >= 0x20);
+      lng += (result & 1) ? ~(result >> 1) : (result >> 1);
+      out.push([lat * 1e-5, lng * 1e-5]);
+    }
+    return out;
+  }
+  // Projects lat/lng (equirectangular, longitude squeezed by cos(lat)) into a
+  // w×h box, aspect preserved and centred, with start (green) and end (red) dots.
+  function routeSvg(pts, w, h){
+    if(!pts || pts.length < 2) return '';
+    var pad = 8, k = Math.cos(pts[Math.floor(pts.length/2)][0] * Math.PI / 180);
+    var xs = pts.map(function(p){ return p[1] * k; }), ys = pts.map(function(p){ return -p[0]; });
+    var minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+    var minY = Math.min.apply(null, ys), maxY = Math.max.apply(null, ys);
+    var sw = (maxX - minX) || 1e-6, sh = (maxY - minY) || 1e-6;
+    var scale = Math.min((w - 2*pad) / sw, (h - 2*pad) / sh);
+    var ox = (w - sw*scale) / 2, oy = (h - sh*scale) / 2;
+    function X(i){ return ox + (xs[i] - minX) * scale; }
+    function Y(i){ return oy + (ys[i] - minY) * scale; }
+    var d = pts.map(function(p, i){ return (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(i).toFixed(1); }).join('');
+    var last = pts.length - 1;
+    return '<svg class="route-map" viewBox="0 0 ' + w + ' ' + h + '" width="' + w + '" height="' + h + '" role="img" aria-label="Route map">' +
+      '<path d="' + d + '" fill="none" stroke="var(--accent)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>' +
+      '<circle cx="' + X(0).toFixed(1) + '" cy="' + Y(0).toFixed(1) + '" r="3.2" fill="var(--ok)"/>' +
+      '<circle cx="' + X(last).toFixed(1) + '" cy="' + Y(last).toFixed(1) + '" r="3.2" fill="var(--c-anaerobic)"/>' +
+      '</svg>';
+  }
+
   // ---- quick-log form (ride / run / gym) ----
   // The type picker rebuilds the fields; new and existing entries share the
   // form, and an existing one also gets Delete. On an existing entry the
@@ -6768,6 +6829,7 @@
           '</div>' +
         '</div>' +
         '<div class="lf-identity" id="lfIdentity"></div>' +
+        (seed.route ? '<div class="lf-route">' + routeSvg(decodePolyline(seed.route), 246, 120) + '</div>' : '') +
         '<div class="lf-fields" id="lfFields"></div>' +
         '<label>TSS <span class="lf-unit"><input type="number" id="lfTss" min="0" max="999" placeholder="optional" value="' + (seed.tss || '') + '"></span></label>' +
         '<label class="lf-note">Note <input type="text" id="lfNote" maxlength="80" placeholder="optional" value="' + (seed.note ? String(seed.note).replace(/"/g, '&quot;') : '') + '"></label>' +
@@ -6910,9 +6972,10 @@
         note: document.getElementById('lfNote').value.trim() || null,
         name: finalName, fields: fields, savedAt: Date.now()
       };
-      // Preserve the Strava link on an imported entry that's being edited.
+      // Preserve the Strava link and route on an imported entry being edited.
       if(seed.stravaActivityId) rec.stravaActivityId = seed.stravaActivityId;
       if(seed.imported) rec.imported = true;
+      if(seed.route) rec.route = seed.route;
       rideSave(rec).then(function(){
         // Save only — the panel stays open; the rider clicks X to close.
         // Track this record so a second save updates it instead of duplicating,
@@ -6963,11 +7026,15 @@
     // TSS from Strava's normalised power (weighted_average_watts) at our FTP.
     var np = a.weighted_average_watts, tss = null;
     if(np && hasFtp() && sec > 0){ var IF = np / ftp; tss = Math.round(sec / 3600 * IF * IF * 100); }
-    return {
+    var rec = {
       id: startMs, type:type, day:dayKey(startMs), startDateMs:startMs,
       durationSec: sec, tss:tss, name: a.name || typeSpec(type).label, fields:fields,
       stravaActivityId: a.id, imported:true, savedAt: Date.now()
     };
+    // The route shape, so the rider recognises the ride. Only GPS activities
+    // carry one; the list endpoint returns it as map.summary_polyline.
+    if(a.map && a.map.summary_polyline) rec.route = a.map.summary_polyline;
+    return rec;
   }
   function showImportPanel(){
     if(!stravaConnected()){
