@@ -1291,7 +1291,6 @@
   /* Import-from-Strava checklist, shown in the same scratch area as the form. */
   .log-import{
     background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:16px 18px;
-    max-width:680px;margin:12px auto 0;
   }
   .log-import h3{margin:0 0 12px;font-size:15px;font-weight:700;display:flex;align-items:baseline;gap:10px;}
   .imp-count{font-size:12px;font-weight:600;color:var(--text-faint);}
@@ -1315,7 +1314,14 @@
   @media (max-width:720px){ .imp-meta{display:none;} }
   .log-spacer{flex:1;}
   .log-head .action-btn.danger{margin-top:0;}
-  .log-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding-top:12px;}
+  /* The modal body: a scrolling calendar on the left, a full-height side
+     panel on the right that appears when a form or import opens. */
+  .log-body{flex:1 1 auto;min-height:0;display:flex;gap:16px;padding-top:12px;}
+  .log-gridwrap{flex:1 1 auto;min-width:0;overflow-y:auto;}
+  .log-side{
+    flex:0 0 380px;align-self:stretch;overflow-y:auto;
+    display:flex;flex-direction:column;
+  }
   /* Seven days and a week column, Monday first. */
   .log-dow,.log-row{display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) 128px;gap:6px;}
   .log-dow{margin-bottom:4px;}
@@ -1357,14 +1363,25 @@
   .log-week span{font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
   .log-week-empty{color:var(--text-faint);}
   .log-error{color:var(--c-test);text-align:center;}
-  /* The quick-log form. */
-  .log-add{margin-top:12px;}
+  /* The quick-log form — one column, sized to the side panel. */
   .log-form{
     background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:16px 18px;
-    display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;max-width:640px;margin:0 auto;
+    display:grid;grid-template-columns:1fr;gap:12px;
   }
-  .log-form h3{grid-column:1/-1;margin:0;font-size:15px;font-weight:700;}
-  .log-types{grid-column:1/-1;display:flex;gap:8px;}
+  .log-side-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+  .log-form h3{margin:0;font-size:15px;font-weight:700;}
+  .lf-edit{
+    flex:none;width:30px;height:30px;border-radius:8px;border:1px solid var(--border);
+    background:var(--bg-card);color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .lf-edit:hover{color:var(--text);border-color:var(--accent);}
+  /* Locked identity: name big, type + date beneath. */
+  .lf-identity{display:flex;flex-direction:column;gap:12px;}
+  .lf-id-view{display:flex;flex-direction:column;gap:4px;padding:2px 0;}
+  .lf-id-name{font-size:17px;font-weight:750;color:var(--text-strong);}
+  .lf-id-sub{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-dim);}
+  .lf-id-sub i{width:8px;height:8px;border-radius:50%;flex:none;}
+  .log-types{display:flex;gap:8px;}
   .log-types button{
     flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
     background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:9px 8px;
@@ -1374,9 +1391,9 @@
   .log-types button.on{border-color:var(--c);color:var(--text);box-shadow:0 0 0 1px var(--c);}
   .log-form label,.lf-field{display:flex;flex-direction:column;gap:5px;font-size:11.5px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;}
   .lf-flabel{display:block;}
-  /* The per-type fields span both columns and wrap in a responsive grid. */
-  .lf-fields{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;}
-  .log-form .lf-note,.log-form .lf-multi{grid-column:1/-1;}
+  /* One field per row in the side panel; distance/duration etc. stay legible. */
+  .lf-fields{display:grid;grid-template-columns:1fr;gap:12px;}
+  .lf-name input{width:100%;}
   .log-form input{
     background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:8px;
     padding:7px 9px;font-size:13.5px;font-family:inherit;width:100%;
@@ -1394,12 +1411,20 @@
   .lf-multi-btns button:hover{border-color:var(--accent);color:var(--text);}
   .lf-multi-btns button.on{background:var(--warn);border-color:var(--warn);color:#2A1B00;}
   .log-form .rpe-row{grid-column:1/-1;justify-content:flex-start;margin:2px 0 0;}
-  .log-form-actions{grid-column:1/-1;display:flex;gap:8px;}
-  .log-form-actions .action-btn{margin-top:0;}
+  /* Pinned to the bottom of the panel so Save/Delete/Cancel are always in
+     reach even when the fields scroll. */
+  .log-form-actions{
+    display:flex;gap:8px;position:sticky;bottom:0;
+    margin:2px -18px -16px;padding:12px 18px 16px;
+    background:var(--bg-elev);border-top:1px solid var(--border-soft);
+  }
+  .log-form-actions .action-btn{margin-top:0;flex:1;}
   @media (max-width:720px){
     .log-dow,.log-row{grid-template-columns:repeat(7,minmax(0,1fr));}
     .log-dow-week,.log-week{display:none;}
-    .log-form{grid-template-columns:1fr;}
+    /* Not enough width for a side column — stack the panel under the grid. */
+    .log-body{flex-direction:column;}
+    .log-side{flex-basis:auto;width:100%;position:static;}
   }
 
   .action-btn.danger{background:#E8395A;border-color:#E8395A;color:#fff;justify-content:center;margin-top:8px;}
@@ -1961,9 +1986,11 @@
       <input type="file" id="logImportFile" accept="application/json,.json" style="display:none;">
       <button class="action-btn danger" id="logCloseBtn" type="button">Close</button>
     </div>
-    <div class="log-scroll">
-      <div class="log-grid" id="logGrid"></div>
-      <div class="log-add" id="logAdd" style="display:none;"></div>
+    <!-- Calendar scrolls on the left; the form / import panel is a full-height
+         column on the right, so its buttons never fall below the fold. -->
+    <div class="log-body">
+      <div class="log-gridwrap"><div class="log-grid" id="logGrid"></div></div>
+      <div class="log-side" id="logAdd" style="display:none;"></div>
     </div>
   </div>
 </div>
@@ -6447,22 +6474,34 @@
     });
   });
 
+  var PENCIL_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 16v4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M13.3 6.7l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+  function prettyDate(day){
+    var p = String(day).split('-').map(Number), d = new Date(p[0], p[1]-1, p[2]);
+    var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return days[d.getDay()] + ' ' + d.getDate() + ' ' + mons[d.getMonth()] + ' ' + d.getFullYear();
+  }
+
   // ---- quick-log form (ride / run / gym) ----
   // The type picker rebuilds the fields; new and existing entries share the
-  // form, and an existing one also gets Delete.
+  // form, and an existing one also gets Delete. On an existing entry the
+  // identity (name / date / type) is shown read-only until the pencil is
+  // pressed — those rarely change, and locking them stops a stray edit.
   function showLogForm(seed){
     var editing = !!seed.id;
     var type = seed.type === 'outdoor' ? 'ride' : (seed.type && MANUAL_TYPES[seed.type] ? seed.type : 'ride');
     var rpe = seed.rpe || null;
+    var name = seed.name || '';
+    var idLocked = editing;   // new entries start editable
 
     els.logAdd.style.display = '';
     els.logAdd.innerHTML =
       '<div class="log-form">' +
-        '<h3>' + (editing ? 'Edit activity' : 'Log an activity') + '</h3>' +
-        '<div class="log-types">' + Object.keys(MANUAL_TYPES).map(function(k){
-          return '<button type="button" data-type="' + k + '" class="' + (type === k ? 'on' : '') + '" style="--c:' + MANUAL_TYPES[k].color + '"><i></i>' + MANUAL_TYPES[k].label + '</button>';
-        }).join('') + '</div>' +
-        '<label class="lf-date">Date <input type="date" id="lfDate" value="' + (seed.day || dayKey(Date.now())) + '"></label>' +
+        '<div class="log-side-head">' +
+          '<h3>' + (editing ? 'Edit activity' : 'Log an activity') + '</h3>' +
+          (editing ? '<button type="button" class="lf-edit" id="lfEdit" title="Edit name, date and type" aria-label="Edit name, date and type">' + PENCIL_SVG + '</button>' : '') +
+        '</div>' +
+        '<div class="lf-identity" id="lfIdentity"></div>' +
         '<div class="lf-fields" id="lfFields"></div>' +
         '<label>TSS <span class="lf-unit"><input type="number" id="lfTss" min="0" max="999" placeholder="optional" value="' + (seed.tss || '') + '"></span></label>' +
         '<label class="lf-note">Note <input type="text" id="lfNote" maxlength="80" placeholder="optional" value="' + (seed.note ? String(seed.note).replace(/"/g, '&quot;') : '') + '"></label>' +
@@ -6538,15 +6577,40 @@
       tEl.addEventListener('input', function(){ recompute('time'); });
     }
 
+    // Name / date / type: a static summary while locked, editable fields once
+    // the pencil is pressed (or from the start on a new entry).
+    function renderIdentity(){
+      var box = els.logAdd.querySelector('#lfIdentity');
+      if(idLocked){
+        box.innerHTML =
+          '<div class="lf-id-view">' +
+            '<span class="lf-id-name">' + (name ? esc(name) : typeSpec(type).label) + '</span>' +
+            '<span class="lf-id-sub"><i style="background:' + typeSpec(type).color + '"></i>' + typeSpec(type).label + ' · ' + prettyDate(seed.day) + '</span>' +
+          '</div>';
+        return;
+      }
+      box.innerHTML =
+        '<label class="lf-name">Name <input type="text" id="lfName" maxlength="60" placeholder="' + typeSpec(type).label + '" value="' + esc(name) + '"></label>' +
+        '<div class="log-types">' + Object.keys(MANUAL_TYPES).map(function(k){
+          return '<button type="button" data-type="' + k + '" class="' + (type === k ? 'on' : '') + '" style="--c:' + MANUAL_TYPES[k].color + '"><i></i>' + MANUAL_TYPES[k].label + '</button>';
+        }).join('') + '</div>' +
+        '<label class="lf-date">Date <input type="date" id="lfDate" value="' + (seed.day || dayKey(Date.now())) + '"></label>';
+      box.querySelector('.log-types').addEventListener('click', function(e){
+        var b = e.target.closest('[data-type]'); if(!b) return;
+        type = b.getAttribute('data-type'); groups = []; trioTouched = [];
+        [].forEach.call(box.querySelectorAll('[data-type]'), function(x){ x.classList.toggle('on', x === b); });
+        renderFields();
+      });
+      var nm = box.querySelector('#lfName');
+      if(nm) nm.addEventListener('input', function(){ name = this.value; });
+    }
+
+    renderIdentity();
     renderFields();
     paintRpeBtns(els.logAdd.querySelector('#lfRpe'), rpe);
 
-    els.logAdd.querySelector('.log-types').addEventListener('click', function(e){
-      var b = e.target.closest('[data-type]'); if(!b) return;
-      type = b.getAttribute('data-type'); groups = []; trioTouched = [];
-      [].forEach.call(els.logAdd.querySelectorAll('[data-type]'), function(x){ x.classList.toggle('on', x === b); });
-      renderFields();
-    });
+    var edit = els.logAdd.querySelector('#lfEdit');
+    if(edit) edit.addEventListener('click', function(){ idLocked = false; this.style.display = 'none'; renderIdentity(); });
     els.logAdd.querySelector('#lfRpe').addEventListener('click', function(e){
       var b = e.target.closest('[data-rpe]'); if(!b) return;
       var v = +b.getAttribute('data-rpe'); rpe = rpe === v ? null : v;
@@ -6554,7 +6618,10 @@
     });
     els.logAdd.querySelector('#lfCancel').addEventListener('click', function(){ els.logAdd.style.display = 'none'; });
     els.logAdd.querySelector('#lfSave').addEventListener('click', function(){
-      var day = document.getElementById('lfDate').value;
+      // Date comes from the field when the identity is unlocked, else it's
+      // unchanged from the existing entry.
+      var dateEl = document.getElementById('lfDate');
+      var day = dateEl ? dateEl.value : seed.day;
       if(!day) return;
       var spec = typeSpec(type), fields = {}, durationSec = null;
       spec.fields.forEach(function(f){
@@ -6567,22 +6634,26 @@
       if(!(durationSec > 0)){ alert('Add a ' + (type === 'gym' || type === 'run' ? 'time' : 'duration') + ' so it counts toward the week.'); return; }
       var tss = parseInt(document.getElementById('lfTss').value, 10);
       var parts = day.split('-').map(Number);
-      var startMs = editing ? seed.startDateMs : new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0).getTime();
-      if(!editing) startMs += (Date.now() % 1000);   // keep ids unique for two entries on one day
+      var noon = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0).getTime();
+      // Keep the original timestamp unless the date was actually changed, so an
+      // imported ride's real start time survives an edit.
+      var startMs = editing ? (day !== seed.day ? noon : seed.startDateMs) : noon + (Date.now() % 1000);
       var rec = {
         id: editing ? seed.id : startMs, type:type, day:day, startDateMs:startMs,
         durationSec: durationSec, tss: isNaN(tss) ? null : tss, rpe:rpe,
         note: document.getElementById('lfNote').value.trim() || null,
-        name: spec.label, fields: fields, savedAt: Date.now()
+        name: (name || '').trim() || spec.label, fields: fields, savedAt: Date.now()
       };
-      rideSave(rec).then(function(){ els.logAdd.style.display = 'none'; renderLog(); });
+      // Preserve the Strava link on an imported entry that's being edited.
+      if(seed.stravaActivityId) rec.stravaActivityId = seed.stravaActivityId;
+      if(seed.imported) rec.imported = true;
+      rideSave(rec).then(function(){ els.logAdd.style.display = 'none'; renderLog(); refreshDoneMarks(); });
     });
     var del = els.logAdd.querySelector('#lfDelete');
     if(del) del.addEventListener('click', function(){
       if(!confirm('Delete this activity?')) return;
-      rideDelete(seed.id).then(function(){ els.logAdd.style.display = 'none'; renderLog(); });
+      rideDelete(seed.id).then(function(){ els.logAdd.style.display = 'none'; renderLog(); refreshDoneMarks(); });
     });
-    els.logAdd.scrollIntoView({block:'nearest'});
   }
   function paintRpeBtns(row, rpe){
     [].forEach.call(row.querySelectorAll('[data-rpe]'), function(x){ x.classList.toggle('on', +x.getAttribute('data-rpe') === rpe); });
@@ -6633,7 +6704,6 @@
     }
     els.logAdd.style.display = '';
     els.logAdd.innerHTML = '<div class="log-import"><h3>Import from Strava</h3><p class="log-import-msg">Fetching your recent activities…</p></div>';
-    els.logAdd.scrollIntoView({block:'nearest'});
     var days = 90;
     Promise.all([stravaFetchActivities(Date.now() - days * 86400000), rideAll()]).then(function(res){
       var acts = res[0], have = {};
