@@ -1333,6 +1333,8 @@
     padding:6px 6px 22px;display:flex;flex-direction:column;gap:4px;
   }
   .log-day.out{opacity:.42;}
+  /* Weekend cells sit a touch darker than weekdays. */
+  .log-day.weekend{background:var(--bg-card);}
   .log-day.today{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);}
   .log-date{font-family:var(--mono);font-size:11px;color:var(--text-faint);padding:0 2px;}
   .log-day.today .log-date{color:var(--accent);font-weight:700;}
@@ -1378,11 +1380,16 @@
     color:var(--text-dim);transition:background .12s,border-color .12s,color .12s;
   }
   .lf-hbtn.edit:hover{color:var(--text);border-color:var(--accent);}
-  .lf-hbtn.save{background:var(--ok);border-color:var(--ok);color:#04240F;}
-  .lf-hbtn.save:hover{filter:brightness(1.08);}
+  /* Save: outlined green, matching Delete's outlined-red treatment; fills on hover. */
+  .lf-hbtn.save{color:var(--ok);border-color:var(--ok-line);}
+  .lf-hbtn.save:hover{background:var(--ok);border-color:var(--ok);color:#04240F;}
   .lf-hbtn.del{color:#E8395A;border-color:rgba(232,57,90,0.4);}
   .lf-hbtn.del:hover{background:#E8395A;border-color:#E8395A;color:#fff;}
   .lf-hbtn.cancel:hover{color:var(--text);border-color:var(--text-faint);}
+  /* A brief filled-green pulse confirms a save while the panel stays open. */
+  .lf-hbtn.save.saved{background:var(--ok);border-color:var(--ok);color:#04240F;animation:savedPulse .9s ease;}
+  @keyframes savedPulse{0%{transform:scale(1);}30%{transform:scale(1.12);}100%{transform:scale(1);}}
+  @media (prefers-reduced-motion:reduce){ .lf-hbtn.save.saved{animation:none;} }
   /* Locked identity: name big, type + date beneath. */
   .lf-identity{display:flex;flex-direction:column;gap:12px;}
   .lf-id-view{display:flex;flex-direction:column;gap:4px;padding:2px 0;}
@@ -6450,7 +6457,7 @@
           var k = dayKey(d.getTime()), list = byDay[k] || [];
           var out = d.getMonth() !== m;
           list.forEach(function(r){ wkTss += r.tss || 0; wkSec += r.durationSec || 0; wkN++; });
-          cells += '<div class="log-day' + (out ? ' out' : '') + (k === todayKey ? ' today' : '') + '" data-day="' + k + '">' +
+          cells += '<div class="log-day' + (out ? ' out' : '') + (i >= 5 ? ' weekend' : '') + (k === todayKey ? ' today' : '') + '" data-day="' + k + '">' +
             '<span class="log-date">' + d.getDate() + '</span>' +
             list.map(function(r){
               var det = entryDetail(r);
@@ -6513,8 +6520,8 @@
           '<div class="lf-head-btns">' +
             (editing ? '<button type="button" class="lf-hbtn edit" id="lfEdit" title="Edit name, date and type" aria-label="Edit name, date and type">' + PENCIL_SVG + '</button>' : '') +
             '<button type="button" class="lf-hbtn save" id="lfSave" title="Save" aria-label="Save">' + CHECK_SVG + '</button>' +
-            (editing ? '<button type="button" class="lf-hbtn del" id="lfDelete" title="Delete" aria-label="Delete">' + TRASH_SVG + '</button>' : '') +
-            '<button type="button" class="lf-hbtn cancel" id="lfCancel" title="Cancel" aria-label="Cancel">' + CLOSE_SVG + '</button>' +
+            '<button type="button" class="lf-hbtn del" id="lfDelete" title="Delete" aria-label="Delete"' + (editing ? '' : ' style="display:none;"') + '>' + TRASH_SVG + '</button>' +
+            '<button type="button" class="lf-hbtn cancel" id="lfCancel" title="Close" aria-label="Close">' + CLOSE_SVG + '</button>' +
           '</div>' +
         '</div>' +
         '<div class="lf-identity" id="lfIdentity"></div>' +
@@ -6527,6 +6534,8 @@
 
     var groups = (seed.fields && seed.fields.groups) ? seed.fields.groups.slice() : [];
     var trioTouched = [];   // recency order of the distance/rate/time fields
+    // Null until first saved; then re-saves update this id rather than adding.
+    var currentId = editing ? seed.id : null;
 
     // One input per field, from the type's spec.
     function fieldInput(f){
@@ -6646,13 +6655,14 @@
       var tss = parseInt(document.getElementById('lfTss').value, 10);
       var parts = day.split('-').map(Number);
       var noon = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0).getTime();
-      // Keep the original timestamp unless the date was actually changed, so an
-      // imported ride's real start time survives an edit.
-      var startMs = editing ? (day !== seed.day ? noon : seed.startDateMs) : noon + (Date.now() % 1000);
+      // A record that's been saved keeps its timestamp unless the date was
+      // actually changed (so an imported ride's real start time survives).
+      var startMs = (currentId != null) ? (day !== seed.day ? noon : seed.startDateMs) : noon + (Date.now() % 1000);
+      var id = (currentId != null) ? currentId : startMs;
       var nameEl = document.getElementById('lfName');
       var finalName = (nameEl ? nameEl.value : name || '').trim() || spec.label;
       var rec = {
-        id: editing ? seed.id : startMs, type:type, day:day, startDateMs:startMs,
+        id: id, type:type, day:day, startDateMs:startMs,
         durationSec: durationSec, tss: isNaN(tss) ? null : tss, rpe:rpe,
         note: document.getElementById('lfNote').value.trim() || null,
         name: finalName, fields: fields, savedAt: Date.now()
@@ -6660,12 +6670,22 @@
       // Preserve the Strava link on an imported entry that's being edited.
       if(seed.stravaActivityId) rec.stravaActivityId = seed.stravaActivityId;
       if(seed.imported) rec.imported = true;
-      rideSave(rec).then(function(){ els.logAdd.style.display = 'none'; renderLog(); refreshDoneMarks(); });
+      rideSave(rec).then(function(){
+        // Save only — the panel stays open; the rider clicks X to close.
+        // Track this record so a second save updates it instead of duplicating,
+        // and reveal Delete now that there's something to delete.
+        currentId = id; seed = rec;
+        renderLog(); refreshDoneMarks();
+        var delBtn = els.logAdd.querySelector('#lfDelete');
+        if(delBtn) delBtn.style.display = '';
+        var saveBtn = els.logAdd.querySelector('#lfSave');
+        saveBtn.classList.remove('saved'); void saveBtn.offsetWidth; saveBtn.classList.add('saved');
+      });
     });
-    var del = els.logAdd.querySelector('#lfDelete');
-    if(del) del.addEventListener('click', function(){
+    els.logAdd.querySelector('#lfDelete').addEventListener('click', function(){
+      if(currentId == null) return;
       if(!confirm('Delete this activity?')) return;
-      rideDelete(seed.id).then(function(){ els.logAdd.style.display = 'none'; renderLog(); refreshDoneMarks(); });
+      rideDelete(currentId).then(function(){ els.logAdd.style.display = 'none'; renderLog(); refreshDoneMarks(); });
     });
   }
   function paintRpeBtns(row, rpe){
