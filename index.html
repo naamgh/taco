@@ -6638,11 +6638,13 @@
       // Keep the original timestamp unless the date was actually changed, so an
       // imported ride's real start time survives an edit.
       var startMs = editing ? (day !== seed.day ? noon : seed.startDateMs) : noon + (Date.now() % 1000);
+      var nameEl = document.getElementById('lfName');
+      var finalName = (nameEl ? nameEl.value : name || '').trim() || spec.label;
       var rec = {
         id: editing ? seed.id : startMs, type:type, day:day, startDateMs:startMs,
         durationSec: durationSec, tss: isNaN(tss) ? null : tss, rpe:rpe,
         note: document.getElementById('lfNote').value.trim() || null,
-        name: (name || '').trim() || spec.label, fields: fields, savedAt: Date.now()
+        name: finalName, fields: fields, savedAt: Date.now()
       };
       // Preserve the Strava link on an imported entry that's being edited.
       if(seed.stravaActivityId) rec.stravaActivityId = seed.stravaActivityId;
