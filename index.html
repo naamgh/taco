@@ -1265,9 +1265,143 @@
   }
   .summary-chip span{display:block;font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;}
   .summary-chip b{display:block;font-family:var(--mono);font-size:20px;color:var(--text);}
+  /* RPE 1-10. A row of small squares; the chosen one lights in the accent. */
+  .rpe-row{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:6px 0 4px;}
+  .rpe-label{font-size:13px;color:var(--text-dim);font-weight:600;}
+  .rpe-label em{font-style:normal;color:var(--text-faint);font-weight:500;margin-left:4px;}
+  .rpe-btns{display:flex;gap:4px;}
+  .rpe-btns button{
+    width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:var(--bg-elev);
+    color:var(--text-dim);font-family:var(--mono);font-size:12.5px;font-weight:650;cursor:pointer;padding:0;
+    transition:background .12s,border-color .12s,color .12s;
+  }
+  .rpe-btns button:hover{border-color:var(--accent);color:var(--text);}
+  .rpe-btns button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
+
   .summary-actions{display:flex;flex-direction:column;gap:10px;}
   .summary-row{display:flex;gap:8px;}
   .summary-row .action-btn{flex:1 1 0;justify-content:center;}
+  /* ---------- RIDE LOG ---------- */
+  .log-inner{max-width:1180px;padding:18px 22px 18px;}
+  .log-head{display:flex;align-items:center;gap:8px;flex:none;padding-bottom:12px;border-bottom:1px solid var(--border-soft);}
+  .log-month{margin:0 6px;font-size:19px;font-weight:750;color:var(--text-strong);min-width:190px;text-align:center;}
+  .log-add-btn{margin-left:8px;}
+  .log-import-btn{display:flex;align-items:center;gap:7px;}
+  .log-import-btn svg{display:block;}
+  /* Import-from-Strava checklist, shown in the same scratch area as the form. */
+  .log-import{
+    background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:16px 18px;
+    max-width:680px;margin:12px auto 0;
+  }
+  .log-import h3{margin:0 0 12px;font-size:15px;font-weight:700;display:flex;align-items:baseline;gap:10px;}
+  .imp-count{font-size:12px;font-weight:600;color:var(--text-faint);}
+  .log-import-msg{color:var(--text-dim);font-size:13.5px;margin:8px 0;}
+  .imp-bulk{display:flex;gap:14px;margin-bottom:8px;}
+  .imp-link{background:none;border:0;color:var(--accent);font-size:12.5px;font-weight:650;cursor:pointer;padding:0;font-family:inherit;}
+  .imp-link:hover{text-decoration:underline;}
+  .imp-list{max-height:44vh;overflow-y:auto;display:flex;flex-direction:column;gap:4px;margin-bottom:14px;}
+  .imp-row{
+    display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:9px;cursor:pointer;
+    background:var(--bg-card);border:1px solid var(--border-soft);
+  }
+  .imp-row:hover{border-color:var(--border);}
+  .imp-row.in-log{opacity:.5;cursor:default;}
+  .imp-row input{width:15px;height:15px;accent-color:var(--accent);flex:none;cursor:inherit;}
+  .imp-dot{width:8px;height:8px;border-radius:50%;background:var(--c);flex:none;}
+  .imp-name{font-size:13px;font-weight:650;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;}
+  .imp-meta{font-size:11.5px;color:var(--text-faint);font-family:var(--mono);margin-left:auto;white-space:nowrap;}
+  .imp-type{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);flex:none;}
+  .imp-tag{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ok);flex:none;}
+  @media (max-width:720px){ .imp-meta{display:none;} }
+  .log-spacer{flex:1;}
+  .log-head .action-btn.danger{margin-top:0;}
+  .log-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;padding-top:12px;}
+  /* Seven days and a week column, Monday first. */
+  .log-dow,.log-row{display:grid;grid-template-columns:repeat(7,minmax(0,1fr)) 128px;gap:6px;}
+  .log-dow{margin-bottom:4px;}
+  .log-dow span{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);padding:0 8px;}
+  .log-dow-week{text-align:center;}
+  .log-row{margin-bottom:6px;}
+  .log-day{
+    position:relative;min-height:96px;background:var(--bg-elev);border:1px solid var(--border-soft);border-radius:10px;
+    padding:6px 6px 22px;display:flex;flex-direction:column;gap:4px;
+  }
+  .log-day.out{opacity:.42;}
+  .log-day.today{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);}
+  .log-date{font-family:var(--mono);font-size:11px;color:var(--text-faint);padding:0 2px;}
+  .log-day.today .log-date{color:var(--accent);font-weight:700;}
+  /* An entry is a coloured dot, the name, and its TSS. --c is set inline. */
+  .log-entry{
+    display:flex;align-items:center;gap:5px;width:100%;text-align:left;
+    background:var(--bg-card);border:1px solid var(--border-soft);border-radius:7px;
+    padding:4px 6px;font-size:11px;font-weight:600;color:var(--text);cursor:pointer;font-family:inherit;
+    transition:border-color .12s,background .12s;
+  }
+  .log-entry:hover{border-color:var(--c);background:var(--bg-card-hover);}
+  .log-entry i{width:7px;height:7px;border-radius:50%;background:var(--c);flex:none;}
+  .log-entry span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .log-entry b{font-family:var(--mono);font-size:10.5px;color:var(--text-faint);font-weight:650;}
+  /* Shows on hover so the grid stays clean. */
+  .log-day-add{
+    position:absolute;right:5px;bottom:5px;width:18px;height:18px;border-radius:6px;
+    border:1px solid var(--border);background:var(--bg-card);color:var(--text-faint);
+    font-size:13px;line-height:1;cursor:pointer;padding:0;opacity:0;transition:opacity .12s;
+  }
+  .log-day:hover .log-day-add,.log-day-add:focus{opacity:1;}
+  .log-day-add:hover{color:var(--text);border-color:var(--accent);}
+  .log-week{
+    background:var(--bg-card);border:1px dashed var(--border);border-radius:10px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:6px;
+  }
+  .log-week b{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text-strong);line-height:1.2;}
+  .log-week span{font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
+  .log-week-empty{color:var(--text-faint);}
+  .log-error{color:var(--c-test);text-align:center;}
+  /* The quick-log form. */
+  .log-add{margin-top:12px;}
+  .log-form{
+    background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:16px 18px;
+    display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;max-width:640px;margin:0 auto;
+  }
+  .log-form h3{grid-column:1/-1;margin:0;font-size:15px;font-weight:700;}
+  .log-types{grid-column:1/-1;display:flex;gap:8px;}
+  .log-types button{
+    flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+    background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:9px 8px;
+    color:var(--text-dim);font-size:12.5px;font-weight:650;cursor:pointer;font-family:inherit;
+  }
+  .log-types button i{width:8px;height:8px;border-radius:50%;background:var(--c);}
+  .log-types button.on{border-color:var(--c);color:var(--text);box-shadow:0 0 0 1px var(--c);}
+  .log-form label,.lf-field{display:flex;flex-direction:column;gap:5px;font-size:11.5px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .lf-flabel{display:block;}
+  /* The per-type fields span both columns and wrap in a responsive grid. */
+  .lf-fields{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:12px 18px;}
+  .log-form .lf-note,.log-form .lf-multi{grid-column:1/-1;}
+  .log-form input{
+    background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:8px;
+    padding:7px 9px;font-size:13.5px;font-family:inherit;width:100%;
+  }
+  .log-form input:focus{outline:none;border-color:var(--accent);}
+  .log-form .lf-unit{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-dim);text-transform:none;letter-spacing:0;}
+  .log-form .lf-unit em{font-style:normal;white-space:nowrap;color:var(--text-faint);}
+  /* Gym focus: toggle buttons, one selected style like the type picker. */
+  .lf-multi-btns{display:flex;flex-wrap:wrap;gap:7px;}
+  .lf-multi-btns button{
+    background:var(--bg-card);border:1px solid var(--border);border-radius:20px;
+    padding:6px 13px;font-size:12px;font-weight:650;color:var(--text-dim);cursor:pointer;font-family:inherit;
+    text-transform:none;letter-spacing:0;transition:background .12s,border-color .12s,color .12s;
+  }
+  .lf-multi-btns button:hover{border-color:var(--accent);color:var(--text);}
+  .lf-multi-btns button.on{background:var(--warn);border-color:var(--warn);color:#2A1B00;}
+  .log-form .rpe-row{grid-column:1/-1;justify-content:flex-start;margin:2px 0 0;}
+  .log-form-actions{grid-column:1/-1;display:flex;gap:8px;}
+  .log-form-actions .action-btn{margin-top:0;}
+  @media (max-width:720px){
+    .log-dow,.log-row{grid-template-columns:repeat(7,minmax(0,1fr));}
+    .log-dow-week,.log-week{display:none;}
+    .log-form{grid-template-columns:1fr;}
+  }
+
   .action-btn.danger{background:#E8395A;border-color:#E8395A;color:#fff;justify-content:center;margin-top:8px;}
   .action-btn.danger:hover{background:#d02a4a;}
   :root[data-theme="light"] .action-btn.danger:hover{
@@ -1476,6 +1610,10 @@
       <button class="foot-btn guide-btn" id="guideBtn" aria-label="Quick guide" aria-describedby="guidePop">
         <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2.9-1.2 1.7v.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="17" r="1.1" fill="currentColor"/></svg>
         <span class="foot-label">Guide</span>
+      </button>
+      <button class="foot-btn" id="logBtn" type="button" aria-label="Open the ride log">
+        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 9.5h17M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><rect x="7" y="12.5" width="3" height="3" rx=".7" fill="currentColor"/><rect x="12.5" y="12.5" width="3" height="3" rx=".7" fill="currentColor"/></svg>
+        <span class="foot-label">Log</span>
       </button>
       <button class="foot-btn" id="ftpHelp" type="button" aria-label="Show power and heart-rate zone reference">
         <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><rect x="3.5" y="13" width="4.6" height="7.5" rx="1.3" fill="currentColor"/><rect x="9.7" y="8.5" width="4.6" height="12" rx="1.3" fill="currentColor"/><rect x="15.9" y="4" width="4.6" height="16.5" rx="1.3" fill="currentColor"/></svg>
@@ -1766,13 +1904,15 @@
 <div id="summaryModal" class="live-player no-print" style="display:none;" role="dialog" aria-modal="true" aria-label="Workout summary">
   <div class="live-inner summary-inner">
     <div class="summary-scroll">
-      <p class="summary-title">Workout complete</p>
+      <p class="summary-title" id="summaryTitle">Workout complete</p>
       <p class="live-segment-index" id="summaryWorkoutName"></p>
       <div class="summary-cols">
         <div class="summary-grid" id="summaryGrid"></div>
         <div class="summary-pies" id="summaryPies"></div>
       </div>
       <div class="ftp-estimate" id="ftpEstimate" style="display:none;"></div>
+      <!-- Rate of perceived exertion, 1-10; saved with the ride. -->
+      <div class="rpe-row" id="rpeRow"></div>
     </div>
     <div class="summary-actions">
       <button class="action-btn strava-sync" id="summaryStravaBtn">
@@ -1791,7 +1931,39 @@
           Download Timeline Image
         </button>
       </div>
-      <button class="action-btn danger" id="summaryCloseBtn">Close</button>
+      <div class="summary-row">
+        <button class="action-btn danger" id="summaryDeleteBtn" style="display:none;">Delete ride</button>
+        <button class="action-btn danger" id="summaryCloseBtn">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ride log: a month calendar of everything done, on the trainer or off it. -->
+<div id="logModal" class="live-player no-print" style="display:none;" role="dialog" aria-modal="true" aria-label="Ride log">
+  <div class="live-inner log-inner">
+    <div class="log-head">
+      <button class="icon-btn" id="logPrev" type="button" title="Previous month" aria-label="Previous month">&#8249;</button>
+      <h2 class="log-month" id="logMonth"></h2>
+      <button class="icon-btn" id="logNext" type="button" title="Next month" aria-label="Next month">&#8250;</button>
+      <button class="action-btn log-add-btn" id="logAddBtn" type="button">+ Log an activity</button>
+      <button class="action-btn log-import-btn" id="logImportStrava" type="button" title="Import your activities from Strava">
+        <svg viewBox="135 15 87 17.5" width="52" height="11" role="img" aria-label="Import from Strava"><path fill-rule="evenodd" clip-rule="evenodd" d="M180.749 31.8195L180.748 31.8188H185.357L188.188 26.1268L191.019 31.8188H196.618L188.187 15.5403L180.184 30.9945L177.111 26.5078C179.008 25.5928 180.191 24.0081 180.191 21.7318V21.687C180.191 20.0803 179.7 18.9197 178.763 17.9822C177.669 16.8887 175.906 16.1968 173.139 16.1968H165.506V31.8195H170.728V27.3558H171.844L174.79 31.8195H180.749ZM212.954 15.5403L204.524 31.8188H210.124L212.955 26.1268L215.786 31.8188H221.385L212.954 15.5403ZM200.576 32.4593L209.006 16.1808H203.406L200.575 21.8729L197.744 16.1808H192.144L200.576 32.4593ZM172.982 23.6287C174.232 23.6287 174.991 23.0708 174.991 22.1112V22.0663C174.991 21.0621 174.21 20.5711 173.005 20.5711H170.728V23.6287H172.982ZM154.337 20.6158H149.74V16.1968H164.157V20.6158H159.56V31.8195H154.337V20.6158ZM137.015 26.1507L134.225 29.4761C136.211 31.2172 139.068 32.1097 142.237 32.1097C146.433 32.1097 149.133 30.101 149.133 26.82V26.7756C149.133 23.6287 146.455 22.468 142.46 21.7318C140.808 21.419 140.384 21.1515 140.384 20.7273V20.6827C140.384 20.3033 140.742 20.0355 141.523 20.0355C142.973 20.0355 144.737 20.5042 146.209 21.5754L148.754 18.0493C146.946 16.6209 144.714 15.9065 141.701 15.9065C137.394 15.9065 135.073 18.2055 135.073 21.1737V21.2185C135.073 24.5214 138.153 25.526 141.656 26.2398C143.33 26.5747 143.821 26.82 143.821 27.2665V27.3113C143.821 27.7352 143.42 27.9805 142.482 27.9805C140.652 27.9805 138.711 27.4452 137.015 26.1507Z" fill="#FC4C02"/></svg>
+        Import
+      </button>
+      <span class="log-spacer"></span>
+      <button class="icon-btn" id="logExportBtn" type="button" title="Download the whole log as a file" aria-label="Export log">
+        <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M12 3.5v11M12 14.5l-4.2-4.2M12 14.5l4.2-4.2M4.5 16.5v2.2a1.8 1.8 0 001.8 1.8h11.4a1.8 1.8 0 001.8-1.8v-2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="icon-btn" id="logImportBtn" type="button" title="Import a log file" aria-label="Import log">
+        <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M12 14.5v-11M12 3.5L7.8 7.7M12 3.5l4.2 4.2M4.5 16.5v2.2a1.8 1.8 0 001.8 1.8h11.4a1.8 1.8 0 001.8-1.8v-2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <input type="file" id="logImportFile" accept="application/json,.json" style="display:none;">
+      <button class="action-btn danger" id="logCloseBtn" type="button">Close</button>
+    </div>
+    <div class="log-scroll">
+      <div class="log-grid" id="logGrid"></div>
+      <div class="log-add" id="logAdd" style="display:none;"></div>
     </div>
   </div>
 </div>
@@ -2020,7 +2192,23 @@
     ftpEstimate: document.getElementById('ftpEstimate'),
     summaryFitBtn: document.getElementById('summaryFitBtn'),
     summaryImageBtn: document.getElementById('summaryImageBtn'),
-    summaryCloseBtn: document.getElementById('summaryCloseBtn')
+    summaryCloseBtn: document.getElementById('summaryCloseBtn'),
+    summaryDeleteBtn: document.getElementById('summaryDeleteBtn'),
+    summaryTitle: document.getElementById('summaryTitle'),
+    rpeRow: document.getElementById('rpeRow'),
+    logBtn: document.getElementById('logBtn'),
+    logModal: document.getElementById('logModal'),
+    logMonth: document.getElementById('logMonth'),
+    logGrid: document.getElementById('logGrid'),
+    logAdd: document.getElementById('logAdd'),
+    logPrev: document.getElementById('logPrev'),
+    logNext: document.getElementById('logNext'),
+    logAddBtn: document.getElementById('logAddBtn'),
+    logImportStrava: document.getElementById('logImportStrava'),
+    logExportBtn: document.getElementById('logExportBtn'),
+    logImportBtn: document.getElementById('logImportBtn'),
+    logImportFile: document.getElementById('logImportFile'),
+    logCloseBtn: document.getElementById('logCloseBtn')
   };
 
   var selectedKey = null;    // workout shown in the detail pane
@@ -2655,7 +2843,9 @@
     var z = ZONES[wo.zone] || ZONES.endurance;
 
     var card = document.createElement('div');
-    card.className = 'workout-card' + (selectedKey === wo.key ? ' selected' : '');
+    // `doneByKey` is filled from the ride log once it has been read.
+    card.className = 'workout-card' + (selectedKey === wo.key ? ' selected' : '') +
+      ((typeof doneByKey !== 'undefined' && doneByKey && doneByKey[wo.key]) ? ' done' : '');
     card.id = 'workout-' + wo.key;
     card.setAttribute('data-card', wo.key);
 
@@ -3189,8 +3379,9 @@
     {z:'Z5', label:'Anaerobic',  lo:97.4, hi:null, color:'#FF5D75'}
   ];
   function hrZoneIndex(bpm){
-    if(!maxHr || bpm === null || bpm === undefined) return -1;
-    var pct = bpm / maxHr * 100;
+    var m = rideMaxHr();
+    if(!m || bpm === null || bpm === undefined) return -1;
+    var pct = bpm / m * 100;
     for(var i = 0; i < HR_ZONES.length; i++){ if(HR_ZONES[i].hi === null || pct < HR_ZONES[i].hi) return i; }
     return HR_ZONES.length - 1;
   }
@@ -3883,7 +4074,9 @@
   // server is needed. The client id/secret are entered once and live in this
   // browser's storage — never in the file, so a public repo stays clean.
   var STRAVA_KEY = 'ftpPlan_strava_v1';
-  var STRAVA_SCOPE = 'read,activity:write';
+  // activity:read lets the ride log import the athlete's own activities.
+  // activity:write stays for uploading rides done here.
+  var STRAVA_SCOPE = 'read,activity:read,activity:write';
   // The app's id is public; its secret lives in the Worker, which does the
   // code/token exchange on the page's behalf. So Connect is one click.
   var STRAVA_APP_ID = '248261';
@@ -3905,6 +4098,30 @@
     strava.expiresAt = json.expires_at;             // unix seconds
     if(json.athlete) strava.athlete = {id:json.athlete.id, name:(json.athlete.firstname || '') + ' ' + (json.athlete.lastname || '')};
     saveStrava();
+  }
+  // Whether the athlete granted a given scope. Recorded from the OAuth
+  // callback, since the token endpoints don't echo it back.
+  function stravaHasScope(s){ return (strava.scope || '').split(',').indexOf(s) >= 0; }
+  function stravaCanRead(){ return stravaHasScope('activity:read') || stravaHasScope('activity:read_all'); }
+
+  // The athlete's own activities since `sinceMs`, newest first. One request per
+  // 100; capped so a very active athlete can't spend the whole rate budget.
+  async function stravaFetchActivities(sinceMs){
+    var token = await stravaAccessToken();
+    var perPage = 100, after = Math.floor(sinceMs / 1000), out = [];
+    for(var page = 1; page <= 5; page++){
+      var url = 'https://www.strava.com/api/v3/athlete/activities?per_page=' + perPage + '&page=' + page + '&after=' + after;
+      var res = await fetch(url, {headers:{Authorization:'Bearer ' + token}});
+      if(res.status === 401 || res.status === 403){
+        throw new Error('Strava didn’t allow reading your activities — reconnect and keep "View data about your activities" ticked.');
+      }
+      if(!res.ok){ var j = await res.json().catch(function(){ return {}; }); throw new Error(j.message || ('HTTP ' + res.status)); }
+      var arr = await res.json();
+      if(!Array.isArray(arr)) break;
+      out = out.concat(arr);
+      if(arr.length < perPage) break;
+    }
+    return out;
   }
 
   // Access tokens last six hours; refresh a minute early.
@@ -3932,12 +4149,15 @@
       els.bleWarning.textContent = 'Strava access was declined (' + q.get('error') + ').';
       return;
     }
-    if((q.get('scope') || '').indexOf('activity:write') < 0){
+    var granted = q.get('scope') || '';
+    if(granted.indexOf('activity:write') < 0){
       els.bleWarning.style.display = 'block';
       els.bleWarning.textContent = 'Strava connected without upload permission — reconnect and tick "Upload your activities".';
     }
     try{
       await stravaTokenRequest({grant_type:'authorization_code', code:q.get('code')});
+      strava.scope = granted;   // remember what was granted, for the import feature
+      saveStrava();
     }catch(e){
       els.bleWarning.style.display = 'block';
       els.bleWarning.textContent = 'Strava sign-in failed: ' + e.message + ' — try Connect again in a moment.';
@@ -4022,6 +4242,7 @@
       link.style.display = '';
       say('Synced. Attach the timeline image as a photo on the activity if you want it there.');
       liveState.stravaActivityId = activityId;
+      patchCurrentRide({stravaActivityId:activityId});
     }catch(e){
       btn.disabled = false; btn.classList.remove('busy'); els.summaryStravaText.textContent = 'Sync to';
       say('Upload failed: ' + e.message, true);
@@ -4083,6 +4304,12 @@
   };
 
   var INTENSITY_MIN = 50, INTENSITY_MAX = 150;
+
+  // The FTP and max HR a ride is judged against are the ones it was ridden
+  // at, snapshotted onto liveState at the start and restored with a saved
+  // ride — so a ride from before a retest keeps its zones and TSS.
+  function rideFtp(){ return liveState.ftp || ftp; }
+  function rideMaxHr(){ return liveState.maxHr || maxHr; }
 
   // The workout arms itself when the window opens and only starts the clock
   // once the rider is actually turning the cranks.
@@ -4164,6 +4391,11 @@
     liveState.paused = false;
     liveState.samples = [];
     liveState.startDateMs = Date.now();
+    liveState.ftp = hasFtp() ? ftp : null;
+    liveState.maxHr = maxHr || null;
+    liveState.savedId = null;
+    liveState.rpe = null;
+    liveState.stravaActivityId = null;
     liveState.clockOriginMs = now();
     liveState.pausedAccumMs = 0;
     liveState.pausedAtMs = 0;
@@ -5069,8 +5301,12 @@
     }
     var avgP = avg(powers);
     var kj = avgP !== null ? Math.round(avgP * samples.length / 1000) : null;
+    // Training stress from normalised power against the FTP ridden at.
+    var f = rideFtp(), IF = (np !== null && f) ? np / f : null;
+    var tss = IF !== null ? Math.round(samples.length / 3600 * IF * IF * 100) : null;
     return {duration:samples.length, avgPower:avgP, maxPower:mx(powers), np:np,
-            avgHr:avg(hrs), maxHr:mx(hrs), avgCadence:avg(cads), maxCadence:mx(cads), kj:kj};
+            avgHr:avg(hrs), maxHr:mx(hrs), avgCadence:avg(cads), maxCadence:mx(cads), kj:kj,
+            IF:IF !== null ? Math.round(IF * 100) / 100 : null, tss:tss};
   }
 
   // ---- time-in-zone pies ----
@@ -5087,8 +5323,9 @@
     {z:'Z7', label:'Neuromuscular', hi:null, key:'anaerobic', color:'#FF3B30'}
   ];
   function powerZoneIndex(w){
-    if(w === null || w === undefined || !ftp) return -1;
-    var pct = w / ftp * 100;
+    var f = rideFtp();
+    if(w === null || w === undefined || !f) return -1;
+    var pct = w / f * 100;
     for(var i = 0; i < POWER_PIE_ZONES.length; i++){ if(POWER_PIE_ZONES[i].hi === null || pct <= POWER_PIE_ZONES[i].hi + 0.5) return i; }
     return POWER_PIE_ZONES.length - 1;
   }
@@ -5150,22 +5387,36 @@
       cards += '<div class="pie-card"><h4>' + pTitle + '</h4>' + cvHtml + pieKey(pSlices, pPop) + '</div>';
       summaryPieSpecs.push({slices:pSlices, total:pTotal, focus:pPop});
     }
-    if(hTotal >= 60 && maxHr){
+    if(hTotal >= 60 && rideMaxHr()){
       var hSlices = HR_ZONES.map(function(z, i){ return {z:z.z, label:z.label, sec:hSecs[i], color:z.color}; });
       var hPop = hSecs.indexOf(Math.max.apply(null, hSecs));
-      cards += '<div class="pie-card"><h4>Heart rate zones \u00b7 max ' + maxHr + '</h4>' + cvHtml + pieKey(hSlices, hPop) + '</div>';
+      cards += '<div class="pie-card"><h4>Heart rate zones \u00b7 max ' + rideMaxHr() + '</h4>' + cvHtml + pieKey(hSlices, hPop) + '</div>';
       summaryPieSpecs.push({slices:hSlices, total:hTotal, focus:hPop});
     }
     return cards;
   }
-  function showSummary(){
+  function fmtRideDate(ms){
+    var d = new Date(ms);
+    var days = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'], mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var h = d.getHours(), mm = d.getMinutes();
+    return days[d.getDay()] + ' ' + d.getDate() + ' ' + mons[d.getMonth()] + ' ' + d.getFullYear() + ', ' +
+      ((h % 12) || 12) + ':' + (mm < 10 ? '0' : '') + mm + (h < 12 ? ' am' : ' pm');
+  }
+
+  // The same screen serves a ride that just finished and one reopened from
+  // the log; `opts.fromLog` only changes the framing and which buttons show.
+  function showSummary(opts){
+    opts = opts || {};
     var stats = computeSummary(liveState.samples);
-    els.summaryWorkoutName.textContent = liveState.workout ? liveState.workout.name : 'Live ride';
+    els.summaryTitle.textContent = opts.fromLog ? 'Saved ride' : 'Workout complete';
+    els.summaryWorkoutName.textContent = (liveState.workout ? liveState.workout.name : 'Live ride') +
+      (liveState.startDateMs ? ' \u00b7 ' + fmtRideDate(liveState.startDateMs) : '');
     var chips = [
       {lab:'Duration', val: mmss(stats.duration)},
+      {lab:'TSS', val: stats.tss !== null ? stats.tss : '\u2014'},
       {lab:'Avg Power', val: stats.avgPower !== null ? stats.avgPower + ' W' : '\u2014'},
-      {lab:'Max Power', val: stats.maxPower !== null ? stats.maxPower + ' W' : '\u2014'},
       {lab:'Normalized Power', val: stats.np !== null ? stats.np + ' W' : '\u2014'},
+      {lab:'Max Power', val: stats.maxPower !== null ? stats.maxPower + ' W' : '\u2014'},
       {lab:'Avg Heart Rate', val: stats.avgHr !== null ? stats.avgHr + ' bpm' : '\u2014'},
       {lab:'Max Heart Rate', val: stats.maxHr !== null ? stats.maxHr + ' bpm' : '\u2014'},
       {lab:'Avg Cadence', val: stats.avgCadence !== null ? stats.avgCadence + ' rpm' : '\u2014'},
@@ -5177,15 +5428,23 @@
     els.summaryPies.innerHTML = renderZonePies();
     paintSummaryPies();
     renderFtpEstimate();
-    // Fresh Strava state for this ride. Not connected yet? Offer to connect
-    // and sync in one go — the ride is parked first, since the consent
-    // round-trip reloads the page.
-    els.summaryStravaBtn.style.display = '';
+    paintRpe();
+    // Strava state for this ride: already synced (from the log, or earlier in
+    // this session) shows the link; otherwise offer the sync. Not connected
+    // yet? Connect and sync in one go — the ride is parked first, since the
+    // consent round-trip reloads the page.
+    var synced = !!liveState.stravaActivityId;
+    els.summaryStravaBtn.style.display = synced ? 'none' : '';
     els.summaryStravaBtn.disabled = false;
+    els.summaryStravaBtn.classList.remove('busy');
     els.summaryStravaText.textContent = stravaConnected() ? 'Sync to' : 'Connect & sync to';
-    els.summaryStravaLink.style.display = 'none';
+    els.summaryStravaLink.style.display = synced ? '' : 'none';
+    if(synced) els.summaryStravaLink.href = 'https://www.strava.com/activities/' + liveState.stravaActivityId;
     els.summaryStravaStatus.style.display = 'none';
+    els.summaryDeleteBtn.style.display = opts.fromLog ? '' : 'none';
+    liveState.summaryFromLog = !!opts.fromLog;
     els.summaryModal.style.display = 'flex';
+    if(!opts.fromLog) saveCurrentRide();
   }
 
   // ---- parked ride: survives the Strava consent round-trip ----
@@ -5197,6 +5456,10 @@
         startDateMs: liveState.startDateMs,
         samples: liveState.samples,
         laps: liveState.laps,
+        ftp: liveState.ftp || null,
+        maxHr: liveState.maxHr || null,
+        rpe: liveState.rpe || null,
+        savedId: liveState.savedId || null,
         upload: !!uploadIntent
       }));
     }catch(e){ console.log('Could not park the ride:', e && e.message); }
@@ -5220,6 +5483,11 @@
     liveState.samples = s.samples;
     liveState.laps = s.laps || [];
     liveState.startDateMs = s.startDateMs;
+    liveState.ftp = s.ftp || null;
+    liveState.maxHr = s.maxHr || null;
+    liveState.rpe = s.rpe || null;
+    liveState.savedId = s.savedId || null;   // already in the log; don't save it twice
+    liveState.stravaActivityId = null;
     liveState.intensity = 1;
     liveState.chartMaxPct = Math.max(105, Math.ceil((peak + 8) / 5) * 5);
     liveState.elapsedTotal = liveState.totalSeconds;
@@ -5353,14 +5621,23 @@
     paintWaitingFtp();
   });
 
-  els.summaryCloseBtn.addEventListener('click', function(){
+  // Closing a ride opened from the log goes back to the log.
+  function closeSummary(){
     els.summaryModal.style.display = 'none';
     clearStashedRide();   // the rider is done with it
-  });
+    if(liveState.summaryFromLog){ liveState.summaryFromLog = false; reopenLog(); }
+  }
+  els.summaryCloseBtn.addEventListener('click', closeSummary);
   document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape' && els.summaryModal.style.display !== 'none'){
-      els.summaryModal.style.display = 'none';
-    }
+    if(e.key === 'Escape' && els.summaryModal.style.display !== 'none') closeSummary();
+  });
+  els.summaryDeleteBtn.addEventListener('click', function(){
+    if(!liveState.savedId || !confirm('Delete this ride from the log? This can’t be undone.')) return;
+    rideDelete(liveState.savedId).then(function(){
+      liveState.savedId = null;
+      refreshDoneMarks();
+      closeSummary();
+    });
   });
   function exportBasename(){
     var nameSlug = (liveState.workout ? liveState.workout.name : 'ride').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -5433,11 +5710,12 @@
 
     // Power scale: 40% at the floor up to whatever the ride (or plan) peaked.
     var peak = 100;
-    samples.forEach(function(s){ if(s.power !== null) peak = Math.max(peak, s.power / ftp * 100); });
+    var f = rideFtp();
+    samples.forEach(function(s){ if(s.power !== null) peak = Math.max(peak, s.power / f * 100); });
     liveState.flat.forEach(function(s){ if(s.pct !== null) peak = Math.max(peak, s.pct, s.pctEnd || 0); });
     var pmin = 40, pmax = Math.max(120, Math.ceil((peak + 8) / 5) * 5);
     function yPct(pct){ return H - Math.max(0, Math.min(1, (pct - pmin) / (pmax - pmin))) * H; }
-    function pMap(w){ return yPct(ftp > 0 ? w / ftp * 100 : 0); }
+    function pMap(w){ return yPct(f > 0 ? w / f * 100 : 0); }
 
     // Zone bands: hairlines at the boundaries, a tag at the left edge, the
     // focus zone's tag in the accent so axis, blocks and slice agree.
@@ -5500,8 +5778,9 @@
   // "@ 94%" does, and the name is on the Strava post already.
   function structureHeadline(wo){
     if(!wo) return '';
-    if(wo.test || !hasFtp()) return wo.short || '';
-    return String(wo.short || '').replace(/(\d+)%/g, function(m, p){ return Math.round(ftp * p / 100) + ' W'; });
+    var f = rideFtp();
+    if(wo.test || !f) return wo.short || '';
+    return String(wo.short || '').replace(/(\d+)%/g, function(m, p){ return Math.round(f * p / 100) + ' W'; });
   }
 
   // Letter-spaced centred text. Canvas has no tracking of its own, and the
@@ -5693,7 +5972,7 @@
     });
     var pTotal = pSecs.reduce(function(a, b){ return a + b; }, 0);
     var hTotal = hSecs.reduce(function(a, b){ return a + b; }, 0);
-    var hasHr = hTotal >= 60 && maxHr;
+    var hasHr = hTotal >= 60 && rideMaxHr();
 
     var pFocus = focusZoneIndex(wo, pSecs);
     if(pFocus < 0 || !pSecs[pFocus]) pFocus = pSecs.indexOf(Math.max.apply(null, pSecs));
@@ -5750,7 +6029,8 @@
       console.error('Image export failed:', e);
       btn.textContent = 'Image export failed';
     }
-  });  // ============================================================
+  });
+  // ============================================================
   // .ZWO EXPORT
   // ============================================================
   function escapeXml(s){
@@ -5842,6 +6122,609 @@
     document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
   }
+
+  // ============================================================
+  // RIDE LOG
+  // ============================================================
+  // Every finished ride is kept, in this browser, in IndexedDB — binary-safe
+  // and hundreds of MB, where localStorage is ~5 MB of strings. A record
+  // holds the ingredients (samples, laps, the FTP and max HR ridden at), not
+  // the outputs: the .fit and the timeline image are regenerated on demand,
+  // identical to the day's, and pick up any later redesign for free.
+  //
+  // Manual entries (an outdoor ride, a run, the gym) share the store so the
+  // calendar shows the whole week, not just what happened on the trainer.
+  var RIDE_DB = 'ftpPlanRides', RIDE_STORE = 'rides';
+  var rideDbPromise = null;
+  function rideDb(){
+    if(rideDbPromise) return rideDbPromise;
+    rideDbPromise = new Promise(function(resolve, reject){
+      if(!window.indexedDB){ reject(new Error('IndexedDB unavailable')); return; }
+      var req = indexedDB.open(RIDE_DB, 1);
+      req.onupgradeneeded = function(){
+        var db = req.result;
+        var st = db.createObjectStore(RIDE_STORE, {keyPath:'id'});
+        st.createIndex('day', 'day', {unique:false});
+      };
+      req.onsuccess = function(){ resolve(req.result); };
+      req.onerror = function(){ reject(req.error); };
+    });
+    return rideDbPromise;
+  }
+  function rideTx(mode, fn){
+    return rideDb().then(function(db){
+      return new Promise(function(resolve, reject){
+        var tx = db.transaction(RIDE_STORE, mode), st = tx.objectStore(RIDE_STORE);
+        var out = fn(st);
+        tx.oncomplete = function(){ resolve(out && out.result !== undefined ? out.result : out); };
+        tx.onerror = function(){ reject(tx.error); };
+        tx.onabort = function(){ reject(tx.error); };
+      });
+    });
+  }
+  function rideSave(rec){ return rideTx('readwrite', function(st){ st.put(rec); return rec; }); }
+  function rideDelete(id){ return rideTx('readwrite', function(st){ st.delete(id); return id; }); }
+  function rideGet(id){ return rideTx('readonly', function(st){ return st.get(id); }); }
+  function rideAll(){
+    return rideTx('readonly', function(st){ return st.getAll(); }).then(function(all){
+      return (all || []).sort(function(a, b){ return a.startDateMs - b.startDateMs; });
+    });
+  }
+  function ridePatch(id, patch){
+    return rideGet(id).then(function(rec){
+      if(!rec) return null;
+      Object.keys(patch).forEach(function(k){ rec[k] = patch[k]; });
+      return rideSave(rec);
+    });
+  }
+
+  // Local calendar day, "YYYY-MM-DD".
+  function dayKey(ms){
+    var d = new Date(ms);
+    return d.getFullYear() + '-' + (d.getMonth() < 9 ? '0' : '') + (d.getMonth() + 1) + '-' + (d.getDate() < 10 ? '0' : '') + d.getDate();
+  }
+
+  // ---- saving the ride that just finished ----
+  // Zone seconds are computed once here so the calendar and the week totals
+  // never have to walk the samples again.
+  function zoneSeconds(samples){
+    var p = POWER_PIE_ZONES.map(function(){ return 0; }), h = HR_ZONES.map(function(){ return 0; });
+    samples.forEach(function(s){
+      var pi = powerZoneIndex(s.power); if(pi >= 0) p[pi]++;
+      var hi = hrZoneIndex(s.hr);       if(hi >= 0) h[hi]++;
+    });
+    return {power:p, hr:h};
+  }
+  function rideRecordFromLive(){
+    var wo = liveState.workout, stats = computeSummary(liveState.samples);
+    return {
+      id: liveState.startDateMs,
+      type: 'indoor',
+      day: dayKey(liveState.startDateMs),
+      startDateMs: liveState.startDateMs,
+      durationSec: liveState.samples.length,
+      key: wo ? wo.key : null,
+      name: wo ? wo.name : 'Live ride',
+      zone: wo ? wo.zone : null,
+      ftp: liveState.ftp || null,
+      maxHr: liveState.maxHr || null,
+      samples: liveState.samples,
+      laps: liveState.laps,
+      stats: stats,
+      tss: stats.tss,
+      tiz: zoneSeconds(liveState.samples),
+      rpe: liveState.rpe || null,
+      stravaActivityId: liveState.stravaActivityId || null,
+      savedAt: Date.now()
+    };
+  }
+  function saveCurrentRide(){
+    if(!liveState.samples.length || liveState.savedId) return Promise.resolve(null);
+    var rec = rideRecordFromLive();
+    liveState.savedId = rec.id;
+    return rideSave(rec).then(function(){
+      refreshDoneMarks();
+      return rec;
+    }).catch(function(e){
+      liveState.savedId = null;
+      console.log('Ride not saved:', e && e.message);
+      return null;
+    });
+  }
+  function patchCurrentRide(patch){
+    if(!liveState.savedId) return Promise.resolve(null);
+    return ridePatch(liveState.savedId, patch).catch(function(e){ console.log('Ride not updated:', e && e.message); });
+  }
+
+  // ---- reopening a saved ride ----
+  // Rebuilds liveState the way the Strava round-trip does, with the ride's
+  // own FTP and max HR, then shows the same summary — so the pies, the
+  // exports and the sync all work unchanged.
+  function openSavedRide(id){
+    rideGet(id).then(function(r){
+      if(!r || r.type !== 'indoor') return;
+      var wo = r.key ? byKey(r.key) : null;
+      var flat = wo ? expandBlocks(wo.blocks).map(function(x){
+        return {type:x.type, min:x.min, pct:x.pct, pctEnd:x.pctEnd, label:x.label, seconds:Math.round(x.min * 60)};
+      }) : [];
+      var peak = 0;
+      flat.forEach(function(x){ if(x.pct !== null) peak = Math.max(peak, x.pct, x.pctEnd || 0); });
+      liveState.workout = wo;
+      liveState.flat = flat;
+      liveState.totalSeconds = flat.reduce(function(a, x){ return a + x.seconds; }, 0) || r.samples.length;
+      liveState.samples = r.samples;
+      liveState.laps = r.laps || [];
+      liveState.startDateMs = r.startDateMs;
+      liveState.ftp = r.ftp || null;
+      liveState.maxHr = r.maxHr || null;
+      liveState.savedId = r.id;
+      liveState.rpe = r.rpe || null;
+      liveState.stravaActivityId = r.stravaActivityId || null;
+      liveState.intensity = 1;
+      liveState.chartMaxPct = Math.max(105, Math.ceil((peak + 8) / 5) * 5);
+      liveState.elapsedTotal = liveState.totalSeconds;
+      liveState.active = false;
+      els.logModal.style.display = 'none';
+      showSummary({fromLog:true});
+    });
+  }
+
+  // ---- RPE on the summary ----
+  function paintRpe(){
+    [].forEach.call(els.rpeRow.querySelectorAll('button'), function(b){
+      b.classList.toggle('on', +b.getAttribute('data-rpe') === liveState.rpe);
+    });
+  }
+  els.rpeRow.innerHTML = '<span class="rpe-label">How hard was that? <em>RPE 1–10</em></span><span class="rpe-btns">' +
+    [1,2,3,4,5,6,7,8,9,10].map(function(n){ return '<button type="button" data-rpe="' + n + '">' + n + '</button>'; }).join('') + '</span>';
+  els.rpeRow.addEventListener('click', function(e){
+    var b = e.target.closest('button[data-rpe]');
+    if(!b) return;
+    var v = +b.getAttribute('data-rpe');
+    liveState.rpe = liveState.rpe === v ? null : v;   // tap again to clear
+    paintRpe();
+    patchCurrentRide({rpe:liveState.rpe});
+  });
+
+  // ---- "done" marks on the workout cards ----
+  var doneByKey = {};
+  function refreshDoneMarks(){
+    rideAll().then(function(all){
+      doneByKey = {};
+      all.forEach(function(r){ if(r.type === 'indoor' && r.key) doneByKey[r.key] = r.startDateMs; });
+      [].forEach.call(els.workoutCards.querySelectorAll('.workout-card'), function(c){
+        var k = c.getAttribute('data-card');
+        c.classList.toggle('done', !!doneByKey[k]);
+      });
+    }).catch(function(){});
+  }
+
+  // ---- calendar ----
+  // Each type asks for what suits it. `fields` drives the form and what's
+  // stored; the trio distance/rate/time reconciles so entering any two fills
+  // the third (a run's time from distance and pace, a ride's speed from
+  // distance and duration). Metric throughout — this is an Australian app.
+  var MANUAL_TYPES = {
+    ride:{label:'Ride', color:'var(--accent)', fields:[
+      {key:'distanceKm', kind:'num',  label:'Distance', unit:'km', step:0.1, trio:'dist'},
+      {key:'durationSec',kind:'time', label:'Duration', trio:'time'},
+      {key:'avgSpeedKmh',kind:'num',  label:'Avg speed', unit:'km/h', step:0.1, trio:'rate', rate:'speed'},
+      {key:'avgPower',   kind:'num',  label:'Avg power', unit:'W', step:1},
+      {key:'elevationM', kind:'num',  label:'Elevation', unit:'m', step:1}
+    ]},
+    run:{label:'Run', color:'var(--ok)', fields:[
+      {key:'distanceKm', kind:'num',  label:'Distance', unit:'km', step:0.1, trio:'dist'},
+      {key:'paceSec',    kind:'pace', label:'Avg pace', unit:'/km', trio:'rate', rate:'pace'},
+      {key:'durationSec',kind:'time', label:'Time', trio:'time'}
+    ]},
+    gym:{label:'Gym', color:'var(--warn)', fields:[
+      {key:'durationSec',kind:'time', label:'Time'},
+      {key:'groups', kind:'multi', label:'Focus', options:[
+        ['full','Full body'],['lower','Lower'],['upper','Upper'],['core','Core'],['mobility','Mobility']
+      ]}
+    ]}
+  };
+  // Old records were saved as type 'outdoor'; treat them as rides.
+  function typeSpec(t){ return MANUAL_TYPES[t] || MANUAL_TYPES.ride; }
+  var logMonth = null;   // {y, m} being shown
+  function openLog(){
+    var d = new Date();
+    logMonth = {y:d.getFullYear(), m:d.getMonth()};
+    els.logAdd.style.display = 'none';
+    els.logModal.style.display = 'flex';
+    renderLog();
+  }
+  function closeLog(){ els.logModal.style.display = 'none'; }
+  // Back from a saved ride: same month, fresh data.
+  function reopenLog(){
+    if(!logMonth){ openLog(); return; }
+    els.logModal.style.display = 'flex';
+    renderLog();
+  }
+  function shiftLogMonth(n){
+    var d = new Date(logMonth.y, logMonth.m + n, 1);
+    logMonth = {y:d.getFullYear(), m:d.getMonth()};
+    renderLog();
+  }
+  function fmtHours(sec){
+    var h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60);
+    return h ? h + 'h ' + (m < 10 ? '0' : '') + m + 'm' : m + 'm';
+  }
+  function entryColor(r){
+    if(r.type === 'indoor') return r.zone && ZONES[r.zone] ? ZONES[r.zone].hex : 'var(--accent)';
+    return typeSpec(r.type).color;
+  }
+  function entryName(r){
+    return r.type === 'indoor' ? r.name : (r.name || typeSpec(r.type).label);
+  }
+  // A one-line summary of a manual entry's own fields, for the chip's tooltip.
+  function entryDetail(r){
+    if(r.type === 'indoor') return '';
+    var f = r.fields || {}, bits = [];
+    if(f.distanceKm) bits.push(f.distanceKm + ' km');
+    if(r.type === 'run' && f.paceSec) bits.push(secToClock(f.paceSec) + '/km');
+    if(r.type === 'ride' && f.avgSpeedKmh) bits.push(f.avgSpeedKmh + ' km/h');
+    if(f.avgPower) bits.push(f.avgPower + ' W');
+    if(f.elevationM) bits.push(f.elevationM + ' m');
+    if(f.groups && f.groups.length) bits.push(f.groups.map(function(g){
+      var o = (typeSpec('gym').fields[1].options.filter(function(x){ return x[0] === g; })[0]); return o ? o[1] : g;
+    }).join(', '));
+    return bits.join(' · ');
+  }
+
+  // ---- time / pace helpers ----
+  // "1:45:30" or "5:30" -> seconds; a bare number is minutes (a 5 pace = 5:00).
+  function clockToSec(str){
+    str = String(str || '').trim();
+    if(!str) return null;
+    if(str.indexOf(':') < 0){ var m = parseFloat(str); return isNaN(m) ? null : Math.round(m * 60); }
+    var p = str.split(':').map(Number);
+    if(p.some(isNaN)) return null;
+    return p.length === 3 ? p[0]*3600 + p[1]*60 + p[2] : p[0]*60 + p[1];
+  }
+  function secToClock(sec){
+    if(sec === null || sec === undefined || isNaN(sec)) return '';
+    sec = Math.round(sec);
+    var h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+    var mm = (h && m < 10 ? '0' : '') + m, ss = (s < 10 ? '0' : '') + s;
+    return (h ? h + ':' : '') + mm + ':' + ss;
+  }
+  var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+  function renderLog(){
+    rideAll().then(function(all){
+      var byDay = {};
+      all.forEach(function(r){ (byDay[r.day] = byDay[r.day] || []).push(r); });
+
+      var y = logMonth.y, m = logMonth.m;
+      els.logMonth.textContent = MONTHS[m] + ' ' + y;
+      var first = new Date(y, m, 1);
+      // Monday starts the week: shift Sunday (0) to the end.
+      var lead = (first.getDay() + 6) % 7;
+      var start = new Date(y, m, 1 - lead);
+      var todayKey = dayKey(Date.now());
+
+      var html = '<div class="log-dow">' + DOW.map(function(d){ return '<span>' + d + '</span>'; }).join('') + '<span class="log-dow-week">Week</span></div>';
+      for(var w = 0; w < 6; w++){
+        var rowStart = new Date(start.getFullYear(), start.getMonth(), start.getDate() + w * 7);
+        if(w === 5 && rowStart.getMonth() !== m) break;   // a 5-row month
+        var cells = '', wkTss = 0, wkSec = 0, wkN = 0;
+        for(var i = 0; i < 7; i++){
+          var d = new Date(rowStart.getFullYear(), rowStart.getMonth(), rowStart.getDate() + i);
+          var k = dayKey(d.getTime()), list = byDay[k] || [];
+          var out = d.getMonth() !== m;
+          list.forEach(function(r){ wkTss += r.tss || 0; wkSec += r.durationSec || 0; wkN++; });
+          cells += '<div class="log-day' + (out ? ' out' : '') + (k === todayKey ? ' today' : '') + '" data-day="' + k + '">' +
+            '<span class="log-date">' + d.getDate() + '</span>' +
+            list.map(function(r){
+              var det = entryDetail(r);
+              var tip = entryName(r) + (det ? ' · ' + det : '') + (r.tss ? ' · TSS ' + r.tss : '');
+              return '<button type="button" class="log-entry" data-id="' + r.id + '" style="--c:' + entryColor(r) + '" title="' + tip.replace(/"/g, '&quot;') + '">' +
+                '<i></i><span>' + entryName(r) + '</span>' + (r.tss ? '<b>' + r.tss + '</b>' : '') + '</button>';
+            }).join('') +
+            '<button type="button" class="log-day-add" data-add="' + k + '" title="Log an activity on this day" aria-label="Log an activity">+</button>' +
+          '</div>';
+        }
+        html += '<div class="log-row">' + cells +
+          '<div class="log-week">' + (wkN ? '<b>' + wkTss + '</b><span>TSS</span><b>' + fmtHours(wkSec) + '</b><span>' + wkN + (wkN === 1 ? ' activity' : ' activities') + '</span>' : '<span class="log-week-empty">—</span>') + '</div>' +
+        '</div>';
+      }
+      els.logGrid.innerHTML = html;
+    }).catch(function(e){
+      els.logGrid.innerHTML = '<p class="log-error">The log couldn’t be opened: ' + (e && e.message) + '</p>';
+    });
+  }
+  els.logGrid.addEventListener('click', function(e){
+    var add = e.target.closest('[data-add]');
+    if(add){ showLogForm({day:add.getAttribute('data-add')}); return; }
+    var en = e.target.closest('.log-entry');
+    if(!en) return;
+    var id = +en.getAttribute('data-id');
+    rideGet(id).then(function(r){
+      if(!r) return;
+      if(r.type === 'indoor') openSavedRide(id); else showLogForm(r);
+    });
+  });
+
+  // ---- quick-log form (ride / run / gym) ----
+  // The type picker rebuilds the fields; new and existing entries share the
+  // form, and an existing one also gets Delete.
+  function showLogForm(seed){
+    var editing = !!seed.id;
+    var type = seed.type === 'outdoor' ? 'ride' : (seed.type && MANUAL_TYPES[seed.type] ? seed.type : 'ride');
+    var rpe = seed.rpe || null;
+
+    els.logAdd.style.display = '';
+    els.logAdd.innerHTML =
+      '<div class="log-form">' +
+        '<h3>' + (editing ? 'Edit activity' : 'Log an activity') + '</h3>' +
+        '<div class="log-types">' + Object.keys(MANUAL_TYPES).map(function(k){
+          return '<button type="button" data-type="' + k + '" class="' + (type === k ? 'on' : '') + '" style="--c:' + MANUAL_TYPES[k].color + '"><i></i>' + MANUAL_TYPES[k].label + '</button>';
+        }).join('') + '</div>' +
+        '<label class="lf-date">Date <input type="date" id="lfDate" value="' + (seed.day || dayKey(Date.now())) + '"></label>' +
+        '<div class="lf-fields" id="lfFields"></div>' +
+        '<label>TSS <span class="lf-unit"><input type="number" id="lfTss" min="0" max="999" placeholder="optional" value="' + (seed.tss || '') + '"></span></label>' +
+        '<label class="lf-note">Note <input type="text" id="lfNote" maxlength="80" placeholder="optional" value="' + (seed.note ? String(seed.note).replace(/"/g, '&quot;') : '') + '"></label>' +
+        '<div class="rpe-row" id="lfRpe"><span class="rpe-label">RPE <em>1–10</em></span><span class="rpe-btns">' +
+          [1,2,3,4,5,6,7,8,9,10].map(function(n){ return '<button type="button" data-rpe="' + n + '">' + n + '</button>'; }).join('') + '</span></div>' +
+        '<div class="log-form-actions">' +
+          '<button type="button" class="action-btn primary" id="lfSave">Save</button>' +
+          (editing ? '<button type="button" class="action-btn danger" id="lfDelete">Delete</button>' : '') +
+          '<button type="button" class="action-btn" id="lfCancel">Cancel</button>' +
+        '</div>' +
+      '</div>';
+
+    var groups = (seed.fields && seed.fields.groups) ? seed.fields.groups.slice() : [];
+    var trioTouched = [];   // recency order of the distance/rate/time fields
+
+    // One input per field, from the type's spec.
+    function fieldInput(f){
+      var seedF = seed.fields || {};
+      if(f.kind === 'multi'){
+        return '<div class="lf-field lf-multi"><span class="lf-flabel">' + f.label + '</span><div class="lf-multi-btns" id="lf_' + f.key + '">' +
+          f.options.map(function(o){ return '<button type="button" data-g="' + o[0] + '" class="' + (groups.indexOf(o[0]) >= 0 ? 'on' : '') + '">' + o[1] + '</button>'; }).join('') +
+          '</div></div>';
+      }
+      var val = '';
+      if(f.kind === 'time'){ val = seed.durationSec ? secToClock(seed.durationSec) : ''; }
+      else if(f.kind === 'pace'){ val = seedF.paceSec ? secToClock(seedF.paceSec) : ''; }
+      else { val = (seedF[f.key] !== undefined && seedF[f.key] !== null) ? seedF[f.key] : ''; }
+      var isNum = f.kind === 'num';
+      var ph = f.kind === 'time' ? 'h:mm:ss' : f.kind === 'pace' ? 'm:ss' : 'optional';
+      return '<label class="lf-field"><span class="lf-flabel">' + f.label + '</span><span class="lf-unit">' +
+        '<input ' + (isNum ? 'type="number" inputmode="decimal"' + (f.step ? ' step="' + f.step + '"' : '') + ' min="0"' : 'type="text"') +
+        ' id="lf_' + f.key + '" data-kind="' + f.kind + (f.trio ? '" data-trio="' + f.trio : '') + (f.rate ? '" data-rate="' + f.rate : '') +
+        '" placeholder="' + ph + '" value="' + val + '">' + (f.unit ? '<em>' + f.unit + '</em>' : '') + '</span></label>';
+    }
+
+    function renderFields(){
+      els.logAdd.querySelector('#lfFields').innerHTML = typeSpec(type).fields.map(fieldInput).join('');
+      wireTrio();
+      var mb = els.logAdd.querySelector('.lf-multi-btns');
+      if(mb) mb.addEventListener('click', function(e){
+        var b = e.target.closest('[data-g]'); if(!b) return;
+        var g = b.getAttribute('data-g'), i = groups.indexOf(g);
+        if(i >= 0) groups.splice(i, 1); else groups.push(g);
+        b.classList.toggle('on', groups.indexOf(g) >= 0);
+      });
+    }
+
+    // distance / rate / time reconcile: fill whichever the rider omitted.
+    function wireTrio(){
+      var box = els.logAdd.querySelector('#lfFields');
+      var dEl = box.querySelector('[data-trio="dist"]'), rEl = box.querySelector('[data-trio="rate"]'), tEl = box.querySelector('[data-trio="time"]');
+      if(!dEl || !tEl || !rEl) return;   // gym has no trio
+      function num(el){ var v = parseFloat(el.value); return isNaN(v) ? null : v; }
+      function recompute(changed){
+        // Newest first. The two most-recently-touched fields are authoritative;
+        // the third is the one we fill.
+        trioTouched = [changed].concat(trioTouched.filter(function(x){ return x !== changed; }));
+        var dist = num(dEl), time = clockToSec(tEl.value), rate = rEl.value.trim();
+        var rateKind = rEl.getAttribute('data-rate');
+        var rateVal = rateKind === 'pace' ? clockToSec(rate) : (rate === '' ? null : parseFloat(rate));
+        var recent = trioTouched.slice(0, 2);
+        var fill = ['dist','rate','time'].filter(function(x){ return recent.indexOf(x) < 0; })[0];
+        if(fill === 'time' && dist && rateVal){
+          tEl.value = secToClock(rateKind === 'pace' ? rateVal * dist : dist / rateVal * 3600);
+        } else if(fill === 'rate' && dist && time){
+          rEl.value = rateKind === 'pace' ? secToClock(time / dist) : Math.round(dist / (time / 3600) * 10) / 10;
+        } else if(fill === 'dist' && rateVal && time){
+          dEl.value = Math.round((rateKind === 'pace' ? time / rateVal : rateVal * (time / 3600)) * 100) / 100;
+        }
+      }
+      dEl.addEventListener('input', function(){ recompute('dist'); });
+      rEl.addEventListener('input', function(){ recompute('rate'); });
+      tEl.addEventListener('input', function(){ recompute('time'); });
+    }
+
+    renderFields();
+    paintRpeBtns(els.logAdd.querySelector('#lfRpe'), rpe);
+
+    els.logAdd.querySelector('.log-types').addEventListener('click', function(e){
+      var b = e.target.closest('[data-type]'); if(!b) return;
+      type = b.getAttribute('data-type'); groups = []; trioTouched = [];
+      [].forEach.call(els.logAdd.querySelectorAll('[data-type]'), function(x){ x.classList.toggle('on', x === b); });
+      renderFields();
+    });
+    els.logAdd.querySelector('#lfRpe').addEventListener('click', function(e){
+      var b = e.target.closest('[data-rpe]'); if(!b) return;
+      var v = +b.getAttribute('data-rpe'); rpe = rpe === v ? null : v;
+      paintRpeBtns(this, rpe);
+    });
+    els.logAdd.querySelector('#lfCancel').addEventListener('click', function(){ els.logAdd.style.display = 'none'; });
+    els.logAdd.querySelector('#lfSave').addEventListener('click', function(){
+      var day = document.getElementById('lfDate').value;
+      if(!day) return;
+      var spec = typeSpec(type), fields = {}, durationSec = null;
+      spec.fields.forEach(function(f){
+        var el = document.getElementById('lf_' + f.key);
+        if(f.kind === 'multi'){ if(groups.length) fields.groups = groups.slice(); return; }
+        if(f.kind === 'time'){ durationSec = clockToSec(el.value); return; }
+        if(f.kind === 'pace'){ var pv = clockToSec(el.value); if(pv) fields.paceSec = pv; return; }
+        var v = parseFloat(el.value); if(!isNaN(v)) fields[f.key] = v;
+      });
+      if(!(durationSec > 0)){ alert('Add a ' + (type === 'gym' || type === 'run' ? 'time' : 'duration') + ' so it counts toward the week.'); return; }
+      var tss = parseInt(document.getElementById('lfTss').value, 10);
+      var parts = day.split('-').map(Number);
+      var startMs = editing ? seed.startDateMs : new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0).getTime();
+      if(!editing) startMs += (Date.now() % 1000);   // keep ids unique for two entries on one day
+      var rec = {
+        id: editing ? seed.id : startMs, type:type, day:day, startDateMs:startMs,
+        durationSec: durationSec, tss: isNaN(tss) ? null : tss, rpe:rpe,
+        note: document.getElementById('lfNote').value.trim() || null,
+        name: spec.label, fields: fields, savedAt: Date.now()
+      };
+      rideSave(rec).then(function(){ els.logAdd.style.display = 'none'; renderLog(); });
+    });
+    var del = els.logAdd.querySelector('#lfDelete');
+    if(del) del.addEventListener('click', function(){
+      if(!confirm('Delete this activity?')) return;
+      rideDelete(seed.id).then(function(){ els.logAdd.style.display = 'none'; renderLog(); });
+    });
+    els.logAdd.scrollIntoView({block:'nearest'});
+  }
+  function paintRpeBtns(row, rpe){
+    [].forEach.call(row.querySelectorAll('[data-rpe]'), function(x){ x.classList.toggle('on', +x.getAttribute('data-rpe') === rpe); });
+  }
+
+  // ---- import from Strava ----
+  // The athlete's activities done elsewhere (outdoor rides, runs, gym) come
+  // in as log entries, mapped onto the same fields as a manual entry. Rides
+  // we synced here — and anything imported before — are skipped by id.
+  var SPORT_MAP = {
+    Ride:'ride', VirtualRide:'ride', MountainBikeRide:'ride', GravelRide:'ride', EBikeRide:'ride', Velomobile:'ride', Handcycle:'ride',
+    Run:'run', TrailRun:'run', VirtualRun:'run', Walk:'run', Hike:'run',
+    WeightTraining:'gym', Workout:'gym', Crossfit:'gym', HighIntensityIntervalTraining:'gym', Yoga:'gym', Pilates:'gym', Elliptical:'gym', StairStepper:'gym',
+    // Everything else with no natural home lands in Gym (time kept, name kept)
+    // rather than being mislabelled a bike ride.
+    Swim:'gym', Rowing:'gym', Kayaking:'gym', Canoeing:'gym', StandUpPaddling:'gym', Rock:'gym', Golf:'gym', Skateboard:'gym', Soccer:'gym'
+  };
+  function mapSport(a){
+    var t = SPORT_MAP[a.sport_type || a.type];
+    return t || 'gym';   // unknown → Gym (editable after); never a false bike ride
+  }
+  function stravaToRecord(a){
+    var type = mapSport(a), startMs = Date.parse(a.start_date), sec = a.moving_time || a.elapsed_time || 0;
+    var fields = {};
+    var km = a.distance ? Math.round(a.distance / 1000 * 100) / 100 : null;
+    if(km) fields.distanceKm = km;
+    if(a.total_elevation_gain) fields.elevationM = Math.round(a.total_elevation_gain);
+    if(a.average_watts) fields.avgPower = Math.round(a.average_watts);
+    if(type === 'ride' && sec > 0 && km) fields.avgSpeedKmh = Math.round(km / (sec / 3600) * 10) / 10;
+    if(type === 'run' && km && sec > 0) fields.paceSec = Math.round(sec / km);
+    // TSS from Strava's normalised power (weighted_average_watts) at our FTP.
+    var np = a.weighted_average_watts, tss = null;
+    if(np && hasFtp() && sec > 0){ var IF = np / ftp; tss = Math.round(sec / 3600 * IF * IF * 100); }
+    return {
+      id: startMs, type:type, day:dayKey(startMs), startDateMs:startMs,
+      durationSec: sec, tss:tss, name: a.name || typeSpec(type).label, fields:fields,
+      stravaActivityId: a.id, imported:true, savedAt: Date.now()
+    };
+  }
+  function showImportPanel(){
+    if(!stravaConnected()){
+      if(confirm('Connect to Strava to import your activities? You’ll come back here after.')) stravaConnect();
+      return;
+    }
+    if(!stravaCanRead()){
+      alert('This Strava connection can’t read your activities. Disconnect and reconnect, keeping "View data about your activities" ticked.');
+      return;
+    }
+    els.logAdd.style.display = '';
+    els.logAdd.innerHTML = '<div class="log-import"><h3>Import from Strava</h3><p class="log-import-msg">Fetching your recent activities…</p></div>';
+    els.logAdd.scrollIntoView({block:'nearest'});
+    var days = 90;
+    Promise.all([stravaFetchActivities(Date.now() - days * 86400000), rideAll()]).then(function(res){
+      var acts = res[0], have = {};
+      res[1].forEach(function(r){ if(r.stravaActivityId) have[r.stravaActivityId] = true; });
+      var rows = acts.map(function(a){ return {a:a, rec:stravaToRecord(a), inLog: !!have[a.id]}; })
+                     .sort(function(x, y){ return y.rec.startDateMs - x.rec.startDateMs; });
+      renderImportRows(rows, days);
+    }).catch(function(e){
+      els.logAdd.querySelector('.log-import').innerHTML = '<h3>Import from Strava</h3><p class="log-error">' + (e && e.message || 'Couldn’t reach Strava.') + '</p>' +
+        '<div class="log-form-actions"><button type="button" class="action-btn" id="impClose">Close</button></div>';
+      els.logAdd.querySelector('#impClose').addEventListener('click', function(){ els.logAdd.style.display = 'none'; });
+    });
+  }
+  function fmtDayShort(ms){
+    var d = new Date(ms), mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return d.getDate() + ' ' + mons[d.getMonth()];
+  }
+  function renderImportRows(rows, days){
+    var newCount = rows.filter(function(r){ return !r.inLog; }).length;
+    var body = rows.length ? rows.map(function(r, i){
+      var f = r.rec.fields, bits = [];
+      if(f.distanceKm) bits.push(f.distanceKm + ' km');
+      if(f.avgPower) bits.push(f.avgPower + ' W');
+      if(r.rec.tss) bits.push('TSS ' + r.rec.tss);
+      return '<label class="imp-row' + (r.inLog ? ' in-log' : '') + '">' +
+        '<input type="checkbox" data-i="' + i + '"' + (r.inLog ? ' disabled' : ' checked') + '>' +
+        '<span class="imp-dot" style="--c:' + typeSpec(r.rec.type).color + '"></span>' +
+        '<span class="imp-name">' + (r.a.name || typeSpec(r.rec.type).label) + '</span>' +
+        '<span class="imp-meta">' + fmtDayShort(r.rec.startDateMs) + ' · ' + fmtHours(r.rec.durationSec) + (bits.length ? ' · ' + bits.join(' · ') : '') + '</span>' +
+        (r.inLog ? '<span class="imp-tag">in log</span>' : '<span class="imp-type">' + typeSpec(r.rec.type).label + '</span>') +
+      '</label>';
+    }).join('') : '<p class="log-import-msg">No activities in the last ' + days + ' days.</p>';
+    els.logAdd.querySelector('.log-import').innerHTML =
+      '<h3>Import from Strava <span class="imp-count">' + newCount + ' new · last ' + days + ' days</span></h3>' +
+      (newCount ? '<div class="imp-bulk"><button type="button" class="imp-link" id="impAll">Select all</button><button type="button" class="imp-link" id="impNone">Select none</button></div>' : '') +
+      '<div class="imp-list">' + body + '</div>' +
+      '<div class="log-form-actions">' +
+        (newCount ? '<button type="button" class="action-btn primary" id="impSave">Import selected</button>' : '') +
+        '<button type="button" class="action-btn" id="impClose">Close</button>' +
+      '</div>';
+    var listEl = els.logAdd.querySelector('.imp-list');
+    function boxes(){ return [].slice.call(listEl.querySelectorAll('input[type=checkbox]:not([disabled])')); }
+    var all = els.logAdd.querySelector('#impAll'); if(all) all.addEventListener('click', function(){ boxes().forEach(function(b){ b.checked = true; }); });
+    var none = els.logAdd.querySelector('#impNone'); if(none) none.addEventListener('click', function(){ boxes().forEach(function(b){ b.checked = false; }); });
+    els.logAdd.querySelector('#impClose').addEventListener('click', function(){ els.logAdd.style.display = 'none'; });
+    var save = els.logAdd.querySelector('#impSave');
+    if(save) save.addEventListener('click', function(){
+      var picked = boxes().filter(function(b){ return b.checked; }).map(function(b){ return rows[+b.getAttribute('data-i')].rec; });
+      if(!picked.length){ els.logAdd.style.display = 'none'; return; }
+      save.disabled = true; save.textContent = 'Importing…';
+      picked.reduce(function(p, rec){ return p.then(function(){ return rideSave(rec); }); }, Promise.resolve())
+        .then(function(){ els.logAdd.style.display = 'none'; renderLog(); refreshDoneMarks(); });
+    });
+  }
+  els.logImportStrava.addEventListener('click', showImportPanel);
+
+  // ---- export / import ----
+  // Everything lives in this browser's storage; this is the way out and back.
+  function bytesToB64(arr){ var s = ''; for(var i = 0; i < arr.length; i++) s += String.fromCharCode(arr[i]); return btoa(s); }
+  function exportLog(){
+    rideAll().then(function(all){
+      var blob = new Blob([JSON.stringify({app:'ftp-plan', version:1, exported:new Date().toISOString(), rides:all})], {type:'application/json'});
+      downloadBinary(blob, 'ride-log-' + dayKey(Date.now()) + '.json', 'application/json');
+    });
+  }
+  function importLog(file){
+    var rd = new FileReader();
+    rd.onload = function(){
+      try{
+        var data = JSON.parse(rd.result);
+        var rides = data && data.rides;
+        if(!Array.isArray(rides)) throw new Error('not a ride log');
+        var n = 0;
+        rides.reduce(function(p, r){ return p.then(function(){ if(r && r.id && r.day){ n++; return rideSave(r); } }); }, Promise.resolve())
+          .then(function(){ renderLog(); refreshDoneMarks(); alert(n + ' activit' + (n === 1 ? 'y' : 'ies') + ' imported.'); });
+      }catch(e){ alert('Couldn’t import that file: ' + e.message); }
+    };
+    rd.readAsText(file);
+  }
+
+  els.logBtn.addEventListener('click', openLog);
+  els.logCloseBtn.addEventListener('click', closeLog);
+  els.logPrev.addEventListener('click', function(){ shiftLogMonth(-1); });
+  els.logNext.addEventListener('click', function(){ shiftLogMonth(1); });
+  els.logAddBtn.addEventListener('click', function(){ showLogForm({}); });
+  els.logExportBtn.addEventListener('click', exportLog);
+  els.logImportBtn.addEventListener('click', function(){ els.logImportFile.click(); });
+  els.logImportFile.addEventListener('change', function(){ if(this.files[0]) importLog(this.files[0]); this.value = ''; });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && els.logModal.style.display !== 'none') closeLog();
+  });
 
   // ============================================================
   // .FIT EXPORT (for Strava / Garmin Connect / TrainingPeaks, etc.)
@@ -6160,6 +7043,7 @@
       if(!w.key) w.key = String(w.name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     });
     render();
+    refreshDoneMarks();   // ticks on the cards come from the ride log
     dismissLoadScreen();
     // After the library exists, so the prompt can name the real ramp test.
     maybeShowIntro();
