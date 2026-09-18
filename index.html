@@ -1559,7 +1559,7 @@
   .load-text{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);}
 
   /* ---------- TRAINING CHARTS ---------- */
-  .trends-inner{max-width:840px;}
+  .trends-inner{max-width:1180px;}
   .trends-head{display:flex;align-items:center;gap:12px;flex:none;padding-bottom:12px;border-bottom:1px solid var(--border-soft);}
   .trends-title{margin:0;font-size:19px;font-weight:750;color:var(--text-strong);}
   .trends-range{display:flex;gap:4px;background:var(--bg-card-list);border:1px solid var(--border);border-radius:9px;padding:3px;}
@@ -1593,7 +1593,7 @@
   .trends-cols{display:flex;gap:16px;align-items:stretch;}
   .trends-cols .tr-card{margin-bottom:0;}
   .col-left{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:16px;}
-  .col-right{flex:none;width:248px;}
+  .col-right{flex:none;width:300px;}
   .col-right .tr-card{height:100%;display:flex;flex-direction:column;}
   .col-right .tr-canvas{flex:1;min-height:230px;}
   @media (max-width:620px){
@@ -1623,9 +1623,13 @@
   .pc-head-right{display:flex;align-items:center;gap:12px;}
   .pc-unit{padding:2px;}
   .pc-unit .tr-range-btn{padding:3px 8px;}
-  .tr-legend{display:flex;gap:12px;}
+  .tr-legend{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:5px 12px;}
   .tr-legend .k{font-size:10.5px;color:var(--text-dim);display:flex;align-items:center;gap:5px;}
   .tr-legend .k::before{content:"";width:12px;height:3px;border-radius:2px;background:currentColor;}
+  /* Filled-swatch items (the shaded gap on the Fitness/Fatigue chart) */
+  .tr-legend .k.fill::before{width:11px;height:11px;border-radius:3px;opacity:0.85;}
+  .tr-legend .k.lead-fit{color:var(--ok);}
+  .tr-legend .k.lead-fat{color:var(--c-anaerobic);}
   .tr-legend .k.ctl{color:var(--accent);}
   .tr-legend .k.atl{color:var(--c-threshold);}
   .tr-legend .k.tsb{color:var(--ok);}
@@ -7228,11 +7232,13 @@
     }
     band(25, tsbAbs, 'rgba(242,169,59,0.08)');
     band(5, 25, 'rgba(95,227,154,0.10)');
+    band(-10, 5, 'rgba(150,156,176,0.07)');   // neutral / maintaining
     band(-30, -10, 'rgba(110,139,255,0.14)');
     band(-tsbAbs, -30, 'rgba(255,93,117,0.10)');
     // zone labels down the right margin
     ctx.font = '9px ' + IMG_MONO; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
     ctx.fillStyle = '#5FE39A'; ctx.fillText('Fresh', W - padR + 6, y(15));
+    ctx.fillStyle = '#9AA0B2'; ctx.fillText('Maintain', W - padR + 6, y(-2.5));
     ctx.fillStyle = '#8CA0FF'; ctx.fillText('Productive', W - padR + 6, y(-20));
     ctx.fillStyle = '#FF7D91'; ctx.fillText('Overreach', W - padR + 6, y(Math.min(-38, (-30 - tsbAbs) / 2)));
     ctx.font = '10px ' + IMG_MONO; ctx.textBaseline = 'middle';
@@ -7329,13 +7335,14 @@
         '<div class="tr-tiles">' + tiles + weekTiles + '</div>' +
         '<div class="trends-cols">' +
           '<div class="col-left">' +
-            '<div class="tr-card"><div class="tr-card-head"><h3>Fitness &amp; Fatigue ' +
-              '<button class="help-dot" id="fitHelp" type="button" aria-label="What Fitness, Fatigue and Form mean">?</button></h3>' +
-              '<div class="tr-legend"><span class="k ctl">Fitness</span><span class="k atl">Fatigue</span></div></div>' +
+            '<div class="tr-card"><div class="tr-card-head"><h3>Fitness &amp; Fatigue</h3>' +
+              '<div class="tr-legend"><span class="k ctl">Fitness</span><span class="k atl">Fatigue</span>' +
+                '<span class="k lead-fit fill">Fitness leads</span><span class="k lead-fat fill">Fatigue leads</span></div></div>' +
               '<canvas class="tr-canvas" id="fitCanvas"></canvas>' +
               '<p class="tr-note">Fitness is a 42-day average of daily load; Fatigue a 7-day. The shaded gap between them is your Form — green when fitness leads, red when fatigue does. Load is TSS where power was recorded, otherwise estimated from RPE.</p>' +
             '</div>' +
-            '<div class="tr-card"><div class="tr-card-head"><h3>Form</h3>' +
+            '<div class="tr-card"><div class="tr-card-head"><h3>Form ' +
+              '<button class="help-dot" id="formHelp" type="button" aria-label="What the Form zones mean">?</button></h3>' +
               '<div class="tr-legend"><span class="k fresh">Fresh</span><span class="k fatig">Fatigued</span></div></div>' +
               '<canvas class="tr-canvas" id="formCanvas"></canvas>' +
               '<p class="tr-note">Form is Fitness minus Fatigue. Above zero you’re fresh (tapered); a touch below (−10 to −30) is productive overload; deeply negative means overreached.</p>' +
@@ -7383,7 +7390,7 @@
   function hideFormPop(){ els.formPop.classList.remove('open'); }
   function scheduleFormHide(){ clearTimeout(formHelpHideT); formHelpHideT = setTimeout(hideFormPop, 120); }
   function wireFormHelp(){
-    var t = document.getElementById('fitHelp'); if(!t) return;
+    var t = document.getElementById('formHelp'); if(!t) return;
     t.addEventListener('mouseenter', function(){ clearTimeout(formHelpHideT); placeFormPop(t); });
     t.addEventListener('focus', function(){ clearTimeout(formHelpHideT); placeFormPop(t); });
     t.addEventListener('mouseleave', scheduleFormHide);
