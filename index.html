@@ -1589,8 +1589,36 @@
     background:var(--bg-card-list);border:1px solid var(--border);border-radius:16px;
     padding:16px 18px 14px;margin-bottom:16px;
   }
+  /* Fitness/Form stacked on the left, the tall power curve beside them. */
+  .trends-cols{display:flex;gap:16px;align-items:stretch;}
+  .trends-cols .tr-card{margin-bottom:0;}
+  .col-left{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:16px;}
+  .col-right{flex:none;width:248px;}
+  .col-right .tr-card{height:100%;display:flex;flex-direction:column;}
+  .col-right .tr-canvas{flex:1;min-height:230px;}
+  @media (max-width:620px){
+    .trends-cols{flex-direction:column;}
+    .col-right{width:auto;}
+    .col-right .tr-canvas{height:300px;flex:none;}
+  }
   .tr-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
   .tr-card-head h3{margin:0;font-size:14px;font-weight:700;color:var(--text-strong);}
+  .help-dot{
+    width:16px;height:16px;border-radius:50%;border:1px solid var(--border);background:var(--bg-card);
+    color:var(--text-faint);font-size:10px;font-weight:700;line-height:1;cursor:help;padding:0;
+    display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;font-family:inherit;
+  }
+  .help-dot:hover,.help-dot:focus-visible{color:var(--text);border-color:var(--accent);outline:none;}
+  /* Form-zones popover (reuses .zone-pop) */
+  .form-pop{width:340px;}
+  .form-pop-lead{margin:0 0 11px;font-size:11.5px;line-height:1.5;color:var(--text-dim);}
+  .fz-rows{display:flex;flex-direction:column;}
+  .fz-row{display:grid;grid-template-columns:12px 62px 1fr;gap:9px;align-items:center;padding:6px 0;border-top:1px solid var(--border-soft);}
+  .fz-row:first-child{border-top:0;}
+  .fz-sw{width:12px;height:12px;border-radius:3px;}
+  .fz-num{font-family:var(--mono);font-size:11px;color:var(--text-dim);white-space:nowrap;}
+  .fz-mean{font-size:11.5px;color:var(--text-faint);}
+  .fz-mean b{color:var(--text-strong);font-weight:650;}
   .tr-sub{font-size:11px;color:var(--text-faint);font-family:var(--mono);}
   .pc-head-right{display:flex;align-items:center;gap:12px;}
   .pc-unit{padding:2px;}
@@ -1836,6 +1864,20 @@
   <p class="zone-pop-note">Standard seven-zone model (Coggan), the same one Strava uses. <b>Sweet Spot</b> isn’t a zone of its own — it’s the 88–94% band across the top of Tempo and the bottom of Threshold, so a sweet-spot ride shows on Strava as Z3/Z4 time. That’s expected.</p>
   <span class="zone-pop-title zone-pop-title-hr">Heart rate zones at <b id="zonePopMaxHr">—</b> bpm max</span>
   <table class="zone-table" id="hrZoneTable"></table>
+</div>
+
+<!-- Form-zones help, shown on hover of the (?) in the Training charts. On <body>
+     so it isn't clipped by the modal; positioned in JS. -->
+<div class="zone-pop form-pop" id="formPop">
+  <span class="zone-pop-title">Form zones</span>
+  <p class="form-pop-lead">Form is Fitness minus Fatigue — the gap between the two lines. Where it sits tells you what to do next.</p>
+  <div class="fz-rows">
+    <div class="fz-row"><span class="fz-sw" style="background:rgba(242,169,59,0.55)"></span><span class="fz-num">+25 &amp; up</span><span class="fz-mean"><b>Too fresh</b> — tapered, fitness fading</span></div>
+    <div class="fz-row"><span class="fz-sw" style="background:rgba(95,227,154,0.55)"></span><span class="fz-num">+5 to +25</span><span class="fz-mean"><b>Fresh</b> — race-ready</span></div>
+    <div class="fz-row"><span class="fz-sw" style="background:rgba(126,134,158,0.45)"></span><span class="fz-num">−10 to +5</span><span class="fz-mean"><b>Neutral</b> — maintaining</span></div>
+    <div class="fz-row"><span class="fz-sw" style="background:rgba(110,139,255,0.7)"></span><span class="fz-num">−10 to −30</span><span class="fz-mean"><b>Productive</b> — build here</span></div>
+    <div class="fz-row"><span class="fz-sw" style="background:rgba(255,93,117,0.6)"></span><span class="fz-num">below −30</span><span class="fz-mean"><b>Overreaching</b> — back off soon</span></div>
+  </div>
 </div>
 
 <div class="ble-warning no-print" id="bleWarning" style="display:none;"></div>
@@ -2306,6 +2348,7 @@
     trendsRange: document.getElementById('trendsRange'),
     trendsBody: document.getElementById('trendsBody'),
     trendsCloseBtn: document.getElementById('trendsCloseBtn'),
+    formPop: document.getElementById('formPop'),
     listPane: document.getElementById('listPane'),
     detailPane: document.getElementById('detailPane'),
     detailHead: document.getElementById('detailHead'),
@@ -7114,6 +7157,7 @@
     return ctx;
   }
   function niceMax(v){ if(v <= 0) return 10; var p = Math.pow(10, Math.floor(Math.log10(v))); var f = v / p; return (f <= 1 ? 1 : f <= 1.5 ? 1.5 : f <= 2 ? 2 : f <= 3 ? 3 : f <= 4 ? 4 : f <= 5 ? 5 : f <= 6 ? 6 : f <= 8 ? 8 : 10) * p; }
+  function roundRect(ctx, x, y, w, h, r){ r = Math.min(r, h/2, w/2); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
 
   function rangeView(series, rangeDays){ return rangeDays ? series.slice(Math.max(0, series.length - rangeDays)) : series; }
   function monthTicks(ctx, view, x, H, faint){
@@ -7166,18 +7210,33 @@
   // sign: green above the line (fresh), red below (fatigued).
   function drawForm(cv, series, rangeDays){
     var W = cv.clientWidth || 720, H = 168, ctx = setupCanvas(cv, W, H);
-    var padL = 38, padR = 14, padT = 12, padB = 24;
+    var padL = 34, padR = 62, padT = 12, padB = 24;
     var ok = cssVar('--ok') || '#5FE39A', danger = cssVar('--c-anaerobic') || '#FF5D75';
     var faint = cssVar('--text-faint') || '#7E869E', grid = 'rgba(255,255,255,0.06)';
     ctx.clearRect(0, 0, W, H);
     if(series.length < 2){ ctx.fillStyle = faint; ctx.font = '13px ' + IMG_SANS; ctx.textAlign = 'center'; ctx.fillText('Not enough history yet', W/2, H/2); return; }
     var view = rangeView(series, rangeDays);
     var t0 = view[0].t, t1 = view[view.length - 1].t, span = Math.max(1, t1 - t0);
-    var tsbAbs = Math.max(10, Math.max.apply(null, view.map(function(d){ return Math.abs(d.tsb); })) || 10);
+    // Floor at 35 so the productive (−10 to −30) and overreach bands stay on chart.
+    var tsbAbs = Math.max(35, Math.max.apply(null, view.map(function(d){ return Math.abs(d.tsb); })) || 35);
     function x(t){ return padL + (t - t0) / span * (W - padL - padR); }
     function y(v){ return padT + (tsbAbs - v) / (2 * tsbAbs) * (H - padT - padB); }
+    // target-zone bands (clamped to the visible range)
+    function band(lo, hi, fill){
+      var yt = y(Math.min(hi, tsbAbs)), yb = y(Math.max(lo, -tsbAbs));
+      ctx.fillStyle = fill; ctx.fillRect(padL, yt, W - padL - padR, yb - yt);
+    }
+    band(25, tsbAbs, 'rgba(242,169,59,0.08)');
+    band(5, 25, 'rgba(95,227,154,0.10)');
+    band(-30, -10, 'rgba(110,139,255,0.14)');
+    band(-tsbAbs, -30, 'rgba(255,93,117,0.10)');
+    // zone labels down the right margin
+    ctx.font = '9px ' + IMG_MONO; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = '#5FE39A'; ctx.fillText('Fresh', W - padR + 6, y(15));
+    ctx.fillStyle = '#8CA0FF'; ctx.fillText('Productive', W - padR + 6, y(-20));
+    ctx.fillStyle = '#FF7D91'; ctx.fillText('Overreach', W - padR + 6, y(Math.min(-38, (-30 - tsbAbs) / 2)));
     ctx.font = '10px ' + IMG_MONO; ctx.textBaseline = 'middle';
-    [tsbAbs, tsbAbs/2, 0, -tsbAbs/2, -tsbAbs].forEach(function(lv){
+    [tsbAbs, 0, -tsbAbs].forEach(function(lv){
       var gy = y(lv);
       ctx.strokeStyle = (lv === 0) ? 'rgba(255,255,255,0.16)' : grid; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W - padR, gy); ctx.stroke();
@@ -7197,38 +7256,40 @@
     monthTicks(ctx, view, x, H, faint);
   }
 
-  // unit: 'w' (watts) or 'wkg' (watts per kilo). W/kg needs a body weight;
-  // falls back to watts when none is set.
+  // Tall, narrow bar chart: one horizontal bar per duration, shortest (15s) at
+  // the top to longest (60m) at the bottom, power along the x-axis. Fills the
+  // right column's height. unit: 'w' or 'wkg' (falls back to watts, no weight).
   function drawPowerCurve(cv, curve, unit){
-    var W = cv.clientWidth || 720, H = 260, ctx = setupCanvas(cv, W, H);
-    var padL = 44, padR = 14, padT = 14, padB = 34;
-    var accent = cssVar('--accent') || '#6E8BFF', gold = '#F2A93B', faint = cssVar('--text-faint') || '#7E869E', grid = 'rgba(255,255,255,0.06)';
+    var W = cv.clientWidth || 240, H = cv.clientHeight || 320, ctx = setupCanvas(cv, W, H);
+    var padL = 42, padR = 46, padT = 8, padB = 24;
+    var accent = cssVar('--accent') || '#6E8BFF', gold = '#F2A93B', faint = cssVar('--text-faint') || '#7E869E';
+    var strong = cssVar('--text-strong') || '#FFFFFF', grid = 'rgba(255,255,255,0.06)';
     var wkg = unit === 'wkg' && hasWeight();
     function val(w){ return wkg ? w / weight : w; }
-    function axisLabel(v){ return wkg ? v.toFixed(1) : Math.round(v); }
-    function ptLabel(w){ return wkg ? (w / weight).toFixed(2) : w; }
+    function axisLabel(v){ return wkg ? v.toFixed(0) : Math.round(v); }
+    function barLabel(w){ return wkg ? (w / weight).toFixed(1) : w; }
     ctx.clearRect(0, 0, W, H);
-    var pts = curve.points.map(function(p, i){ return p ? {sec:PC_TARGETS[i][0], label:PC_TARGETS[i][1], w:Math.round(p.w)} : null; }).filter(Boolean);
-    if(pts.length < 2){ ctx.fillStyle = faint; ctx.font = '13px ' + IMG_SANS; ctx.textAlign = 'center'; ctx.fillText('Ride indoors with power to build your curve', W/2, H/2); return; }
-    var lx0 = Math.log(pts[0].sec), lx1 = Math.log(pts[pts.length-1].sec), lspan = Math.max(0.1, lx1 - lx0);
+    var pts = curve.points.map(function(p, i){ return p ? {label:PC_TARGETS[i][1], w:Math.round(p.w)} : null; }).filter(Boolean);
+    if(pts.length < 1){ ctx.fillStyle = faint; ctx.font = '12px ' + IMG_SANS; ctx.textAlign = 'center'; ctx.fillText('Ride indoors with power', W/2, H/2); return; }
+    var n = pts.length, rowH = (H - padT - padB) / n;
     var vMax = niceMax(Math.max.apply(null, pts.map(function(p){ return val(p.w); })));
-    function x(sec){ return padL + (Math.log(sec) - lx0) / lspan * (W - padL - padR); }
-    function y(v){ return H - padB - v / vMax * (H - padT - padB); }
-    ctx.font = '10px ' + IMG_MONO; ctx.fillStyle = faint; ctx.textBaseline = 'middle';
-    for(var g = 0; g <= 4; g++){ var lv = vMax*g/4, gy = y(lv); ctx.strokeStyle = grid; ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W-padR, gy); ctx.stroke(); ctx.textAlign = 'right'; ctx.fillText(axisLabel(lv), padL - 6, gy); }
-    // line + fill
-    ctx.beginPath(); pts.forEach(function(p, i){ i ? ctx.lineTo(x(p.sec), y(val(p.w))) : ctx.moveTo(x(p.sec), y(val(p.w))); });
-    ctx.lineTo(x(pts[pts.length-1].sec), y(0)); ctx.lineTo(x(pts[0].sec), y(0)); ctx.closePath();
-    var grd = ctx.createLinearGradient(0, padT, 0, H-padB); grd.addColorStop(0, accent+'44'); grd.addColorStop(1, accent+'05'); ctx.fillStyle = grd; ctx.fill();
-    ctx.beginPath(); pts.forEach(function(p, i){ i ? ctx.lineTo(x(p.sec), y(val(p.w))) : ctx.moveTo(x(p.sec), y(val(p.w))); }); ctx.strokeStyle = accent; ctx.lineWidth = 2.4; ctx.lineJoin = 'round'; ctx.stroke();
-    // dots + duration labels + values
+    function xf(v){ return padL + v / vMax * (W - padL - padR); }
+    // vertical gridlines + x-axis labels
+    ctx.font = '10px ' + IMG_MONO; ctx.textAlign = 'center';
+    for(var g = 0; g <= 2; g++){
+      var lv = vMax * g / 2, gx = xf(lv);
+      ctx.strokeStyle = grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(gx, padT); ctx.lineTo(gx, H - padB); ctx.stroke();
+      ctx.fillStyle = faint; ctx.textBaseline = 'alphabetic'; ctx.fillText(axisLabel(lv), gx, H - 9);
+    }
     var prLabels = {}; curve.prs.forEach(function(p){ prLabels[p.label] = true; });
-    ctx.textAlign = 'center';
-    pts.forEach(function(p){
-      var isPr = prLabels[p.label], py = y(val(p.w));
-      ctx.beginPath(); ctx.arc(x(p.sec), py, isPr ? 4.5 : 3, 0, Math.PI*2); ctx.fillStyle = isPr ? gold : accent; ctx.fill();
-      ctx.fillStyle = faint; ctx.textBaseline = 'alphabetic'; ctx.font = '10px ' + IMG_MONO; ctx.fillText(p.label, x(p.sec), H - 8);
-      ctx.fillStyle = isPr ? gold : cssVar('--text-strong'); ctx.textBaseline = 'middle'; ctx.font = '600 11px ' + IMG_MONO; ctx.fillText(ptLabel(p.w), x(p.sec), py - 12);
+    pts.forEach(function(p, i){
+      var mid = padT + rowH * i + rowH / 2, barH = Math.min(18, rowH * 0.52), by = mid - barH / 2;
+      var isPr = prLabels[p.label], bw = Math.max(2, xf(val(p.w)) - padL);
+      ctx.fillStyle = faint; ctx.textAlign = 'right'; ctx.textBaseline = 'middle'; ctx.font = '10px ' + IMG_MONO;
+      ctx.fillText(p.label, padL - 8, mid);
+      ctx.fillStyle = isPr ? gold : accent; roundRect(ctx, padL, by, bw, barH, 4); ctx.fill();
+      ctx.fillStyle = isPr ? gold : strong; ctx.textAlign = 'left'; ctx.font = '600 11px ' + IMG_MONO;
+      ctx.fillText(barLabel(p.w), padL + bw + 6, mid);
     });
   }
 
@@ -7266,33 +7327,39 @@
 
       els.trendsBody.innerHTML =
         '<div class="tr-tiles">' + tiles + weekTiles + '</div>' +
-        '<div class="tr-card"><div class="tr-card-head"><h3>Fitness &amp; Fatigue</h3>' +
-          '<div class="tr-legend"><span class="k ctl">Fitness</span><span class="k atl">Fatigue</span></div></div>' +
-          '<canvas class="tr-canvas" id="fitCanvas"></canvas>' +
-          '<p class="tr-note">Fitness is a 42-day average of daily load; Fatigue a 7-day. The shaded gap between them is your Form — green when fitness leads, red when fatigue does. Load is TSS where power was recorded, otherwise estimated from RPE.</p>' +
-        '</div>' +
-        '<div class="tr-card"><div class="tr-card-head"><h3>Form</h3>' +
-          '<div class="tr-legend"><span class="k fresh">Fresh</span><span class="k fatig">Fatigued</span></div></div>' +
-          '<canvas class="tr-canvas" id="formCanvas"></canvas>' +
-          '<p class="tr-note">Form is Fitness minus Fatigue. Above zero you’re fresh (tapered); a touch below (−10 to −30) is productive overload; deeply negative means overreached.</p>' +
-        '</div>' +
-        '<div class="tr-card"><div class="tr-card-head"><h3>Power curve</h3>' +
-          '<div class="pc-head-right">' +
-            '<span class="tr-sub">' + curve.rides + (curve.rides===1?' ride':' rides') + ' with power</span>' +
-            (hasWeight()
-              ? '<div class="trends-range pc-unit">' +
-                  '<button type="button" class="tr-range-btn pc-unit-btn' + (pcUnit==='w'?' on':'') + '" data-unit="w">W</button>' +
-                  '<button type="button" class="tr-range-btn pc-unit-btn' + (pcUnit==='wkg'?' on':'') + '" data-unit="wkg">W/kg</button>' +
-                '</div>'
-              : '') +
-          '</div></div>' +
-          prHtml +
-          '<canvas class="tr-canvas" id="pcCanvas"></canvas>' +
-          '<p class="tr-note">Your best average power held for each duration, across every indoor ride. Gold points are new bests.</p>' +
+        '<div class="trends-cols">' +
+          '<div class="col-left">' +
+            '<div class="tr-card"><div class="tr-card-head"><h3>Fitness &amp; Fatigue ' +
+              '<button class="help-dot" id="fitHelp" type="button" aria-label="What Fitness, Fatigue and Form mean">?</button></h3>' +
+              '<div class="tr-legend"><span class="k ctl">Fitness</span><span class="k atl">Fatigue</span></div></div>' +
+              '<canvas class="tr-canvas" id="fitCanvas"></canvas>' +
+              '<p class="tr-note">Fitness is a 42-day average of daily load; Fatigue a 7-day. The shaded gap between them is your Form — green when fitness leads, red when fatigue does. Load is TSS where power was recorded, otherwise estimated from RPE.</p>' +
+            '</div>' +
+            '<div class="tr-card"><div class="tr-card-head"><h3>Form</h3>' +
+              '<div class="tr-legend"><span class="k fresh">Fresh</span><span class="k fatig">Fatigued</span></div></div>' +
+              '<canvas class="tr-canvas" id="formCanvas"></canvas>' +
+              '<p class="tr-note">Form is Fitness minus Fatigue. Above zero you’re fresh (tapered); a touch below (−10 to −30) is productive overload; deeply negative means overreached.</p>' +
+            '</div>' +
+          '</div>' +
+          '<div class="col-right">' +
+            '<div class="tr-card"><div class="tr-card-head"><h3>Power curve</h3>' +
+              (hasWeight()
+                ? '<div class="trends-range pc-unit">' +
+                    '<button type="button" class="tr-range-btn pc-unit-btn' + (pcUnit==='w'?' on':'') + '" data-unit="w">W</button>' +
+                    '<button type="button" class="tr-range-btn pc-unit-btn' + (pcUnit==='wkg'?' on':'') + '" data-unit="wkg">W/kg</button>' +
+                  '</div>'
+                : '') +
+            '</div>' +
+            prHtml +
+            '<canvas class="tr-canvas" id="pcCanvas"></canvas>' +
+            '<p class="tr-note">' + curve.rides + (curve.rides===1?' ride':' rides') + ' with power. Best average at each duration; gold marks a new best.</p>' +
+            '</div>' +
+          '</div>' +
         '</div>';
       drawFitness(document.getElementById('fitCanvas'), pmc.series, trendsRange);
       drawForm(document.getElementById('formCanvas'), pmc.series, trendsRange);
       drawPowerCurve(document.getElementById('pcCanvas'), curve, pcUnit);
+      wireFormHelp();
     }).catch(function(e){
       els.trendsBody.innerHTML = '<p class="log-error">Charts couldn’t be built: ' + (e && e.message) + '</p>';
     });
@@ -7302,8 +7369,31 @@
     return '<em class="' + (d>0?'up':'down') + '">' + (d>0?'▲':'▼') + Math.abs(d) + '</em>';
   }
 
+  // Form-zones popover, on hover — the same pattern as the sidebar Zones help.
+  // The (?) is re-created on every render, so re-bind it each time.
+  var formHelpHideT = null;
+  function placeFormPop(trigger){
+    var pop = els.formPop; pop.classList.add('open');
+    var r = trigger.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+    var left = r.left; if(left + w > window.innerWidth - 10) left = window.innerWidth - 10 - w;
+    var top = r.bottom + 8; if(top + h > window.innerHeight - 10) top = Math.max(10, r.top - h - 8);
+    pop.style.left = Math.round(Math.max(10, left)) + 'px';
+    pop.style.top = Math.round(top) + 'px';
+  }
+  function hideFormPop(){ els.formPop.classList.remove('open'); }
+  function scheduleFormHide(){ clearTimeout(formHelpHideT); formHelpHideT = setTimeout(hideFormPop, 120); }
+  function wireFormHelp(){
+    var t = document.getElementById('fitHelp'); if(!t) return;
+    t.addEventListener('mouseenter', function(){ clearTimeout(formHelpHideT); placeFormPop(t); });
+    t.addEventListener('focus', function(){ clearTimeout(formHelpHideT); placeFormPop(t); });
+    t.addEventListener('mouseleave', scheduleFormHide);
+    t.addEventListener('blur', scheduleFormHide);
+  }
+  els.formPop.addEventListener('mouseenter', function(){ clearTimeout(formHelpHideT); });
+  els.formPop.addEventListener('mouseleave', scheduleFormHide);
+
   function openTrends(){ els.trendsModal.style.display = 'flex'; paintRangeButtons(); renderTrends(); }
-  function closeTrends(){ els.trendsModal.style.display = 'none'; }
+  function closeTrends(){ hideFormPop(); els.trendsModal.style.display = 'none'; }
   function paintRangeButtons(){
     els.trendsRange.innerHTML = RANGES.map(function(r){ return '<button type="button" class="tr-range-btn' + (r[0] === trendsRange ? ' on' : '') + '" data-days="' + r[0] + '">' + r[1] + '</button>'; }).join('');
   }
@@ -7311,11 +7401,12 @@
     var b = e.target.closest('[data-days]'); if(!b) return;
     trendsRange = +b.getAttribute('data-days'); paintRangeButtons(); renderTrends();
   });
-  // Watts vs W/kg: only redraws the power curve, no recompute.
+  // Watts vs W/kg: a two-state switch — clicking either side flips it. Only the
+  // power curve redraws, no recompute.
   els.trendsBody.addEventListener('click', function(e){
-    var b = e.target.closest('.pc-unit-btn'); if(!b) return;
-    pcUnit = b.getAttribute('data-unit');
-    els.trendsBody.querySelectorAll('.pc-unit-btn').forEach(function(x){ x.classList.toggle('on', x === b); });
+    if(!e.target.closest('.pc-unit-btn')) return;
+    pcUnit = (pcUnit === 'wkg') ? 'w' : 'wkg';
+    els.trendsBody.querySelectorAll('.pc-unit-btn').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-unit') === pcUnit); });
     if(lastCurve) drawPowerCurve(document.getElementById('pcCanvas'), lastCurve, pcUnit);
   });
   els.trendsBtn.addEventListener('click', openTrends);
