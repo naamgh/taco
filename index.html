@@ -1404,12 +1404,22 @@
     padding:1px 4px;border-radius:4px;line-height:1.35;
   }
   .log-entry.needs-rpe{border-style:dashed;}
+  /* The entry whose detail is open, highlighted on the grid. */
+  .log-entry.selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--bg-card-hover);}
+  .log-entry.selected i{box-shadow:0 0 0 2px var(--bg-card-hover);}
   /* Route-map preview in the activity panel. */
   .lf-route{
     display:flex;justify-content:center;
     background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:6px;
   }
   .route-map{display:block;}
+  /* Detail header with a route: title + type + date beside the map, bottom-aligned;
+     the map is bare (no frame). */
+  .dv-head.has-route{display:flex;flex-direction:column;gap:10px;}
+  .dv-head.has-route .lf-head-btns{align-self:flex-end;}
+  .dv-title-route{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;}
+  .dv-title-route .dv-title{min-width:0;}
+  .lf-route.bare{background:none;border:0;padding:0;flex:none;}
   /* Shows on hover so the grid stays clean. */
   .log-day-add{
     position:absolute;right:5px;bottom:5px;width:18px;height:18px;border-radius:6px;
@@ -1457,6 +1467,9 @@
   .lf-id-name{font-size:17px;font-weight:750;color:var(--text-strong);}
   .lf-id-sub{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-dim);}
   .lf-id-sub i{width:8px;height:8px;border-radius:50%;flex:none;}
+  /* Fixed activity type on an existing entry — shown, not editable. */
+  .lf-static-type{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--text-dim);font-weight:600;}
+  .lf-static-type i{width:9px;height:9px;border-radius:50%;flex:none;}
   .log-types{display:flex;gap:8px;}
   .log-types button{
     flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
@@ -1540,9 +1553,7 @@
   .dv-graph{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:12px 12px 8px;}
   .dv-ghead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;}
   .dv-ghead h4{margin:0;font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
-  .dv-glegend{display:flex;gap:12px;}
-  .dv-glegend .k{font-size:10px;font-weight:600;display:flex;align-items:center;gap:5px;}
-  .dv-glegend .k::before{content:"";width:11px;height:2.5px;border-radius:2px;background:currentColor;}
+  .dv-gsub{font-size:10px;color:var(--text-faint);font-family:var(--mono);}
   .dv-graph-cv{display:block;width:100%;}
   .dv-nodata{margin:0;font-size:11.5px;color:var(--text-faint);text-align:center;line-height:1.5;padding:14px 8px;background:var(--bg-card);border:1px dashed var(--border);border-radius:10px;}
   .dv-rpe{font-size:12px;color:var(--text-dim);}
@@ -6685,6 +6696,12 @@
   // Old records were saved as type 'outdoor'; treat them as rides.
   function typeSpec(t){ return MANUAL_TYPES[t] || MANUAL_TYPES.ride; }
   var logMonth = null;   // {y, m} being shown
+  var selectedId = null; // the entry whose detail is open, highlighted on the grid
+  function markSelected(){
+    [].forEach.call(els.logGrid.querySelectorAll('.log-entry'), function(el){
+      el.classList.toggle('selected', +el.getAttribute('data-id') === selectedId);
+    });
+  }
   function openLog(){
     var d = new Date();
     logMonth = {y:d.getFullYear(), m:d.getMonth()};
@@ -6781,7 +6798,7 @@
               // that an RPE. With neither it's invisible to those charts — flag it.
               var needsRpe = !r.tss && !r.rpe;
               var tip = entryName(r) + (det ? ' · ' + det : '') + (r.tss ? ' · TSS ' + r.tss : needsRpe ? ' · needs an RPE to count toward Fitness/Form' : '');
-              return '<button type="button" class="log-entry' + (needsRpe ? ' needs-rpe' : '') + '" data-id="' + r.id + '" style="--c:' + entryColor(r) + '" title="' + tip.replace(/"/g, '&quot;') + '">' +
+              return '<button type="button" class="log-entry' + (needsRpe ? ' needs-rpe' : '') + (r.id === selectedId ? ' selected' : '') + '" data-id="' + r.id + '" style="--c:' + entryColor(r) + '" title="' + tip.replace(/"/g, '&quot;') + '">' +
                 '<i></i><span>' + entryName(r) + '</span>' + (r.tss ? '<b>' + r.tss + '</b>' : needsRpe ? '<em class="rpe-flag">RPE</em>' : '') + '</button>';
             }).join('') +
             '<button type="button" class="log-day-add" data-add="' + k + '" title="Log an activity on this day" aria-label="Log an activity">+</button>' +
@@ -6810,6 +6827,7 @@
   var TRASH_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4.5 7h15M9.5 7V5.2A1.2 1.2 0 0110.7 4h2.6a1.2 1.2 0 011.2 1.2V7M6.5 7l.8 11.2A1.6 1.6 0 008.9 20h6.2a1.6 1.6 0 001.6-1.8L17.5 7" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var CLOSE_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   var EXPAND_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M14 5h5v5M19 5l-6 6M10 19H5v-5M5 19l6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var BACK_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
   function prettyDate(day){
     var p = String(day).split('-').map(Number), d = new Date(p[0], p[1]-1, p[2]);
@@ -6892,105 +6910,95 @@
     return out.join('');
   }
 
-  // ---- activity graph ----
-  // A time series in the detail pane, whatever the activity recorded: power &
-  // HR for rides, pace & HR for runs, HR alone for the gym. Indoor rides read
-  // their per-second samples; Strava imports fetch streams on demand and cache.
-  function some(arr){ return arr && arr.some(function(v){ return v !== null && v !== undefined; }); }
-  function activityGraphData(rec){
+  // ---- heart-rate zone distribution ----
+  // Time in each HR zone (Strava-style), as vertical bars, using the app's max
+  // HR setting for the boundaries and marking the ride's average. The HR series
+  // is the indoor samples or a Strava import's streams (fetched once, cached).
+  function hrSeriesFor(rec){
     if(rec.type === 'indoor' && rec.samples && rec.samples.length){
-      var t = [], p = [], h = [];
-      rec.samples.forEach(function(s, i){ t.push(i); p.push(s.power == null ? null : s.power); h.push(s.hr == null ? null : s.hr); });
-      return {t:t, power:p, hr:h, pace:[]};
+      return rec.samples.map(function(s){ return s.hr; }).filter(function(v){ return v != null; });
     }
-    if(rec.streams && rec.streams.t && rec.streams.t.length){
-      return {t:rec.streams.t, power:rec.streams.watts || [], hr:rec.streams.hr || [], pace:rec.streams.pace || []};
-    }
+    if(rec.streams && rec.streams.hr){ return rec.streams.hr.filter(function(v){ return v != null; }); }
     return null;
   }
-  // Which axes to draw for this activity, given what the data actually holds.
-  function graphSpec(rec, data){
-    var hasHr = some(data.hr), hasPower = some(data.power), hasPace = some(data.pace);
-    var left = null, right = hasHr ? {key:'hr', label:'HR', unit:'bpm', color:'var(--c-anaerobic)'} : null;
-    if(rec.type === 'run' && hasPace) left = {key:'pace', label:'Pace', unit:'/km', color:'var(--accent)', invert:true, fmt:secToClock};
-    else if(hasPower) left = {key:'power', label:'Power', unit:'W', color:'var(--accent)'};
-    if(!left && hasHr){ left = right; right = null; }   // gym: HR alone, on the left
-    return left ? {left:left, right:right} : null;
+  // bpm bounds for each zone at a given max HR (Z5 is open-ended).
+  function hrZoneBpm(m){
+    return HR_ZONES.map(function(z){ return {z:z.z, label:z.label, color:z.color,
+      lo: Math.round(m * z.lo / 100), hi: z.hi === null ? null : Math.round(m * z.hi / 100) - 1 }; });
   }
-  function graphLegend(spec){
-    var items = [spec.left]; if(spec.right) items.push(spec.right);
-    return '<div class="dv-glegend">' + items.map(function(s){
-      return '<span class="k" style="color:' + s.color + '">' + s.label + '</span>';
-    }).join('') + '</div>';
+  function hrZoneOf(bpm, m){
+    var pct = bpm / m * 100;
+    for(var i = 0; i < HR_ZONES.length; i++){ if(HR_ZONES[i].hi === null || pct < HR_ZONES[i].hi) return i; }
+    return HR_ZONES.length - 1;
   }
-  function drawActivityGraph(cv, data, spec){
-    var W = cv.clientWidth || 260, H = 150, dpr = Math.min(3, window.devicePixelRatio || 1);
+  function drawHrZones(cv, dist, total, avg, m){
+    var W = cv.clientWidth || 300, H = 208, dpr = Math.min(3, window.devicePixelRatio || 1);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
     var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var faint = 'var(--text-faint)', grid = 'rgba(255,255,255,0.06)';
-    var padL = 34, padR = spec.right ? 34 : 12, padT = 10, padB = 20;
-    var t = data.t, t0 = t[0], t1 = t[t.length - 1], span = Math.max(1, t1 - t0);
-    function xAt(tt){ return padL + (tt - t0) / span * (W - padL - padR); }
-    function axisRange(arr, invert){
-      var vals = arr.filter(function(v){ return v !== null && v !== undefined; });
-      var lo = Math.min.apply(null, vals), hi = Math.max.apply(null, vals);
-      if(lo === hi){ lo -= 1; hi += 1; }
-      var pad = (hi - lo) * 0.1; lo -= pad; hi += pad;
-      return invert ? {lo:hi, hi:lo} : {lo:lo, hi:hi};
+    var faintC = getComputedStyle(document.documentElement).getPropertyValue('--text-faint').trim();
+    var strongC = getComputedStyle(document.documentElement).getPropertyValue('--text-strong').trim();
+    var bpm = hrZoneBpm(m), n = HR_ZONES.length;
+    var padL = 6, padR = 6, padT = 24, padB = 40, gap = 12;
+    var bw = (W - padL - padR - gap * (n - 1)) / n;
+    var maxFrac = Math.max.apply(null, dist.map(function(c){ return total ? c / total : 0; })) || 1;
+    var plotH = H - padT - padB;
+    function slotX(i){ return padL + i * (bw + gap); }
+    for(var i = 0; i < n; i++){
+      var frac = total ? dist[i] / total : 0, h = Math.max(2, frac / maxFrac * plotH);
+      var x = slotX(i), y = H - padB - h;
+      ctx.fillStyle = bpm[i].color; roundRect(ctx, x, y, bw, h, 4); ctx.fill();
+      // % above
+      ctx.fillStyle = frac > 0 ? strongC : faintC; ctx.font = '600 12px ' + IMG_MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+      ctx.fillText(Math.round(frac * 100) + '%', x + bw / 2, y - 6);
+      // zone label + bpm range below
+      ctx.fillStyle = strongC; ctx.font = '700 12px ' + IMG_SANS; ctx.textBaseline = 'top';
+      ctx.fillText(bpm[i].z, x + bw / 2, H - padB + 7);
+      ctx.fillStyle = faintC; ctx.font = '8.5px ' + IMG_MONO;
+      ctx.fillText(bpm[i].hi === null ? bpm[i].lo + '+' : bpm[i].lo + '–' + bpm[i].hi, x + bw / 2, H - padB + 23);
     }
-    function yFn(rng){ return function(v){ return H - padB - (v - rng.lo) / (rng.hi - rng.lo) * (H - padT - padB); }; }
-    var lRange = axisRange(data[spec.left.key], spec.left.invert), yL = yFn(lRange);
-    ctx.font = '9px ' + IMG_MONO; ctx.fillStyle = faint.indexOf('var') === 0 ? getComputedStyle(document.documentElement).getPropertyValue('--text-faint').trim() : faint;
-    var faintC = ctx.fillStyle;
-    // left gridlines + labels
-    for(var g = 0; g <= 3; g++){
-      var lv = lRange.lo + (lRange.hi - lRange.lo) * g / 3, gy = yL(lv);
-      ctx.strokeStyle = grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W - padR, gy); ctx.stroke();
-      ctx.fillStyle = faintC; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-      ctx.fillText(spec.left.fmt ? spec.left.fmt(Math.round(lv)) : Math.round(lv), padL - 5, gy);
+    // average-HR marker: a line at the avg's position within its own zone
+    if(avg && m){
+      var zi = hrZoneOf(avg, m), lo = bpm[zi].lo, hi = bpm[zi].hi === null ? Math.max(m, lo + 1) : bpm[zi].hi;
+      var f = Math.min(1, Math.max(0, (avg - lo) / (hi - lo)));
+      var mx = slotX(zi) + f * bw;
+      ctx.strokeStyle = strongC; ctx.lineWidth = 1.4; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(mx, padT - 2); ctx.lineTo(mx, H - padB); ctx.stroke(); ctx.setLineDash([]);
+      var lbl = 'Avg ' + Math.round(avg), tw = ctx.measureText(lbl).width + 12;
+      var lx = Math.min(W - tw, Math.max(0, mx - tw / 2));
+      ctx.fillStyle = strongC; roundRect(ctx, lx, 2, tw, 15, 4); ctx.fill();
+      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#000';
+      ctx.font = '700 9.5px ' + IMG_MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(lbl, lx + tw / 2, 10);
     }
-    function stroke(arr, yf, colorVar){
-      var col = colorVar.indexOf('var') === 0 ? getComputedStyle(document.documentElement).getPropertyValue(colorVar.slice(4, -1)).trim() : colorVar;
-      ctx.strokeStyle = col; ctx.lineWidth = 1.6; ctx.lineJoin = 'round'; ctx.beginPath();
-      var pen = false;
-      arr.forEach(function(v, i){ if(v == null){ pen = false; return; } var px = xAt(t[i]), py = yf(v); if(pen) ctx.lineTo(px, py); else ctx.moveTo(px, py); pen = true; });
-      ctx.stroke();
-    }
-    if(spec.right){
-      var rRange = axisRange(data[spec.right.key]), yR = yFn(rRange);
-      ctx.fillStyle = faintC; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-      [rRange.lo, (rRange.lo + rRange.hi) / 2, rRange.hi].forEach(function(v){ ctx.fillText(Math.round(v), W - padR + 5, yFn(rRange)(v)); });
-      stroke(data[spec.right.key], yR, spec.right.color);
-    }
-    stroke(data[spec.left.key], yL, spec.left.color);
-    // x-axis time ticks
-    ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic'; ctx.fillStyle = faintC;
-    for(var xi = 0; xi <= 3; xi++){ var tt = t0 + span * xi / 3; ctx.fillText(secToClock(Math.round(tt)), xAt(tt), H - 7); }
   }
   function renderDetailGraph(rec){
     var box = els.logAdd.querySelector('#dvGraph'); if(!box) return;
-    function paint(data){
-      var spec = graphSpec(rec, data);
-      if(!spec){ box.innerHTML = '<p class="dv-nodata">No power or heart-rate data recorded for this activity.</p>'; return; }
-      box.innerHTML = '<div class="dv-graph"><div class="dv-ghead"><h4>Over time</h4>' + graphLegend(spec) + '</div><canvas class="dv-graph-cv"></canvas></div>';
-      drawActivityGraph(box.querySelector('.dv-graph-cv'), data, spec);
+    function paint(hr){
+      var ref = maxHr || rec.maxHr;   // prefer the app's max-HR setting
+      if(!ref){ box.innerHTML = '<p class="dv-nodata">Set your max HR in the menu to see heart-rate zones.</p>'; return; }
+      var dist = HR_ZONES.map(function(){ return 0; }), sum = 0;
+      hr.forEach(function(v){ dist[hrZoneOf(v, ref)]++; sum += v; });
+      var total = hr.length, avg = total ? sum / total : 0;
+      box.innerHTML = '<div class="dv-graph"><div class="dv-ghead"><h4>Heart-rate zones</h4>' +
+        '<span class="dv-gsub">max ' + ref + ' bpm</span></div><canvas class="dv-graph-cv"></canvas></div>';
+      drawHrZones(box.querySelector('.dv-graph-cv'), dist, total, avg, ref);
     }
-    var data = activityGraphData(rec);
-    if(data){ paint(data); return; }
-    // No local series. Strava imports can fetch their streams once, then cache.
+    var hr = hrSeriesFor(rec);
+    if(hr && hr.length){ paint(hr); return; }
+    // Strava imports can fetch their streams once, then cache.
     if(rec.imported && rec.stravaActivityId && typeof stravaCanRead === 'function' && stravaCanRead()){
-      box.innerHTML = '<p class="dv-nodata">Loading graph from Strava…</p>';
+      box.innerHTML = '<p class="dv-nodata">Loading heart rate from Strava…</p>';
       stravaFetchStreams(rec.stravaActivityId).then(function(sr){
-        if(!sr){ box.innerHTML = '<p class="dv-nodata">No time-series recorded for this activity on Strava.</p>'; return; }
-        rec.streams = sr; ridePatch(rec.id, {streams:sr});
-        var d = activityGraphData(rec);
-        if(d) paint(d); else box.innerHTML = '<p class="dv-nodata">No power or heart-rate data recorded for this activity.</p>';
+        if(sr){ rec.streams = sr; ridePatch(rec.id, {streams:sr}); }
+        var h = hrSeriesFor(rec);
+        if(h && h.length) paint(h);
+        else box.innerHTML = '<p class="dv-nodata">No heart-rate recorded for this activity.</p>';
       }).catch(function(e){
-        box.innerHTML = '<p class="dv-nodata">Couldn’t load the graph: ' + (e && e.message || 'Strava error') + '</p>';
+        box.innerHTML = '<p class="dv-nodata">Couldn’t load heart rate: ' + (e && e.message || 'Strava error') + '</p>';
       });
       return;
     }
-    box.innerHTML = '<p class="dv-nodata">No time-series data for this activity.</p>';
+    box.innerHTML = '<p class="dv-nodata">No heart-rate data for this activity.</p>';
   }
   function showDetail(rec){
     els.logAdd.style.display = '';
@@ -7003,32 +7011,41 @@
     var rpeHtml = rec.rpe ? '<div class="dv-rpe">RPE <b>' + rec.rpe + '</b> / 10</div>'
       : (!rec.tss ? '<div class="dv-rpe none">No RPE yet — ' + (indoor ? 'add one in the full view' : 'edit to add one') + ' so it counts toward Fitness &amp; Form.</div>' : '');
     var noteHtml = rec.note ? '<p class="dv-note">' + esc(rec.note) + '</p>' : '';
+    var titleBlock =
+      '<div class="dv-title">' +
+        '<span class="dv-name">' + esc(entryName(rec)) + '</span>' +
+        '<span class="dv-sub"><i style="background:' + entryColor(rec) + '"></i>' + typeLabel + ' · ' + prettyDate(rec.day) + '</span>' +
+      '</div>';
+    var btns = '<div class="lf-head-btns">' + editBtn +
+      '<button type="button" class="lf-hbtn del" id="dvDelete" title="Delete" aria-label="Delete">' + TRASH_SVG + '</button>' +
+      '<button type="button" class="lf-hbtn cancel" id="dvClose" title="Close" aria-label="Close">' + CLOSE_SVG + '</button>' +
+      '</div>';
+    // With a route, the title / type / date sit on one line beside the map,
+    // bottom-aligned; the map is bare (no frame). Otherwise the usual header.
+    var head = rec.route
+      ? '<div class="dv-head has-route">' + btns +
+          '<div class="dv-title-route">' + titleBlock +
+            '<div class="lf-route bare">' + routeSvg(decodePolyline(rec.route), 130, 74) + '</div>' +
+          '</div>' +
+        '</div>'
+      : '<div class="log-side-head">' + titleBlock + btns + '</div>';
     els.logAdd.innerHTML =
-      '<div class="log-detail">' +
-        '<div class="log-side-head">' +
-          '<div class="dv-title">' +
-            '<span class="dv-name">' + esc(entryName(rec)) + '</span>' +
-            '<span class="dv-sub"><i style="background:' + entryColor(rec) + '"></i>' + typeLabel + ' · ' + prettyDate(rec.day) + '</span>' +
-          '</div>' +
-          '<div class="lf-head-btns">' + editBtn +
-            '<button type="button" class="lf-hbtn del" id="dvDelete" title="Delete" aria-label="Delete">' + TRASH_SVG + '</button>' +
-            '<button type="button" class="lf-hbtn cancel" id="dvClose" title="Close" aria-label="Close">' + CLOSE_SVG + '</button>' +
-          '</div>' +
-        '</div>' +
-        routeHtml +
+      '<div class="log-detail">' + head +
         '<div class="dv-stats">' + detailStats(rec) + '</div>' +
         '<div class="dv-graph-wrap" id="dvGraph"></div>' +
         rpeHtml + noteHtml +
       '</div>';
+    selectedId = rec.id; markSelected();
     renderDetailGraph(rec);
     var full = els.logAdd.querySelector('#dvFull'); if(full) full.addEventListener('click', function(){ openSavedRide(rec.id); });
     var edit = els.logAdd.querySelector('#dvEdit'); if(edit) edit.addEventListener('click', function(){ showLogForm(rec); });
-    els.logAdd.querySelector('#dvClose').addEventListener('click', function(){ els.logAdd.style.display = 'none'; });
+    els.logAdd.querySelector('#dvClose').addEventListener('click', hideSide);
     els.logAdd.querySelector('#dvDelete').addEventListener('click', function(){
       if(!confirm('Delete this activity?')) return;
-      rideDelete(rec.id).then(function(){ els.logAdd.style.display = 'none'; renderLog(); refreshDoneMarks(); });
+      rideDelete(rec.id).then(function(){ hideSide(); renderLog(); refreshDoneMarks(); });
     });
   }
+  function hideSide(){ els.logAdd.style.display = 'none'; selectedId = null; markSelected(); }
 
   // ---- quick-log form (ride / run / gym) ----
   // The type picker rebuilds the fields; new and existing entries share the
@@ -7050,7 +7067,7 @@
           '<div class="lf-head-btns">' +
             '<button type="button" class="lf-hbtn save" id="lfSave" title="Save" aria-label="Save" style="display:none;">' + CHECK_SVG + '</button>' +
             '<button type="button" class="lf-hbtn del" id="lfDelete" title="Delete" aria-label="Delete"' + (editing ? '' : ' style="display:none;"') + '>' + TRASH_SVG + '</button>' +
-            '<button type="button" class="lf-hbtn cancel" id="lfCancel" title="' + (editing ? 'Back' : 'Close') + '" aria-label="' + (editing ? 'Back' : 'Close') + '">' + CLOSE_SVG + '</button>' +
+            '<button type="button" class="lf-hbtn cancel" id="lfCancel" title="' + (editing ? 'Back to details' : 'Close') + '" aria-label="' + (editing ? 'Back to details' : 'Close') + '">' + (editing ? BACK_SVG : CLOSE_SVG) + '</button>' +
           '</div>' +
         '</div>' +
         '<div class="lf-identity" id="lfIdentity"></div>' +
@@ -7128,25 +7145,22 @@
       tEl.addEventListener('input', function(){ recompute('time'); });
     }
 
-    // Name / date / type: a static summary while locked, editable fields once
-    // the pencil is pressed (or from the start on a new entry).
+    // Name and date are always editable in edit mode. The type can be chosen
+    // when logging something new, but not changed on an existing entry — the
+    // fields and any imported data belong to that type, so it stays fixed.
     function renderIdentity(){
       var box = els.logAdd.querySelector('#lfIdentity');
-      if(idLocked){
-        box.innerHTML =
-          '<div class="lf-id-view">' +
-            '<span class="lf-id-name">' + (name ? esc(name) : typeSpec(type).label) + '</span>' +
-            '<span class="lf-id-sub"><i style="background:' + typeSpec(type).color + '"></i>' + typeSpec(type).label + ' · ' + prettyDate(seed.day) + '</span>' +
-          '</div>';
-        return;
-      }
+      var typeCtrl = editing
+        ? '<div class="lf-static-type"><i style="background:' + typeSpec(type).color + '"></i>' + typeSpec(type).label + '</div>'
+        : '<div class="log-types">' + Object.keys(MANUAL_TYPES).map(function(k){
+            return '<button type="button" data-type="' + k + '" class="' + (type === k ? 'on' : '') + '" style="--c:' + MANUAL_TYPES[k].color + '"><i></i>' + MANUAL_TYPES[k].label + '</button>';
+          }).join('') + '</div>';
       box.innerHTML =
         '<label class="lf-name">Name <input type="text" id="lfName" maxlength="60" placeholder="' + typeSpec(type).label + '" value="' + esc(name) + '"></label>' +
-        '<div class="log-types">' + Object.keys(MANUAL_TYPES).map(function(k){
-          return '<button type="button" data-type="' + k + '" class="' + (type === k ? 'on' : '') + '" style="--c:' + MANUAL_TYPES[k].color + '"><i></i>' + MANUAL_TYPES[k].label + '</button>';
-        }).join('') + '</div>' +
+        typeCtrl +
         '<label class="lf-date">Date <input type="date" id="lfDate" value="' + (seed.day || dayKey(Date.now())) + '"></label>';
-      box.querySelector('.log-types').addEventListener('click', function(e){
+      var picker = box.querySelector('.log-types');
+      if(picker) picker.addEventListener('click', function(e){
         var b = e.target.closest('[data-type]'); if(!b) return;
         type = b.getAttribute('data-type'); groups = []; trioTouched = [];
         [].forEach.call(box.querySelectorAll('[data-type]'), function(x){ x.classList.toggle('on', x === b); });
@@ -7175,7 +7189,7 @@
     // Close: back to the read-only detail for an existing entry (discarding any
     // unsaved edits), or shut the panel for a brand-new one.
     els.logAdd.querySelector('#lfCancel').addEventListener('click', function(){
-      if(currentId != null) showDetail(seed); else els.logAdd.style.display = 'none';
+      if(currentId != null) showDetail(seed); else hideSide();
     });
     els.logAdd.querySelector('#lfSave').addEventListener('click', function(){
       // Date comes from the field when the identity is unlocked, else it's
@@ -7231,7 +7245,7 @@
     els.logAdd.querySelector('#lfDelete').addEventListener('click', function(){
       if(currentId == null) return;
       if(!confirm('Delete this activity?')) return;
-      rideDelete(currentId).then(function(){ els.logAdd.style.display = 'none'; renderLog(); refreshDoneMarks(); });
+      rideDelete(currentId).then(function(){ hideSide(); renderLog(); refreshDoneMarks(); });
     });
   }
   function paintRpeBtns(row, rpe){
