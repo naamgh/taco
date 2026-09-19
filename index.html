@@ -1560,6 +1560,11 @@
   .dv-rpe{font-size:12px;color:var(--text-dim);}
   .dv-rpe b{font-family:var(--mono);color:var(--text-strong);font-weight:700;}
   .dv-rpe.none{font-size:11px;color:var(--text-faint);line-height:1.5;}
+  /* One-click RPE in the detail pane: label on top, 10 buttons filling the row. */
+  .dv-rpe-set{flex-direction:column;align-items:stretch;gap:8px;margin:0;}
+  .dv-rpe-set .rpe-label{font-size:12px;}
+  .dv-rpe-set .rpe-btns{display:flex;gap:5px;}
+  .dv-rpe-set .rpe-btns button{flex:1;width:auto;min-width:0;height:30px;}
   .dv-note{margin:0;font-size:12.5px;color:var(--text-dim);line-height:1.5;}
   .ftp-estimate{
     background:rgba(255,93,117,0.07);border:1px dashed rgba(255,93,117,0.45);border-radius:14px;
@@ -7006,8 +7011,11 @@
       ? '<button type="button" class="lf-hbtn edit" id="dvFull" title="Open full view — export, Strava sync" aria-label="Full view">' + EXPAND_SVG + '</button>'
       : '<button type="button" class="lf-hbtn edit" id="dvEdit" title="Edit this activity" aria-label="Edit">' + PENCIL_SVG + '</button>';
     var routeHtml = rec.route ? '<div class="lf-route">' + routeSvg(decodePolyline(rec.route), 246, 120) + '</div>' : '';
-    var rpeHtml = rec.rpe ? '<div class="dv-rpe">RPE <b>' + rec.rpe + '</b> / 10</div>'
-      : (!rec.tss ? '<div class="dv-rpe none">No RPE yet — ' + (indoor ? 'add one in the full view' : 'edit to add one') + ' so it counts toward Fitness &amp; Form.</div>' : '');
+    var rpeHtml = rec.rpe
+      ? '<div class="dv-rpe">RPE <b>' + rec.rpe + '</b> / 10</div>'
+      : '<div class="rpe-row dv-rpe-set" id="dvRpe"><span class="rpe-label">Rate this session <em>RPE 1–10</em></span><span class="rpe-btns">' +
+          [1,2,3,4,5,6,7,8,9,10].map(function(n){ return '<button type="button" data-rpe="' + n + '">' + n + '</button>'; }).join('') +
+        '</span></div>';
     var noteHtml = rec.note ? '<p class="dv-note">' + esc(rec.note) + '</p>' : '';
     var titleBlock =
       '<div class="dv-title">' +
@@ -7037,6 +7045,15 @@
     renderDetailGraph(rec);
     var full = els.logAdd.querySelector('#dvFull'); if(full) full.addEventListener('click', function(){ openSavedRide(rec.id); });
     var edit = els.logAdd.querySelector('#dvEdit'); if(edit) edit.addEventListener('click', function(){ showLogForm(rec); });
+    // One-click RPE: set, auto-save, and re-render as "RPE X/10". To change it
+    // later, use the normal edit flow.
+    var rpeBox = els.logAdd.querySelector('#dvRpe');
+    if(rpeBox) rpeBox.addEventListener('click', function(e){
+      var b = e.target.closest('[data-rpe]'); if(!b) return;
+      rec.rpe = +b.getAttribute('data-rpe');
+      showDetail(rec);
+      ridePatch(rec.id, {rpe:rec.rpe}).then(function(){ renderLog(); refreshDoneMarks(); });
+    });
     els.logAdd.querySelector('#dvClose').addEventListener('click', hideSide);
     els.logAdd.querySelector('#dvDelete').addEventListener('click', function(){
       if(!confirm('Delete this activity?')) return;
