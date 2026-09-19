@@ -1332,6 +1332,8 @@
   .log-add-btn{margin-left:8px;}
   .log-import-btn{display:flex;align-items:center;gap:7px;}
   .log-import-btn svg{display:block;}
+  /* Transient auto-sync status beside the Import button. */
+  .log-sync-note{font-size:11.5px;color:var(--text-faint);font-family:var(--mono);white-space:nowrap;margin-left:2px;}
   /* Back-Up / Load log: icon + label, sitting after the spacer. */
   .log-io-btn{display:flex;align-items:center;gap:6px;}
   .log-io-btn svg{display:block;}
@@ -1404,6 +1406,58 @@
     padding:1px 4px;border-radius:4px;line-height:1.35;
   }
   .log-entry.needs-rpe{border-style:dashed;}
+  /* A planned workout: outlined, translucent — clearly not-yet-done. */
+  .log-entry.planned{background:transparent;border-style:dashed;border-color:var(--c);color:var(--text-dim);}
+  .log-entry.planned i{opacity:.75;}
+  .log-entry.planned span{font-style:italic;}
+  .log-entry.planned:hover{background:var(--bg-card-hover);color:var(--text);}
+  /* "Add a planned workout" popover. */
+  .plan-pop{
+    display:none;position:fixed;z-index:130;width:214px;
+    background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:12px;
+    box-shadow:0 26px 60px -22px rgba(0,0,0,0.85);
+  }
+  .plan-pop.open{display:block;}
+  .plan-head{display:flex;flex-direction:column;gap:1px;margin-bottom:10px;}
+  .plan-title{font-size:13px;font-weight:700;color:var(--text-strong);}
+  .plan-sub{font-size:11px;color:var(--text-faint);}
+  .plan-cats{display:flex;flex-direction:column;gap:3px;}
+  .plan-cat{
+    display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:8px 9px;border-radius:8px;
+    background:var(--bg-elev);border:1px solid var(--border-soft);color:var(--text);font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .plan-cat:hover{border-color:var(--accent);background:var(--bg-card-hover);}
+  .plan-cat i{width:9px;height:9px;border-radius:50%;flex:none;}
+  .plan-cat .plan-chev{margin-left:auto;color:var(--text-faint);font-size:15px;line-height:1;}
+  .plan-targets{display:flex;flex-wrap:wrap;gap:5px;}
+  .plan-target{
+    flex:1 1 44%;padding:8px 6px;border-radius:8px;background:var(--bg-elev);border:1px solid var(--border-soft);
+    color:var(--text);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .plan-target:hover{border-color:var(--accent);background:var(--bg-card-hover);color:var(--text-strong);}
+  .plan-back{
+    margin-top:8px;background:none;border:0;color:var(--text-faint);font-size:11.5px;font-weight:600;cursor:pointer;padding:2px;font-family:inherit;
+  }
+  .plan-back:hover{color:var(--text);}
+  /* Planned-workout detail. */
+  .dv-plan-note{margin:0;font-size:12px;color:var(--text-dim);line-height:1.55;}
+  .dv-plan-note b{color:var(--text);font-weight:650;}
+  /* Indoor plan: "Show me {zone} workouts" with duration quick-links. */
+  .dv-plan-browse-box{display:flex;flex-direction:column;gap:8px;}
+  .dv-plan-browse-label{font-size:12.5px;font-weight:650;color:var(--text-strong);}
+  .dv-plan-durs{display:flex;flex-wrap:wrap;gap:6px;}
+  .dv-dur{
+    padding:7px 11px;border-radius:8px;background:var(--bg-card);border:1px solid var(--border);
+    color:var(--text-dim);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .dv-dur:hover{border-color:var(--accent);background:var(--bg-card-hover);color:var(--text-strong);}
+  .dv-dur[data-dur="0"]{color:var(--text-faint);}
+  .dv-plan-date{display:flex;flex-direction:column;gap:5px;font-size:11.5px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .dv-plan-date input{
+    background:var(--bg-card);border:1px solid var(--border);color:var(--text);border-radius:8px;
+    padding:8px 10px;font-family:inherit;font-size:13px;font-weight:600;text-transform:none;letter-spacing:0;
+  }
+  .dv-plan-date input:focus{outline:none;border-color:var(--accent);}
   /* The entry whose detail is open, highlighted on the grid. */
   .log-entry.selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--bg-card-hover);}
   .log-entry.selected i{box-shadow:0 0 0 2px var(--bg-card-hover);}
@@ -1947,6 +2001,10 @@
   </div>
 </div>
 
+<!-- "Add a planned workout" popover, anchored to a day's + on the calendar.
+     On <body> so it isn't clipped by the modal; positioned in JS. -->
+<div class="plan-pop" id="planPop"></div>
+
 <div class="ble-warning no-print" id="bleWarning" style="display:none;"></div>
 
 <!-- Guided start. Lives on <body> so the veil covers the whole shell and the
@@ -2233,6 +2291,7 @@
         <svg viewBox="135 15 87 17.5" width="52" height="11" role="img" aria-label="Import from Strava"><path fill-rule="evenodd" clip-rule="evenodd" d="M180.749 31.8195L180.748 31.8188H185.357L188.188 26.1268L191.019 31.8188H196.618L188.187 15.5403L180.184 30.9945L177.111 26.5078C179.008 25.5928 180.191 24.0081 180.191 21.7318V21.687C180.191 20.0803 179.7 18.9197 178.763 17.9822C177.669 16.8887 175.906 16.1968 173.139 16.1968H165.506V31.8195H170.728V27.3558H171.844L174.79 31.8195H180.749ZM212.954 15.5403L204.524 31.8188H210.124L212.955 26.1268L215.786 31.8188H221.385L212.954 15.5403ZM200.576 32.4593L209.006 16.1808H203.406L200.575 21.8729L197.744 16.1808H192.144L200.576 32.4593ZM172.982 23.6287C174.232 23.6287 174.991 23.0708 174.991 22.1112V22.0663C174.991 21.0621 174.21 20.5711 173.005 20.5711H170.728V23.6287H172.982ZM154.337 20.6158H149.74V16.1968H164.157V20.6158H159.56V31.8195H154.337V20.6158ZM137.015 26.1507L134.225 29.4761C136.211 31.2172 139.068 32.1097 142.237 32.1097C146.433 32.1097 149.133 30.101 149.133 26.82V26.7756C149.133 23.6287 146.455 22.468 142.46 21.7318C140.808 21.419 140.384 21.1515 140.384 20.7273V20.6827C140.384 20.3033 140.742 20.0355 141.523 20.0355C142.973 20.0355 144.737 20.5042 146.209 21.5754L148.754 18.0493C146.946 16.6209 144.714 15.9065 141.701 15.9065C137.394 15.9065 135.073 18.2055 135.073 21.1737V21.2185C135.073 24.5214 138.153 25.526 141.656 26.2398C143.33 26.5747 143.821 26.82 143.821 27.2665V27.3113C143.821 27.7352 143.42 27.9805 142.482 27.9805C140.652 27.9805 138.711 27.4452 137.015 26.1507Z" fill="#FC4C02"/></svg>
         Import
       </button>
+      <span class="log-sync-note" id="logSyncNote" style="display:none;"></span>
       <span class="log-spacer"></span>
       <button class="action-btn log-io-btn" id="logExportBtn" type="button" title="Download the whole log as a file">
         <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 3.5v11M12 14.5l-4.2-4.2M12 14.5l4.2-4.2M4.5 16.5v2.2a1.8 1.8 0 001.8 1.8h11.4a1.8 1.8 0 001.8-1.8v-2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -2418,6 +2477,7 @@
     trendsBody: document.getElementById('trendsBody'),
     trendsCloseBtn: document.getElementById('trendsCloseBtn'),
     formPop: document.getElementById('formPop'),
+    planPop: document.getElementById('planPop'),
     listPane: document.getElementById('listPane'),
     detailPane: document.getElementById('detailPane'),
     detailHead: document.getElementById('detailHead'),
@@ -2510,6 +2570,7 @@
     logNext: document.getElementById('logNext'),
     logAddBtn: document.getElementById('logAddBtn'),
     logImportStrava: document.getElementById('logImportStrava'),
+    logSyncNote: document.getElementById('logSyncNote'),
     logExportBtn: document.getElementById('logExportBtn'),
     logImportBtn: document.getElementById('logImportBtn'),
     logImportFile: document.getElementById('logImportFile'),
@@ -2522,7 +2583,12 @@
   // ============================================================
   // LIBRARY FILTERING
   // ============================================================
-  var filters = {duration:null, zone:null, shape:null, spice:null, search:'', sort:'tss', starredOnly:false};
+  // Sort is a remembered preference (not a filter): default Name (A–Z), then
+  // whatever the rider last chose.
+  var SORT_KEY = 'ftpPlan_sort_v1';
+  var savedSort = 'name';
+  try{ var _s = localStorage.getItem(SORT_KEY); if(_s) savedSort = _s; }catch(e){}
+  var filters = {duration:null, zone:null, shape:null, spice:null, search:'', sort:savedSort, starredOnly:false};
 
   // Whether the recommended badges are shown at all. A preference, not a
   // filter: on, the badged rides wear the pill and lead the list; off, the
@@ -3503,7 +3569,7 @@
 
   function clearAllFilters(){
     filters.duration = null; filters.zone = null; filters.shape = null; filters.spice = null;
-    filters.search = ''; filters.sort = 'tss'; filters.starredOnly = false;
+    filters.search = ''; filters.starredOnly = false;   // sort is a preference; it survives a reset
     els.searchBox.value = '';
     els.sortMenu.style.display = 'none';
     renderSortMenu();
@@ -3904,6 +3970,7 @@
       b.className = filters.sort === o.v ? 'on' : '';
       b.addEventListener('click', function(){
         filters.sort = o.v;
+        try{ localStorage.setItem(SORT_KEY, o.v); }catch(e){}   // remembered next time
         els.sortMenu.style.display = 'none';
         renderSortMenu();
         renderWorkoutCards();
@@ -6714,8 +6781,46 @@
     els.logAdd.style.display = 'none';
     els.logModal.style.display = 'flex';
     renderLog();
+    maybeAutoSync();
   }
   function closeLog(){ els.logModal.style.display = 'none'; }
+
+  // ---- auto-sync from Strava on calendar open ----
+  // New activities land on the calendar without a click. It's throttled so
+  // opening the calendar can't spam Strava, only *adds* (never overwrites edits
+  // or deletes), and advances a cursor past everything it fetched so a deleted
+  // import isn't quietly re-added. The manual "Import" button stays for
+  // choosing older activities. Nothing happens unless Strava is connected.
+  var AUTOSYNC_AT = 'ftpPlan_autoSyncAt_v1', AUTOSYNC_SINCE = 'ftpPlan_autoSyncSince_v1';
+  var AUTOSYNC_GAP = 20 * 60 * 1000;   // at most ~3 checks an hour
+  function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+  function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
+  function syncNote(msg, fade){
+    var el = els.logSyncNote; if(!el) return;
+    el.textContent = msg || ''; el.style.display = msg ? '' : 'none';
+    clearTimeout(el._t);
+    if(msg && fade) el._t = setTimeout(function(){ el.style.display = 'none'; }, 4500);
+  }
+  function maybeAutoSync(){
+    if(typeof stravaConnected !== 'function' || !stravaConnected() || !stravaCanRead()) return;
+    var now = Date.now(), last = +lsGet(AUTOSYNC_AT) || 0;
+    if(now - last < AUTOSYNC_GAP) return;
+    lsSet(AUTOSYNC_AT, String(now));
+    var since = +lsGet(AUTOSYNC_SINCE) || 0;
+    if(!since){ since = now - 3 * 86400000; lsSet(AUTOSYNC_SINCE, String(since)); }
+    syncNote('Syncing Strava…');
+    Promise.all([stravaFetchActivities(since), rideAll()]).then(function(res){
+      var acts = res[0] || [], have = {};
+      res[1].forEach(function(r){ if(r.stravaActivityId) have[r.stravaActivityId] = true; });
+      var newest = since;
+      acts.forEach(function(a){ var t = Date.parse(a.start_date); if(t > newest) newest = t; });
+      if(newest > since) lsSet(AUTOSYNC_SINCE, String(newest + 1000));
+      var news = acts.map(stravaToRecord).filter(function(rec){ return rec.stravaActivityId && !have[rec.stravaActivityId]; });
+      if(!news.length){ syncNote(''); return; }
+      news.reduce(function(p, rec){ return p.then(function(){ return rideSave(rec); }); }, Promise.resolve())
+        .then(function(){ renderLog(); refreshDoneMarks(); syncNote(news.length + ' new from Strava', true); });
+    }).catch(function(){ syncNote(''); });
+  }
   // Back from a saved ride: same month, fresh data.
   function reopenLog(){
     if(!logMonth){ openLog(); return; }
@@ -6733,6 +6838,7 @@
   }
   function entryColor(r){
     if(r.type === 'indoor') return r.zone && ZONES[r.zone] ? ZONES[r.zone].hex : 'var(--accent)';
+    if(r.type === 'other') return 'var(--text-faint)';
     return typeSpec(r.type).color;
   }
   function entryName(r){
@@ -6795,19 +6901,21 @@
           var d = new Date(rowStart.getFullYear(), rowStart.getMonth(), rowStart.getDate() + i);
           var k = dayKey(d.getTime()), list = byDay[k] || [];
           var out = d.getMonth() !== m;
-          list.forEach(function(r){ wkTss += r.tss || 0; wkSec += r.durationSec || 0; wkN++; });
+          // Planned workouts don't count toward the week's done totals.
+          list.forEach(function(r){ if(r.planned) return; wkTss += r.tss || 0; wkSec += r.durationSec || 0; wkN++; });
+          var future = k >= todayKey;   // today and later get the plan +
           cells += '<div class="log-day' + (out ? ' out' : '') + (i >= 5 ? ' weekend' : '') + (k === todayKey ? ' today' : '') + '" data-day="' + k + '">' +
             '<span class="log-date">' + d.getDate() + '</span>' +
             list.map(function(r){
               var det = entryDetail(r);
               // An activity feeds Fitness/Fatigue/Form only through TSS, or failing
               // that an RPE. With neither it's invisible to those charts — flag it.
-              var needsRpe = !r.tss && !r.rpe;
-              var tip = entryName(r) + (det ? ' · ' + det : '') + (r.tss ? ' · TSS ' + r.tss : needsRpe ? ' · needs an RPE to count toward Fitness/Form' : '');
-              return '<button type="button" class="log-entry' + (needsRpe ? ' needs-rpe' : '') + (r.id === selectedId ? ' selected' : '') + '" data-id="' + r.id + '" style="--c:' + entryColor(r) + '" title="' + tip.replace(/"/g, '&quot;') + '">' +
+              var needsRpe = !r.planned && !r.tss && !r.rpe;
+              var tip = (r.planned ? 'Planned · ' : '') + entryName(r) + (det ? ' · ' + det : '') + (r.tss ? ' · TSS ' + r.tss : needsRpe ? ' · needs an RPE to count toward Fitness/Form' : '');
+              return '<button type="button" class="log-entry' + (r.planned ? ' planned' : '') + (needsRpe ? ' needs-rpe' : '') + (r.id === selectedId ? ' selected' : '') + '" data-id="' + r.id + '" style="--c:' + entryColor(r) + '" title="' + tip.replace(/"/g, '&quot;') + '">' +
                 '<i></i><span>' + entryName(r) + '</span>' + (r.tss ? '<b>' + r.tss + '</b>' : needsRpe ? '<em class="rpe-flag">RPE</em>' : '') + '</button>';
             }).join('') +
-            '<button type="button" class="log-day-add" data-add="' + k + '" title="Log an activity on this day" aria-label="Log an activity">+</button>' +
+            (future ? '<button type="button" class="log-day-add" data-plan="' + k + '" title="Plan a workout on this day" aria-label="Plan a workout">+</button>' : '') +
           '</div>';
         }
         html += '<div class="log-row">' + cells +
@@ -6820,13 +6928,90 @@
     });
   }
   els.logGrid.addEventListener('click', function(e){
-    var add = e.target.closest('[data-add]');
-    if(add){ showLogForm({day:add.getAttribute('data-add')}); return; }
+    var plan = e.target.closest('[data-plan]');
+    if(plan){ openPlanPop(plan.getAttribute('data-plan'), plan); return; }
     var en = e.target.closest('.log-entry');
     if(!en) return;
     var id = +en.getAttribute('data-id');
     rideGet(id).then(function(r){ if(r) showDetail(r); });
   });
+
+  // ---- plan a workout ----
+  // The + on a future day opens this: pick a category, then one quick target,
+  // and a planned entry lands on the calendar (3 clicks). Planned entries carry
+  // planned:true and no actuals; they're kept out of the charts and totals.
+  var PLAN_CATS = [
+    {key:'indoor', label:'Indoor Ride', type:'indoor', noun:'ride', targets:[
+      ['recovery','Recovery'],['endurance','Endurance'],['sweetspot','Sweet Spot'],['threshold','Threshold'],['vo2','VO₂']]},
+    {key:'ride', label:'Outdoor Ride', type:'ride', noun:'ride', targets:[
+      ['easy','Easy'],['endurance','Endurance'],['tempo','Tempo'],['long','Long']]},
+    {key:'run', label:'Run', type:'run', noun:'run', targets:[
+      ['easy','Easy'],['long','Long'],['tempo','Tempo'],['intervals','Intervals']]},
+    {key:'gym', label:'Gym', type:'gym', noun:'', targets:[
+      ['full','Full body'],['lower','Lower body'],['upper','Upper body'],['core','Core'],['mobility','Mobility']]},
+    {key:'other', label:'Other', type:'other', noun:'', targets:[
+      ['swim','Swim'],['yoga','Yoga'],['walk','Walk'],['hike','Hike'],['rest','Rest day']]}
+  ];
+  var planDay = null, planCat = null;
+  function placePlanPop(anchor){
+    var pop = els.planPop; pop.classList.add('open');
+    var r = anchor.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+    var left = r.right + 8; if(left + w > window.innerWidth - 10) left = Math.max(10, r.left - w - 8);
+    var top = r.top - 4; if(top + h > window.innerHeight - 10) top = Math.max(10, window.innerHeight - 10 - h);
+    pop.style.left = Math.round(left) + 'px'; pop.style.top = Math.round(top) + 'px';
+  }
+  function openPlanPop(day, anchor){
+    planDay = day;
+    renderPlanStep1();
+    placePlanPop(anchor);
+  }
+  function closePlanPop(){ els.planPop.classList.remove('open'); els.planPop.innerHTML = ''; planDay = null; }
+  function planHead(sub){
+    return '<div class="plan-head"><span class="plan-title">Add a planned workout</span>' +
+      '<span class="plan-sub">' + (sub || prettyDate(planDay)) + '</span></div>';
+  }
+  function renderPlanStep1(){
+    planCat = null;
+    els.planPop.innerHTML = planHead() +
+      '<div class="plan-cats">' + PLAN_CATS.map(function(c){
+        return '<button type="button" class="plan-cat" data-cat="' + c.key + '"><i style="background:' + entryColor({type:c.type}) + '"></i>' + c.label + '<span class="plan-chev">›</span></button>';
+      }).join('') + '</div>';
+  }
+  function renderPlanStep2(catKey){
+    planCat = catKey;
+    var c = PLAN_CATS.filter(function(x){ return x.key === catKey; })[0];
+    els.planPop.innerHTML = planHead(c.label) +
+      '<div class="plan-targets">' + c.targets.map(function(t){
+        return '<button type="button" class="plan-target" data-t="' + t[0] + '">' + t[1] + '</button>';
+      }).join('') + '</div>' +
+      '<button type="button" class="plan-back" data-back>‹ Categories</button>';
+  }
+  // One delegated listener; stopPropagation keeps the outside-click closer from
+  // firing when a click re-renders the popover (detaching the clicked node).
+  els.planPop.addEventListener('click', function(e){
+    e.stopPropagation();
+    var cat = e.target.closest('[data-cat]'); if(cat){ renderPlanStep2(cat.getAttribute('data-cat')); return; }
+    if(e.target.closest('[data-back]')){ renderPlanStep1(); return; }
+    var t = e.target.closest('[data-t]');
+    if(t && planCat){ createPlan(PLAN_CATS.filter(function(x){ return x.key === planCat; })[0], t.getAttribute('data-t')); }
+  });
+  function createPlan(cat, targetKey){
+    var t = cat.targets.filter(function(x){ return x[0] === targetKey; })[0], label = t[1];
+    var name = cat.noun ? label + ' ' + cat.noun : label;
+    var parts = planDay.split('-').map(Number);
+    var noon = new Date(parts[0], parts[1] - 1, parts[2], 12, 0, 0).getTime();
+    var rec = {
+      id: noon + (Date.now() % 1000), type: cat.type, day: planDay, startDateMs: noon,
+      planned: true, name: name, plan: {cat: cat.key, target: targetKey, label: label}, savedAt: Date.now()
+    };
+    if(cat.type === 'indoor') rec.zone = targetKey;
+    if(cat.type === 'gym') rec.fields = {groups: [targetKey]};
+    rideSave(rec).then(function(){ closePlanPop(); renderLog(); });
+  }
+  document.addEventListener('click', function(e){
+    if(els.planPop.classList.contains('open') && !els.planPop.contains(e.target) && !e.target.closest('[data-plan]')) closePlanPop();
+  });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && els.planPop.classList.contains('open')) closePlanPop(); });
 
   var PENCIL_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 20h4L18.5 9.5a2 2 0 0 0 0-2.8l-1.2-1.2a2 2 0 0 0-2.8 0L4 16v4z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M13.3 6.7l4 4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
   var CHECK_SVG = '<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M5 12.5l4.2 4.5L19 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -7003,7 +7188,83 @@
     }
     box.innerHTML = '<p class="dv-nodata">No heart-rate data for this activity.</p>';
   }
+  // A planned workout: no actuals yet — show the plan, let the rider move the
+  // day or delete it. (Editing / completing a plan is a later step.)
+  function showPlanDetail(rec){
+    els.logAdd.style.display = '';
+    var typeLabel = rec.type === 'indoor' ? 'Indoor ride' : rec.type === 'other' ? (rec.plan && rec.plan.label || 'Other') : typeSpec(rec.type).label;
+    els.logAdd.innerHTML =
+      '<div class="log-detail">' +
+        '<div class="log-side-head">' +
+          '<div class="dv-title">' +
+            '<span class="dv-name">' + esc(entryName(rec)) + '</span>' +
+            '<span class="dv-sub"><i style="background:' + entryColor(rec) + '"></i>Planned · ' + typeLabel + '</span>' +
+          '</div>' +
+          '<div class="lf-head-btns">' +
+            '<button type="button" class="lf-hbtn del" id="dvDelete" title="Delete" aria-label="Delete">' + TRASH_SVG + '</button>' +
+            '<button type="button" class="lf-hbtn cancel" id="dvClose" title="Close" aria-label="Close">' + CLOSE_SVG + '</button>' +
+          '</div>' +
+        '</div>' +
+        '<p class="dv-plan-note">A planned session — a reminder on the calendar. Reschedule it or remove it below; once you’ve done it, log the actual with the <b>+ Log an activity</b> button.</p>' +
+        planBrowseHtml(rec) +
+        '<label class="lf-date dv-plan-date">Move to <input type="date" id="dvPlanDate" value="' + rec.day + '"></label>' +
+      '</div>';
+    selectedId = rec.id; markSelected();
+    var durBox = els.logAdd.querySelector('.dv-plan-durs');
+    if(durBox) durBox.addEventListener('click', function(e){
+      var b = e.target.closest('[data-dur]'); if(!b) return;
+      browsePlanZone(planBase(rec), +b.getAttribute('data-dur') || null);
+    });
+    els.logAdd.querySelector('#dvClose').addEventListener('click', hideSide);
+    els.logAdd.querySelector('#dvDelete').addEventListener('click', function(){
+      if(!confirm('Delete this planned workout?')) return;
+      rideDelete(rec.id).then(function(){ hideSide(); renderLog(); });
+    });
+    els.logAdd.querySelector('#dvPlanDate').addEventListener('change', function(){
+      var day = this.value; if(!day) return;
+      var p = day.split('-').map(Number), noon = new Date(p[0], p[1] - 1, p[2], 12, 0, 0).getTime();
+      ridePatch(rec.id, {day: day, startDateMs: noon}).then(function(){ rec.day = day; rec.startDateMs = noon; renderLog(); });
+    });
+  }
+  // The library filter an indoor plan maps to. Recovery has no library zone →
+  // easiest endurance (endurance zone, 1 chilli only). Endurance itself is
+  // normal Z2 across all intensities.
+  function planBase(rec){
+    var z = rec.zone, fz = FILTER_ZONES.indexOf(z) >= 0 ? z : (z === 'recovery' ? 'endurance' : null);
+    return {zone: fz, spice: (z === 'recovery') ? 1 : null};
+  }
+  // Durations that actually have a workout for this zone (+ spice), so every
+  // quick-link lands on results.
+  function planDurations(base){
+    var set = {};
+    WORKOUTS.forEach(function(w){
+      if(w.zone === 'test') return;
+      if(base.zone !== null && w.zone !== base.zone) return;
+      if(base.spice !== null && w.spice !== base.spice) return;
+      set[w.durationMin] = true;
+    });
+    return Object.keys(set).map(Number).sort(function(a, b){ return a - b; });
+  }
+  function planBrowseHtml(rec){
+    if(rec.type !== 'indoor') return '';
+    var durs = planDurations(planBase(rec));
+    return '<div class="dv-plan-browse-box"><span class="dv-plan-browse-label">Show me ' + esc((rec.plan && rec.plan.label) || '') + ' workouts</span>' +
+      '<div class="dv-plan-durs">' +
+        '<button type="button" class="dv-dur" data-dur="0">Any length</button>' +
+        durs.map(function(d){ return '<button type="button" class="dv-dur" data-dur="' + d + '">' + d + ' min</button>'; }).join('') +
+      '</div></div>';
+  }
+  // Apply the filter and jump back to the library; clears the rest so the list
+  // isn't accidentally empty.
+  function browsePlanZone(base, duration){
+    filters.zone = base.zone; filters.spice = base.spice; filters.duration = duration || null; filters.shape = null;
+    filters.search = ''; filters.starredOnly = false;
+    if(els.searchBox) els.searchBox.value = '';
+    renderFilters(); renderWorkoutCards();
+    hideSide(); closeLog();
+  }
   function showDetail(rec){
+    if(rec.planned){ showPlanDetail(rec); return; }
     els.logAdd.style.display = '';
     var indoor = rec.type === 'indoor';
     var typeLabel = indoor ? 'Indoor ride' : typeSpec(rec.type).label;
@@ -7651,6 +7912,7 @@
 
   function renderTrends(){
     rideAll().then(function(acts){
+      acts = acts.filter(function(a){ return !a.planned; });   // plans aren't done yet
       var pmc = computePMC(acts), curve = powerCurve(acts);
       lastCurve = curve;
       if(!hasWeight()) pcUnit = 'w';   // W/kg needs a weight
