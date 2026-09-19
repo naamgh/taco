@@ -1543,13 +1543,14 @@
   .dv-name{font-size:17px;font-weight:750;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;}
   .dv-sub{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-dim);}
   .dv-sub i{width:8px;height:8px;border-radius:50%;flex:none;}
-  .dv-stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  .dv-stat{
-    background:var(--bg-card);border:1px solid var(--border-soft);border-radius:9px;padding:7px 10px;
-    display:flex;flex-direction:column;gap:1px;min-width:0;
+  /* Clean text readouts: two-column key / value rows, no pills. */
+  .dv-stats{display:grid;grid-template-columns:1fr 1fr;gap:2px 24px;}
+  .dv-row{
+    display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+    padding:6px 0;border-bottom:1px solid var(--border-soft);min-width:0;
   }
-  .dv-stat span{font-size:9.5px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;font-weight:600;}
-  .dv-stat b{font-family:var(--mono);font-size:14px;color:var(--text-strong);font-weight:650;white-space:nowrap;}
+  .dv-row span{font-size:12px;color:var(--text-faint);}
+  .dv-row b{font-size:13.5px;color:var(--text-strong);font-weight:650;white-space:nowrap;}
   .dv-graph{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;padding:12px 12px 8px;}
   .dv-ghead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:6px;}
   .dv-ghead h4{margin:0;font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
@@ -6879,7 +6880,7 @@
   // nothing editable until the pencil is pressed. Indoor rides also get their
   // zone pies here and a button through to the full summary (exports, sync).
   function gymLabel(g){ var o = MANUAL_TYPES.gym.fields[1].options.filter(function(x){ return x[0] === g; })[0]; return o ? o[1] : g; }
-  function statChip(lab, val){ return '<div class="dv-stat"><span>' + lab + '</span><b>' + val + '</b></div>'; }
+  function statChip(lab, val){ return '<div class="dv-row"><span>' + lab + '</span><b>' + val + '</b></div>'; }
   function detailStats(rec){
     function w(v, u){ return (v !== null && v !== undefined) ? v + (u || '') : '—'; }
     if(rec.type === 'indoor'){
@@ -6932,42 +6933,39 @@
     return HR_ZONES.length - 1;
   }
   function drawHrZones(cv, dist, total, avg, m){
-    var W = cv.clientWidth || 300, H = 208, dpr = Math.min(3, window.devicePixelRatio || 1);
+    var W = cv.clientWidth || 300, H = 190, dpr = Math.min(3, window.devicePixelRatio || 1);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
     var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     var faintC = getComputedStyle(document.documentElement).getPropertyValue('--text-faint').trim();
     var strongC = getComputedStyle(document.documentElement).getPropertyValue('--text-strong').trim();
     var bpm = hrZoneBpm(m), n = HR_ZONES.length;
-    var padL = 6, padR = 6, padT = 24, padB = 40, gap = 12;
-    var bw = (W - padL - padR - gap * (n - 1)) / n;
+    // Narrower bars, close together, centred; extra top headroom for the pill.
+    var padT = 44, padB = 26, barW = 40, gap = 8;
+    var groupW = n * barW + (n - 1) * gap, startX = Math.max(6, (W - groupW) / 2);
     var maxFrac = Math.max.apply(null, dist.map(function(c){ return total ? c / total : 0; })) || 1;
     var plotH = H - padT - padB;
-    function slotX(i){ return padL + i * (bw + gap); }
+    function slotX(i){ return startX + i * (barW + gap); }
     for(var i = 0; i < n; i++){
       var frac = total ? dist[i] / total : 0, h = Math.max(2, frac / maxFrac * plotH);
       var x = slotX(i), y = H - padB - h;
-      ctx.fillStyle = bpm[i].color; roundRect(ctx, x, y, bw, h, 4); ctx.fill();
-      // % above
+      ctx.fillStyle = bpm[i].color; roundRect(ctx, x, y, barW, h, 4); ctx.fill();
       ctx.fillStyle = frac > 0 ? strongC : faintC; ctx.font = '600 12px ' + IMG_MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-      ctx.fillText(Math.round(frac * 100) + '%', x + bw / 2, y - 6);
-      // zone label + bpm range below
+      ctx.fillText(Math.round(frac * 100) + '%', x + barW / 2, y - 6);
       ctx.fillStyle = strongC; ctx.font = '700 12px ' + IMG_SANS; ctx.textBaseline = 'top';
-      ctx.fillText(bpm[i].z, x + bw / 2, H - padB + 7);
-      ctx.fillStyle = faintC; ctx.font = '8.5px ' + IMG_MONO;
-      ctx.fillText(bpm[i].hi === null ? bpm[i].lo + '+' : bpm[i].lo + '–' + bpm[i].hi, x + bw / 2, H - padB + 23);
+      ctx.fillText(bpm[i].z, x + barW / 2, H - padB + 7);
     }
-    // average-HR marker: a line at the avg's position within its own zone
+    // average-HR marker: a line from the Avg pill down to the bars.
     if(avg && m){
       var zi = hrZoneOf(avg, m), lo = bpm[zi].lo, hi = bpm[zi].hi === null ? Math.max(m, lo + 1) : bpm[zi].hi;
       var f = Math.min(1, Math.max(0, (avg - lo) / (hi - lo)));
-      var mx = slotX(zi) + f * bw;
+      var mx = slotX(zi) + f * barW;
       ctx.strokeStyle = strongC; ctx.lineWidth = 1.4; ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.moveTo(mx, padT - 2); ctx.lineTo(mx, H - padB); ctx.stroke(); ctx.setLineDash([]);
-      var lbl = 'Avg ' + Math.round(avg), tw = ctx.measureText(lbl).width + 12;
-      var lx = Math.min(W - tw, Math.max(0, mx - tw / 2));
+      ctx.beginPath(); ctx.moveTo(mx, 18); ctx.lineTo(mx, H - padB); ctx.stroke(); ctx.setLineDash([]);
+      var lbl = 'Avg ' + Math.round(avg); ctx.font = '700 9.5px ' + IMG_MONO;
+      var tw = ctx.measureText(lbl).width + 12, lx = Math.min(W - tw, Math.max(0, mx - tw / 2));
       ctx.fillStyle = strongC; roundRect(ctx, lx, 2, tw, 15, 4); ctx.fill();
       ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#000';
-      ctx.font = '700 9.5px ' + IMG_MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.fillText(lbl, lx + tw / 2, 10);
     }
   }
@@ -7025,7 +7023,7 @@
     var head = rec.route
       ? '<div class="dv-head has-route">' + btns +
           '<div class="dv-title-route">' + titleBlock +
-            '<div class="lf-route bare">' + routeSvg(decodePolyline(rec.route), 130, 74) + '</div>' +
+            '<div class="lf-route bare">' + routeSvg(decodePolyline(rec.route), 168, 108) + '</div>' +
           '</div>' +
         '</div>'
       : '<div class="log-side-head">' + titleBlock + btns + '</div>';
