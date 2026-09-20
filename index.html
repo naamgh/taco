@@ -1411,6 +1411,13 @@
   .log-entry.planned i{opacity:.75;}
   .log-entry.planned span{font-style:italic;}
   .log-entry.planned:hover{background:var(--bg-card-hover);color:var(--text);}
+  /* Quick-delete × on the right of a planned chip — just the glyph, a hair of
+     padding. Scoped past `.log-entry span { flex:1 }` so it doesn't stretch. */
+  .log-entry .plan-del{
+    flex:none;min-width:0;overflow:visible;margin-left:2px;padding:0 2px;border-radius:3px;
+    font-size:13px;line-height:1;color:var(--text-faint);font-style:normal;cursor:pointer;
+  }
+  .log-entry .plan-del:hover{background:rgba(232,57,90,0.16);color:var(--c-anaerobic);}
   /* "Add a planned workout" popover. */
   .plan-pop{
     display:none;position:fixed;z-index:130;width:214px;
@@ -6604,12 +6611,19 @@
       });
     });
   }
-  function rideSave(rec){ return rideTx('readwrite', function(st){ st.put(rec); return rec; }); }
-  function rideDelete(id){ return rideTx('readwrite', function(st){ st.delete(id); return id; }); }
+  // A local edit stamps `updatedAt` (drives the cloud last-write-wins merge) and
+  // nudges a sync. A delete leaves a tombstone ({id,deleted,updatedAt}) so the
+  // removal itself travels to other devices. `rideApply` writes a record straight
+  // from the cloud without re-stamping or re-syncing. `rideAll` hides tombstones;
+  // `rideAllRaw` keeps them (for sync and garbage collection).
+  function rideSave(rec){ rec.updatedAt = Date.now(); if(typeof cloudSyncSoon === 'function') cloudSyncSoon(); return rideTx('readwrite', function(st){ st.put(rec); return rec; }); }
+  function rideApply(rec){ return rideTx('readwrite', function(st){ st.put(rec); return rec; }); }
+  function rideDelete(id){ if(typeof cloudSyncSoon === 'function') cloudSyncSoon(); return rideTx('readwrite', function(st){ st.put({id:id, deleted:true, updatedAt:Date.now()}); return id; }); }
   function rideGet(id){ return rideTx('readonly', function(st){ return st.get(id); }); }
+  function rideAllRaw(){ return rideTx('readonly', function(st){ return st.getAll(); }).then(function(all){ return all || []; }); }
   function rideAll(){
-    return rideTx('readonly', function(st){ return st.getAll(); }).then(function(all){
-      return (all || []).sort(function(a, b){ return a.startDateMs - b.startDateMs; });
+    return rideAllRaw().then(function(all){
+      return all.filter(function(r){ return !r.deleted; }).sort(function(a, b){ return a.startDateMs - b.startDateMs; });
     });
   }
   function ridePatch(id, patch){
@@ -6782,6 +6796,8 @@
     els.logModal.style.display = 'flex';
     renderLog();
     maybeAutoSync();
+    if(typeof cloudSync === 'function') cloudSync();
+    if(typeof rideGcTombstones === 'function') rideGcTombstones();
   }
   function closeLog(){ els.logModal.style.display = 'none'; }
 
@@ -6836,8 +6852,10 @@
     var h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60);
     return h ? h + 'h ' + (m < 10 ? '0' : '') + m + 'm' : m + 'm';
   }
+  // Indoor (trainer) rides get their own identity colour so they read distinctly
+  // from outdoor rides (which stay accent blue, close to the endurance zone).
   function entryColor(r){
-    if(r.type === 'indoor') return r.zone && ZONES[r.zone] ? ZONES[r.zone].hex : 'var(--accent)';
+    if(r.type === 'indoor') return 'var(--lav)';
     if(r.type === 'other') return 'var(--text-faint)';
     return typeSpec(r.type).color;
   }
@@ -6913,7 +6931,8 @@
               var needsRpe = !r.planned && !r.tss && !r.rpe;
               var tip = (r.planned ? 'Planned · ' : '') + entryName(r) + (det ? ' · ' + det : '') + (r.tss ? ' · TSS ' + r.tss : needsRpe ? ' · needs an RPE to count toward Fitness/Form' : '');
               return '<button type="button" class="log-entry' + (r.planned ? ' planned' : '') + (needsRpe ? ' needs-rpe' : '') + (r.id === selectedId ? ' selected' : '') + '" data-id="' + r.id + '" style="--c:' + entryColor(r) + '" title="' + tip.replace(/"/g, '&quot;') + '">' +
-                '<i></i><span>' + entryName(r) + '</span>' + (r.tss ? '<b>' + r.tss + '</b>' : needsRpe ? '<em class="rpe-flag">RPE</em>' : '') + '</button>';
+                '<i></i><span>' + entryName(r) + '</span>' + (r.tss ? '<b>' + r.tss + '</b>' : needsRpe ? '<em class="rpe-flag">RPE</em>' : '') +
+                (r.planned ? '<span class="plan-del" data-del="' + r.id + '" title="Delete plan" aria-label="Delete plan">×</span>' : '') + '</button>';
             }).join('') +
             (future ? '<button type="button" class="log-day-add" data-plan="' + k + '" title="Plan a workout on this day" aria-label="Plan a workout">+</button>' : '') +
           '</div>';
@@ -6928,6 +6947,14 @@
     });
   }
   els.logGrid.addEventListener('click', function(e){
+    // Quick-delete a plan from its chip — no confirm; a plan is 3 clicks to remake.
+    var del = e.target.closest('[data-del]');
+    if(del){
+      e.stopPropagation();
+      var did = +del.getAttribute('data-del');
+      rideDelete(did).then(function(){ if(selectedId === did) hideSide(); renderLog(); });
+      return;
+    }
     var plan = e.target.closest('[data-plan]');
     if(plan){ openPlanPop(plan.getAttribute('data-plan'), plan); return; }
     var en = e.target.closest('.log-entry');
@@ -6941,7 +6968,7 @@
   // and a planned entry lands on the calendar (3 clicks). Planned entries carry
   // planned:true and no actuals; they're kept out of the charts and totals.
   var PLAN_CATS = [
-    {key:'indoor', label:'Indoor Ride', type:'indoor', noun:'ride', targets:[
+    {key:'indoor', label:'Indoor Trainer', type:'indoor', noun:'ride', targets:[
       ['recovery','Recovery'],['endurance','Endurance'],['sweetspot','Sweet Spot'],['threshold','Threshold'],['vo2','VO₂']]},
     {key:'ride', label:'Outdoor Ride', type:'ride', noun:'ride', targets:[
       ['easy','Easy'],['endurance','Endurance'],['tempo','Tempo'],['long','Long']]},
@@ -7217,8 +7244,7 @@
     });
     els.logAdd.querySelector('#dvClose').addEventListener('click', hideSide);
     els.logAdd.querySelector('#dvDelete').addEventListener('click', function(){
-      if(!confirm('Delete this planned workout?')) return;
-      rideDelete(rec.id).then(function(){ hideSide(); renderLog(); });
+      rideDelete(rec.id).then(function(){ hideSide(); renderLog(); });   // plans delete without a prompt
     });
     els.logAdd.querySelector('#dvPlanDate').addEventListener('change', function(){
       var day = this.value; if(!day) return;
@@ -8021,6 +8047,95 @@
   els.trendsCloseBtn.addEventListener('click', closeTrends);
   document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && els.trendsModal.style.display !== 'none') closeTrends(); });
   window.addEventListener('resize', function(){ if(els.trendsModal.style.display !== 'none') renderTrends(); });
+
+  // ============================================================
+  // CLOUD SYNC (Phase 0)
+  // ============================================================
+  // The ride log and planner follow the rider across devices. IndexedDB stays
+  // the local, offline-first copy; this pushes local changes and pulls remote
+  // ones to a small Cloudflare Worker, keyed by the Strava athlete id (Strava is
+  // the identity — the Worker verifies the token). Records merge per-id by
+  // `updatedAt`, last write wins; deletes travel as tombstones.
+  //
+  // The heavy per-second data (samples / streams / laps) stays on the device
+  // that recorded it — only the light metadata syncs, so the cloud blob stays
+  // small and a second device still gets the calendar, plans, stats and pies.
+  //
+  // Off until a sync URL is set. To enable, once the Worker is deployed:
+  //   localStorage.setItem('ftpPlan_syncUrl', 'https://your-worker.workers.dev')
+  var SYNC_PULLED_KEY = 'ftpPlan_syncPulledAt_v1';
+  var HEAVY = ['samples', 'streams', 'laps'];
+  // The deployed sync Worker. A localStorage override wins (set '' to disable).
+  var SYNC_DEFAULT = 'https://ftp-sync.nomtron.workers.dev';
+  function syncUrl(){
+    try{ var u = localStorage.getItem('ftpPlan_syncUrl'); return ((u === null ? SYNC_DEFAULT : u) || '').replace(/\/+$/, ''); }
+    catch(e){ return SYNC_DEFAULT; }
+  }
+  function cloudEnabled(){ return !!syncUrl() && typeof stravaConnected === 'function' && stravaConnected() && stravaCanRead(); }
+  function lightRec(r){ var o = {}; Object.keys(r).forEach(function(k){ if(HEAVY.indexOf(k) < 0) o[k] = r[k]; }); return o; }
+
+  var syncing = false, syncQueued = false, syncTimer = null;
+  // Debounced push-after-change: a burst of edits (e.g. a Strava import) becomes
+  // one sync.
+  function cloudSyncSoon(){ if(!cloudEnabled()) return; clearTimeout(syncTimer); syncTimer = setTimeout(cloudSync, 1500); }
+
+  function cloudSync(){
+    if(!cloudEnabled()) return Promise.resolve();
+    if(syncing){ syncQueued = true; return Promise.resolve(); }
+    syncing = true;
+    var url = syncUrl();
+    var since = 0; try{ since = +localStorage.getItem(SYNC_PULLED_KEY) || 0; }catch(e){}
+    return stravaAccessToken().then(function(token){
+      return rideAllRaw().then(function(all){
+        // Push whatever changed since we last pulled (a little overlap for safety).
+        var outgoing = all.map(function(r){ if(!r.updatedAt) r.updatedAt = r.savedAt || Date.now(); return r; })
+                          .filter(function(r){ return (r.updatedAt || 0) > since - 5000; })
+                          .map(lightRec);
+        return fetch(url + '/sync', {
+          method: 'POST',
+          headers: {'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json'},
+          body: JSON.stringify({records: outgoing, since: since})
+        });
+      });
+    }).then(function(res){
+      if(!res.ok) throw new Error('sync HTTP ' + res.status);
+      return res.json();
+    }).then(function(data){
+      var remote = (data && data.records) || [];
+      return rideAllRaw().then(function(all){
+        var byId = {}, maxSeen = since;
+        all.forEach(function(r){ byId[r.id] = r; if((r.updatedAt || 0) > maxSeen) maxSeen = r.updatedAt; });
+        var applied = 0;
+        return remote.reduce(function(p, r){
+          if((r.updatedAt || 0) > maxSeen) maxSeen = r.updatedAt;
+          var local = byId[r.id];
+          if(local && (local.updatedAt || 0) >= (r.updatedAt || 0)) return p;   // local is same-or-newer
+          // Keep any heavy fields this device already holds — the remote copy is light.
+          var merged = r;
+          if(local) HEAVY.forEach(function(k){ if(local[k] !== undefined) merged[k] = local[k]; });
+          applied++;
+          return p.then(function(){ return rideApply(merged); });
+        }, Promise.resolve()).then(function(){
+          try{ localStorage.setItem(SYNC_PULLED_KEY, String(maxSeen)); }catch(e){}
+          if(applied){ renderLog(); refreshDoneMarks(); }
+        });
+      });
+    }).catch(function(){ /* offline or Worker down — try again on next open */ })
+      .then(function(){
+        syncing = false;
+        if(syncQueued){ syncQueued = false; return cloudSync(); }
+      });
+  }
+
+  // Sweep tombstones once they've had ample time to reach every device.
+  function rideGcTombstones(){
+    var cut = Date.now() - 60 * 86400000;
+    return rideAllRaw().then(function(all){
+      var dead = all.filter(function(r){ return r.deleted && (r.updatedAt || 0) < cut; });
+      if(!dead.length) return;
+      return rideTx('readwrite', function(st){ dead.forEach(function(r){ st.delete(r.id); }); });
+    }).catch(function(){});
+  }
 
   // ============================================================
   // .FIT EXPORT (for Strava / Garmin Connect / TrainingPeaks, etc.)
