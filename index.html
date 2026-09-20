@@ -1332,8 +1332,18 @@
   .log-add-btn{margin-left:8px;}
   .log-import-btn{display:flex;align-items:center;gap:7px;}
   .log-import-btn svg{display:block;}
-  /* Transient auto-sync status beside the Import button. */
-  .log-sync-note{font-size:11.5px;color:var(--text-faint);font-family:var(--mono);white-space:nowrap;margin-left:2px;}
+  /* Cloud-sync status beside the Import button: Syncing… / Synced / Offline. */
+  .cloud-status{
+    display:inline-flex;align-items:center;gap:5px;margin-left:4px;white-space:nowrap;
+    font-size:11.5px;font-weight:600;color:var(--text-faint);
+  }
+  .cloud-status .cs-icon{display:block;flex:none;}
+  .cloud-status.syncing{color:var(--accent);}
+  .cloud-status.synced{color:var(--ok);}
+  .cloud-status.error{color:var(--c-anaerobic);}
+  @keyframes cloudPulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+  .cloud-status.syncing .cs-icon{animation:cloudPulse 1s ease-in-out infinite;}
+  @media (prefers-reduced-motion:reduce){ .cloud-status.syncing .cs-icon{animation:none;} }
   /* Back-Up / Load log: icon + label, sitting after the spacer. */
   .log-io-btn{display:flex;align-items:center;gap:6px;}
   .log-io-btn svg{display:block;}
@@ -2298,7 +2308,10 @@
         <svg viewBox="135 15 87 17.5" width="52" height="11" role="img" aria-label="Import from Strava"><path fill-rule="evenodd" clip-rule="evenodd" d="M180.749 31.8195L180.748 31.8188H185.357L188.188 26.1268L191.019 31.8188H196.618L188.187 15.5403L180.184 30.9945L177.111 26.5078C179.008 25.5928 180.191 24.0081 180.191 21.7318V21.687C180.191 20.0803 179.7 18.9197 178.763 17.9822C177.669 16.8887 175.906 16.1968 173.139 16.1968H165.506V31.8195H170.728V27.3558H171.844L174.79 31.8195H180.749ZM212.954 15.5403L204.524 31.8188H210.124L212.955 26.1268L215.786 31.8188H221.385L212.954 15.5403ZM200.576 32.4593L209.006 16.1808H203.406L200.575 21.8729L197.744 16.1808H192.144L200.576 32.4593ZM172.982 23.6287C174.232 23.6287 174.991 23.0708 174.991 22.1112V22.0663C174.991 21.0621 174.21 20.5711 173.005 20.5711H170.728V23.6287H172.982ZM154.337 20.6158H149.74V16.1968H164.157V20.6158H159.56V31.8195H154.337V20.6158ZM137.015 26.1507L134.225 29.4761C136.211 31.2172 139.068 32.1097 142.237 32.1097C146.433 32.1097 149.133 30.101 149.133 26.82V26.7756C149.133 23.6287 146.455 22.468 142.46 21.7318C140.808 21.419 140.384 21.1515 140.384 20.7273V20.6827C140.384 20.3033 140.742 20.0355 141.523 20.0355C142.973 20.0355 144.737 20.5042 146.209 21.5754L148.754 18.0493C146.946 16.6209 144.714 15.9065 141.701 15.9065C137.394 15.9065 135.073 18.2055 135.073 21.1737V21.2185C135.073 24.5214 138.153 25.526 141.656 26.2398C143.33 26.5747 143.821 26.82 143.821 27.2665V27.3113C143.821 27.7352 143.42 27.9805 142.482 27.9805C140.652 27.9805 138.711 27.4452 137.015 26.1507Z" fill="#FC4C02"/></svg>
         Import
       </button>
-      <span class="log-sync-note" id="logSyncNote" style="display:none;"></span>
+      <span class="cloud-status" id="cloudStatus" hidden title="Cloud sync">
+        <svg class="cs-icon" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M7.4 18h9.1a3.5 3.5 0 0 0 .4-6.98A5 5 0 0 0 7.5 9.2 3.4 3.4 0 0 0 7.4 18z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+        <span class="cs-text"></span>
+      </span>
       <span class="log-spacer"></span>
       <button class="action-btn log-io-btn" id="logExportBtn" type="button" title="Download the whole log as a file">
         <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M12 3.5v11M12 14.5l-4.2-4.2M12 14.5l4.2-4.2M4.5 16.5v2.2a1.8 1.8 0 001.8 1.8h11.4a1.8 1.8 0 001.8-1.8v-2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -2577,7 +2590,7 @@
     logNext: document.getElementById('logNext'),
     logAddBtn: document.getElementById('logAddBtn'),
     logImportStrava: document.getElementById('logImportStrava'),
-    logSyncNote: document.getElementById('logSyncNote'),
+    cloudStatus: document.getElementById('cloudStatus'),
     logExportBtn: document.getElementById('logExportBtn'),
     logImportBtn: document.getElementById('logImportBtn'),
     logImportFile: document.getElementById('logImportFile'),
@@ -6811,12 +6824,8 @@
   var AUTOSYNC_GAP = 20 * 60 * 1000;   // at most ~3 checks an hour
   function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
   function lsSet(k, v){ try{ localStorage.setItem(k, v); }catch(e){} }
-  function syncNote(msg, fade){
-    var el = els.logSyncNote; if(!el) return;
-    el.textContent = msg || ''; el.style.display = msg ? '' : 'none';
-    clearTimeout(el._t);
-    if(msg && fade) el._t = setTimeout(function(){ el.style.display = 'none'; }, 4500);
-  }
+  // Strava-import status rides the same cloud indicator (defined in 08e).
+  function syncNote(msg, fade){ if(typeof flashCloud === 'function' && msg) flashCloud(msg); }
   function maybeAutoSync(){
     if(typeof stravaConnected !== 'function' || !stravaConnected() || !stravaCanRead()) return;
     var now = Date.now(), last = +lsGet(AUTOSYNC_AT) || 0;
@@ -8074,15 +8083,35 @@
   function cloudEnabled(){ return !!syncUrl() && typeof stravaConnected === 'function' && stravaConnected() && stravaCanRead(); }
   function lightRec(r){ var o = {}; Object.keys(r).forEach(function(k){ if(HEAVY.indexOf(k) < 0) o[k] = r[k]; }); return o; }
 
+  // ---- the little cloud indicator in the calendar header ----
+  var CS_TEXT = {syncing: 'Syncing…', synced: 'Synced', error: 'Offline'};
+  var csFlashTimer = null;
+  function cloudRest(){ return cloudEnabled() ? 'synced' : 'hidden'; }
+  function setCloudStatus(state, text){
+    var el = els.cloudStatus; if(!el) return;
+    if(state === 'hidden'){ el.hidden = true; return; }
+    el.hidden = false;
+    el.className = 'cloud-status ' + state;
+    var t = el.querySelector('.cs-text'); if(t) t.textContent = text || CS_TEXT[state] || '';
+  }
+  // A brief message (e.g. "3 new from Strava") that reverts to the resting state.
+  function flashCloud(msg){
+    if(!msg) return;
+    clearTimeout(csFlashTimer);
+    setCloudStatus('synced', msg);
+    csFlashTimer = setTimeout(function(){ setCloudStatus(cloudRest()); }, 4000);
+  }
+
   var syncing = false, syncQueued = false, syncTimer = null;
   // Debounced push-after-change: a burst of edits (e.g. a Strava import) becomes
   // one sync.
   function cloudSyncSoon(){ if(!cloudEnabled()) return; clearTimeout(syncTimer); syncTimer = setTimeout(cloudSync, 1500); }
 
   function cloudSync(){
-    if(!cloudEnabled()) return Promise.resolve();
+    if(!cloudEnabled()){ setCloudStatus('hidden'); return Promise.resolve(); }
     if(syncing){ syncQueued = true; return Promise.resolve(); }
     syncing = true;
+    clearTimeout(csFlashTimer); setCloudStatus('syncing');
     var url = syncUrl();
     var since = 0; try{ since = +localStorage.getItem(SYNC_PULLED_KEY) || 0; }catch(e){}
     return stravaAccessToken().then(function(token){
@@ -8118,9 +8147,10 @@
         }, Promise.resolve()).then(function(){
           try{ localStorage.setItem(SYNC_PULLED_KEY, String(maxSeen)); }catch(e){}
           if(applied){ renderLog(); refreshDoneMarks(); }
+          setCloudStatus('synced');
         });
       });
-    }).catch(function(){ /* offline or Worker down — try again on next open */ })
+    }).catch(function(){ setCloudStatus('error'); /* Worker down / offline — retry next open */ })
       .then(function(){
         syncing = false;
         if(syncQueued){ syncQueued = false; return cloudSync(); }
