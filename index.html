@@ -1376,14 +1376,6 @@
   /* The modal body: a scrolling calendar on the left, a full-height side
      panel on the right that appears when a form or import opens. */
   .log-body{flex:1 1 auto;min-height:0;display:flex;gap:16px;padding-top:12px;}
-  /* 12-week trend strip along the bottom of the calendar modal. */
-  .log-trend{flex:none;border-top:1px solid var(--border-soft);margin-top:10px;padding-top:10px;}
-  .lt-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;}
-  .lt-title{font-size:11.5px;color:var(--text-dim);}
-  .lt-title b{color:var(--text-strong);font-weight:700;font-family:var(--mono);}
-  .lt-toggle{padding:2px;}
-  .lt-canvas{display:block;width:100%;}
-  .lt-empty{margin:6px 0 2px;font-size:11.5px;color:var(--text-faint);text-align:center;}
   .log-gridwrap{flex:1 1 auto;min-width:0;overflow-y:auto;}
   .log-side{
     flex:0 0 380px;align-self:stretch;overflow-y:auto;
@@ -1731,17 +1723,19 @@
     background:var(--bg-card-list);border:1px solid var(--border);border-radius:16px;
     padding:16px 18px 14px;margin-bottom:16px;
   }
-  /* Fitness/Form stacked on the left, the tall power curve beside them. */
+  /* Fitness/Form stacked on the left; the 12-week trend over the tall power curve on the right. */
   .trends-cols{display:flex;gap:16px;align-items:stretch;}
   .trends-cols .tr-card{margin-bottom:0;}
   .col-left{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:16px;}
-  .col-right{flex:none;width:300px;}
-  .col-right .tr-card{height:100%;display:flex;flex-direction:column;}
-  .col-right .tr-canvas{flex:1;min-height:230px;}
+  .col-right{flex:none;width:300px;display:flex;flex-direction:column;gap:16px;}
+  .col-right .wk-card{flex:none;display:flex;flex-direction:column;}
+  .col-right .tr-card:not(.wk-card){flex:1 1 auto;display:flex;flex-direction:column;}
+  .col-right .tr-card:not(.wk-card) .tr-canvas{flex:1;min-height:230px;}
+  .wk-card .wk-canvas{width:100%;}
   @media (max-width:620px){
     .trends-cols{flex-direction:column;}
     .col-right{width:auto;}
-    .col-right .tr-canvas{height:300px;flex:none;}
+    .col-right .tr-card:not(.wk-card) .tr-canvas{height:300px;flex:none;}
   }
   .tr-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
   .tr-card-head h3{margin:0;font-size:14px;font-weight:700;color:var(--text-strong);}
@@ -2338,8 +2332,6 @@
       <div class="log-gridwrap"><div class="log-grid" id="logGrid"></div></div>
       <div class="log-side" id="logAdd" style="display:none;"></div>
     </div>
-    <!-- 12-week trend: weekly TSS or hours, toggled. -->
-    <div class="log-trend" id="logTrend"></div>
   </div>
 </div>
 
@@ -2601,7 +2593,6 @@
     logAddBtn: document.getElementById('logAddBtn'),
     logImportStrava: document.getElementById('logImportStrava'),
     cloudStatus: document.getElementById('cloudStatus'),
-    logTrend: document.getElementById('logTrend'),
     logExportBtn: document.getElementById('logExportBtn'),
     logImportBtn: document.getElementById('logImportBtn'),
     logImportFile: document.getElementById('logImportFile'),
@@ -6692,6 +6683,7 @@
       ftp: liveState.ftp || null,
       maxHr: liveState.maxHr || null,
       samples: liveState.samples,
+      pbCurve: (typeof pbCurveFor === 'function') ? pbCurveFor(liveState.samples) : null,
       laps: liveState.laps,
       stats: stats,
       tss: stats.tss,
@@ -6822,9 +6814,26 @@
     els.logAdd.style.display = 'none';
     els.logModal.style.display = 'flex';
     renderLog();
+    pbBackfill();
     maybeAutoSync();
     if(typeof cloudSync === 'function') cloudSync();
     if(typeof rideGcTombstones === 'function') rideGcTombstones();
+  }
+  // One-time (per ride) backfill: rides saved before pbCurve existed still have
+  // their samples locally — compute the light summary and save it so it syncs to
+  // other devices. Idempotent: once a ride has a pbCurve it's skipped. rideSave
+  // restamps updatedAt + triggers cloud push so the summary propagates.
+  function pbBackfill(){
+    if(typeof pbCurveFor !== 'function') return Promise.resolve();
+    return rideAllRaw().then(function(all){
+      var todo = all.filter(function(r){ return !r.deleted && !r.pref && r.samples && r.samples.length && !r.pbCurve; });
+      return Promise.all(todo.map(function(r){
+        var pc = pbCurveFor(r.samples);
+        if(!pc) return null;
+        r.pbCurve = pc;
+        return rideSave(r);
+      }));
+    }).catch(function(e){ console.log('pbCurve backfill skipped:', e && e.message); });
   }
   function closeLog(){ els.logModal.style.display = 'none'; }
 
@@ -6965,7 +6974,6 @@
         '</div>';
       }
       els.logGrid.innerHTML = html;
-      renderTrendStrip(all);
     }).catch(function(e){
       els.logGrid.innerHTML = '<p class="log-error">The log couldn’t be opened: ' + (e && e.message) + '</p>';
     });
@@ -6986,66 +6994,6 @@
     var id = +en.getAttribute('data-id');
     rideGet(id).then(function(r){ if(r) showDetail(r); });
   });
-
-  // ---- 12-week trend strip (weekly TSS or hours) ----
-  var weekMetric = 'tss';   // 'tss' | 'hours'
-  function computeWeeks(all){
-    var weeks = [], cur = mondayOf(Date.now());
-    for(var i = 11; i >= 0; i--) weeks.push({start: cur - i * 7 * 86400000, tss: 0, sec: 0});
-    all.forEach(function(r){
-      var ws = mondayOf(r.startDateMs);
-      for(var j = 0; j < 12; j++){ if(weeks[j].start === ws){ weeks[j].tss += r.tss || 0; weeks[j].sec += r.durationSec || 0; break; } }
-    });
-    return weeks;
-  }
-  function drawWeeklyTrend(cv, weeks, metric){
-    var W = cv.clientWidth || 600, H = 66, dpr = Math.min(3, window.devicePixelRatio || 1);
-    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
-    var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var faint = cssVar('--text-faint'), accent = cssVar('--accent');
-    var vals = weeks.map(function(w){ return metric === 'tss' ? w.tss : w.sec / 3600; });
-    var max = niceMax(Math.max.apply(null, vals) || (metric === 'tss' ? 100 : 1));
-    var padL = 30, padR = 6, padT = 6, padB = 14, n = 12, gap = 6;
-    var bw = (W - padL - padR - gap * (n - 1)) / n;
-    function y(v){ return H - padB - v / max * (H - padT - padB); }
-    ctx.font = '9px ' + IMG_MONO; ctx.fillStyle = faint; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    ctx.fillText(metric === 'tss' ? Math.round(max) : Math.round(max) + 'h', padL - 4, y(max));
-    ctx.fillText('0', padL - 4, y(0));
-    ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL, y(0) + 0.5); ctx.lineTo(W - padR, y(0) + 0.5); ctx.stroke();
-    for(var i = 0; i < n; i++){
-      var v = vals[i], h = v > 0 ? Math.max(2, v / max * (H - padT - padB)) : 0, x = padL + i * (bw + gap);
-      ctx.fillStyle = (i === n - 1) ? accent : 'rgba(110,139,255,0.42)';   // current week brighter
-      if(h > 0){ roundRect(ctx, x, H - padB - h, bw, h, 2); ctx.fill(); }
-    }
-    var mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    ctx.fillStyle = faint; ctx.font = '8px ' + IMG_MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    [0, 6, 11].forEach(function(i){ var d = new Date(weeks[i].start); ctx.fillText(d.getDate() + ' ' + mons[d.getMonth()], padL + i * (bw + gap) + bw / 2, H - 3); });
-  }
-  function renderTrendStrip(all){
-    var el = els.logTrend; if(!el) return;
-    function go(list){
-      var weeks = computeWeeks(list), cur = weeks[11];
-      var total = weeks.reduce(function(a, w){ return a + w.tss + w.sec; }, 0);
-      if(!total){ el.innerHTML = '<p class="lt-empty">Log activities to build your 12-week trend.</p>'; return; }
-      var valText = weekMetric === 'tss' ? (Math.round(cur.tss) + ' TSS') : fmtHours(cur.sec);
-      el.innerHTML =
-        '<div class="lt-head"><span class="lt-title">Last 12 weeks · <b>' + valText + '</b> this week</span>' +
-          '<div class="trends-range lt-toggle">' +
-            '<button type="button" class="tr-range-btn' + (weekMetric === 'tss' ? ' on' : '') + '" data-m="tss">TSS</button>' +
-            '<button type="button" class="tr-range-btn' + (weekMetric === 'hours' ? ' on' : '') + '" data-m="hours">Hours</button>' +
-          '</div></div>' +
-        '<canvas class="lt-canvas" id="ltCanvas"></canvas>';
-      drawWeeklyTrend(document.getElementById('ltCanvas'), weeks, weekMetric);
-    }
-    if(all) go(all); else rideAll().then(go);
-  }
-  // Metric toggle — same flick switch as watts / W·kg.
-  els.logTrend.addEventListener('click', function(e){
-    var b = e.target.closest('[data-m]'); if(!b) return;
-    weekMetric = b.getAttribute('data-m');
-    renderTrendStrip();
-  });
-  window.addEventListener('resize', function(){ if(els.logModal.style.display !== 'none') renderTrendStrip(); });
 
   // ---- plan a workout ----
   // The + on a future day opens this: pick a category, then one quick target,
@@ -7700,7 +7648,7 @@
     }).catch(function(e){
       els.logAdd.querySelector('.log-import').innerHTML = '<h3>Import from Strava</h3><p class="log-error">' + (e && e.message || 'Couldn’t reach Strava.') + '</p>' +
         '<div class="log-form-actions"><button type="button" class="action-btn" id="impClose">Close</button></div>';
-      els.logAdd.querySelector('#impClose').addEventListener('click', function(){ els.logAdd.style.display = 'none'; });
+      els.logAdd.querySelector('#impClose').addEventListener('click', hideSide);
     });
   }
   function fmtDayShort(ms){
@@ -7731,14 +7679,14 @@
     function boxes(){ return [].slice.call(listEl.querySelectorAll('input[type=checkbox]:not([disabled])')); }
     var all = els.logAdd.querySelector('#impAll'); if(all) all.addEventListener('click', function(){ boxes().forEach(function(b){ b.checked = true; }); });
     var none = els.logAdd.querySelector('#impNone'); if(none) none.addEventListener('click', function(){ boxes().forEach(function(b){ b.checked = false; }); });
-    els.logAdd.querySelector('#impClose').addEventListener('click', function(){ els.logAdd.style.display = 'none'; });
+    els.logAdd.querySelector('#impClose').addEventListener('click', hideSide);
     var save = els.logAdd.querySelector('#impSave');
     if(save) save.addEventListener('click', function(){
       var picked = boxes().filter(function(b){ return b.checked; }).map(function(b){ return rows[+b.getAttribute('data-i')].rec; });
-      if(!picked.length){ els.logAdd.style.display = 'none'; return; }
+      if(!picked.length){ hideSide(); return; }
       save.disabled = true; save.textContent = 'Importing…';
       picked.reduce(function(p, rec){ return p.then(function(){ return rideSave(rec); }); }, Promise.resolve())
-        .then(function(){ els.logAdd.style.display = 'none'; renderLog(); refreshDoneMarks(); });
+        .then(function(){ hideSide(); renderLog(); refreshDoneMarks(); });
     });
   }
   els.logImportStrava.addEventListener('click', showImportPanel);
@@ -7841,16 +7789,31 @@
     for(i = d; i < powers.length; i++){ sum += (powers[i] || 0) - (powers[i - d] || 0); if(sum > best) best = sum; }
     return best / d;
   }
+  // Best average power at each PB duration, keyed by seconds — a *light* per-ride
+  // summary (~8 numbers) that SYNCS, unlike the raw `samples` array which cloud
+  // sync strips out. Stamped on save (rideRecordFromLive) and backfilled for old
+  // rides (pbBackfill), so the power curve is identical on every device.
+  function pbCurveFor(samples){
+    if(!samples || !samples.length) return null;
+    var powers = samples.map(function(s){ return s.power || 0; }), out = {}, any = false;
+    PC_TARGETS.forEach(function(tg){
+      var b = bestForRide(powers, tg[0]);
+      if(b !== null && b > 0){ out[tg[0]] = Math.round(b); any = true; }
+    });
+    return any ? out : null;
+  }
   function powerCurve(acts){
-    var rides = acts.filter(function(a){ return a.samples && a.samples.length; })
+    // Prefer the stored pbCurve (light, synced); fall back to computing from raw
+    // samples for any ride that predates the summary and still has them locally.
+    var rides = acts.filter(function(a){ return a.pbCurve || (a.samples && a.samples.length); })
                     .sort(function(a, b){ return a.startDateMs - b.startDateMs; });
     var overall = PC_TARGETS.map(function(){ return null; });
     var prs = [];
     rides.forEach(function(r, ri){
-      var powers = r.samples.map(function(s){ return s.power || 0; });
+      var pc = r.pbCurve || pbCurveFor(r.samples) || {};
       PC_TARGETS.forEach(function(tg, i){
-        var b = bestForRide(powers, tg[0]);
-        if(b === null) return;
+        var b = pc[tg[0]];
+        if(b === undefined || b === null) return;
         // A new best from the newest ride is a PR (only when there was prior data to beat).
         if(ri === rides.length - 1 && overall[i] !== null && b > overall[i].w + 0.5){
           prs.push({label:tg[1], w:Math.round(b), prev:Math.round(overall[i].w)});
@@ -8014,7 +7977,64 @@
   var RANGES = [[42,'6w'],[90,'3m'],[180,'6m'],[365,'1y'],[0,'All']];
   var pcUnit = 'w';       // power-curve unit: 'w' or 'wkg'
   var lastCurve = null;   // kept so the unit toggle can redraw without recomputing
+  var WEEKMETRIC_KEY = 'ftpPlan_weekMetric_v1';
+  var weekMetric = 'tss'; // 12-week trend metric: 'tss' or 'hours' — remembered
+  try{ var _wm = localStorage.getItem(WEEKMETRIC_KEY); if(_wm === 'hours' || _wm === 'tss') weekMetric = _wm; }catch(e){}
+  var lastActs = null;    // kept so the trend toggle can redraw without recomputing
   function fmtHrs(sec){ var h = Math.floor(sec/3600), m = Math.round((sec%3600)/60); return h ? h + 'h ' + (m<10?'0':'') + m + 'm' : m + 'm'; }
+
+  // ---- 12-week trend (weekly TSS or hours) — a line chart ----
+  function computeWeeks(acts){
+    var weeks = [], cur = mondayOf(Date.now());
+    for(var i = 11; i >= 0; i--) weeks.push({start: cur - i * 7 * DAY_MS, tss: 0, sec: 0});
+    acts.forEach(function(a){
+      var ws = mondayOf(a.startDateMs);
+      for(var j = 0; j < 12; j++){ if(weeks[j].start === ws){ weeks[j].tss += effLoad(a) || 0; weeks[j].sec += a.durationSec || 0; break; } }
+    });
+    return weeks;
+  }
+  function drawWeeklyTrendLine(cv, weeks, metric){
+    var W = cv.clientWidth || 280, H = Math.round(W * 0.72), dpr = Math.min(3, window.devicePixelRatio || 1);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
+    var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var faint = cssVar('--text-faint') || '#7E869E', accent = cssVar('--accent') || '#6E8BFF', strong = cssVar('--text-strong') || '#fff';
+    var vals = weeks.map(function(w){ return metric === 'tss' ? w.tss : w.sec / 3600; });
+    var max = niceMax(Math.max.apply(null, vals) || (metric === 'tss' ? 100 : 1));
+    var padL = 34, padR = 10, padT = 12, padB = 22, n = 12;
+    function x(i){ return padL + i / (n - 1) * (W - padL - padR); }
+    function y(v){ return H - padB - v / max * (H - padT - padB); }
+    ctx.font = '9px ' + IMG_MONO; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    [0, max / 2, max].forEach(function(lv){
+      var gy = y(lv);
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W - padR, gy); ctx.stroke();
+      ctx.fillStyle = faint; ctx.fillText(metric === 'tss' ? Math.round(lv) : (Math.round(lv * 10) / 10) + 'h', padL - 5, gy);
+    });
+    ctx.beginPath(); vals.forEach(function(v, i){ i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(i), y(v)); });
+    ctx.lineTo(x(n - 1), y(0)); ctx.lineTo(x(0), y(0)); ctx.closePath();
+    var grd = ctx.createLinearGradient(0, padT, 0, H - padB); grd.addColorStop(0, accent + '3a'); grd.addColorStop(1, accent + '05');
+    ctx.fillStyle = grd; ctx.fill();
+    ctx.beginPath(); vals.forEach(function(v, i){ i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(i), y(v)); });
+    ctx.strokeStyle = accent; ctx.lineWidth = 2.2; ctx.lineJoin = 'round'; ctx.stroke();
+    vals.forEach(function(v, i){
+      var last = i === n - 1;
+      ctx.beginPath(); ctx.arc(x(i), y(v), last ? 4 : 2.4, 0, Math.PI * 2);
+      ctx.fillStyle = last ? accent : strong; ctx.fill();
+      if(last){ ctx.strokeStyle = strong; ctx.lineWidth = 1.5; ctx.stroke(); }
+    });
+    var mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    ctx.fillStyle = faint; ctx.font = '8.5px ' + IMG_MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    [0, 6, 11].forEach(function(i){ var d = new Date(weeks[i].start); ctx.fillText(d.getDate() + ' ' + mons[d.getMonth()], x(i), H - 6); });
+  }
+  function weeklyTrendCard(){
+    return '<div class="tr-card wk-card"><div class="tr-card-head"><h3>12-week trend</h3>' +
+        '<div class="trends-range wk-toggle">' +
+          '<button type="button" class="tr-range-btn wk-btn' + (weekMetric === 'tss' ? ' on' : '') + '" data-wk="tss">TSS</button>' +
+          '<button type="button" class="tr-range-btn wk-btn' + (weekMetric === 'hours' ? ' on' : '') + '" data-wk="hours">Hours</button>' +
+        '</div></div>' +
+        '<canvas class="tr-canvas wk-canvas" id="wkCanvas"></canvas>' +
+      '</div>';
+  }
+  function drawWeeklyTrend(acts){ drawWeeklyTrendLine(document.getElementById('wkCanvas'), computeWeeks(acts), weekMetric); }
   function formWord(tsb){
     if(tsb > 15) return 'Fresh'; if(tsb > 5) return 'Rested'; if(tsb >= -10) return 'Neutral';
     if(tsb >= -30) return 'Building'; return 'Overreaching';
@@ -8060,6 +8080,7 @@
             '</div>' +
           '</div>' +
           '<div class="col-right">' +
+            weeklyTrendCard() +
             '<div class="tr-card"><div class="tr-card-head"><h3>Power curve</h3>' +
               (hasWeight()
                 ? '<div class="trends-range pc-unit">' +
@@ -8077,6 +8098,8 @@
       drawFitness(document.getElementById('fitCanvas'), pmc.series, trendsRange);
       drawForm(document.getElementById('formCanvas'), pmc.series, trendsRange);
       drawPowerCurve(document.getElementById('pcCanvas'), curve, pcUnit);
+      lastActs = acts;
+      drawWeeklyTrend(acts);
       wireFormHelp();
     }).catch(function(e){
       els.trendsBody.innerHTML = '<p class="log-error">Charts couldn’t be built: ' + (e && e.message) + '</p>';
@@ -8126,6 +8149,15 @@
     pcUnit = (pcUnit === 'wkg') ? 'w' : 'wkg';
     els.trendsBody.querySelectorAll('.pc-unit-btn').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-unit') === pcUnit); });
     if(lastCurve) drawPowerCurve(document.getElementById('pcCanvas'), lastCurve, pcUnit);
+  });
+  // TSS vs Hours on the 12-week trend: a two-state flick switch, same as watts/W·kg.
+  // Only the trend card redraws; the preference is remembered.
+  els.trendsBody.addEventListener('click', function(e){
+    if(!e.target.closest('.wk-btn')) return;
+    weekMetric = (weekMetric === 'tss') ? 'hours' : 'tss';
+    try{ localStorage.setItem(WEEKMETRIC_KEY, weekMetric); }catch(err){}
+    els.trendsBody.querySelectorAll('.wk-btn').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-wk') === weekMetric); });
+    if(lastActs) drawWeeklyTrendLine(document.getElementById('wkCanvas'), computeWeeks(lastActs), weekMetric);
   });
   els.trendsBtn.addEventListener('click', openTrends);
   els.trendsCloseBtn.addEventListener('click', closeTrends);
