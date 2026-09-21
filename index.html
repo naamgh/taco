@@ -1376,6 +1376,14 @@
   /* The modal body: a scrolling calendar on the left, a full-height side
      panel on the right that appears when a form or import opens. */
   .log-body{flex:1 1 auto;min-height:0;display:flex;gap:16px;padding-top:12px;}
+  /* 12-week trend strip along the bottom of the calendar modal. */
+  .log-trend{flex:none;border-top:1px solid var(--border-soft);margin-top:10px;padding-top:10px;}
+  .lt-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px;}
+  .lt-title{font-size:11.5px;color:var(--text-dim);}
+  .lt-title b{color:var(--text-strong);font-weight:700;font-family:var(--mono);}
+  .lt-toggle{padding:2px;}
+  .lt-canvas{display:block;width:100%;}
+  .lt-empty{margin:6px 0 2px;font-size:11.5px;color:var(--text-faint);text-align:center;}
   .log-gridwrap{flex:1 1 auto;min-width:0;overflow-y:auto;}
   .log-side{
     flex:0 0 380px;align-self:stretch;overflow-y:auto;
@@ -2330,6 +2338,8 @@
       <div class="log-gridwrap"><div class="log-grid" id="logGrid"></div></div>
       <div class="log-side" id="logAdd" style="display:none;"></div>
     </div>
+    <!-- 12-week trend: weekly TSS or hours, toggled. -->
+    <div class="log-trend" id="logTrend"></div>
   </div>
 </div>
 
@@ -2591,6 +2601,7 @@
     logAddBtn: document.getElementById('logAddBtn'),
     logImportStrava: document.getElementById('logImportStrava'),
     cloudStatus: document.getElementById('cloudStatus'),
+    logTrend: document.getElementById('logTrend'),
     logExportBtn: document.getElementById('logExportBtn'),
     logImportBtn: document.getElementById('logImportBtn'),
     logImportFile: document.getElementById('logImportFile'),
@@ -3809,6 +3820,7 @@
     if(parseInt(els.ftpInput.value, 10) !== ftp) els.ftpInput.value = ftp;
     render();
     renderWkg();
+    if(typeof savePrefs === 'function' && !applyingPrefs) savePrefs();   // sync to cloud
   }
   els.ftpInput.addEventListener('input', function(){
     var v = parseInt(this.value, 10);
@@ -3823,6 +3835,7 @@
     try{ localStorage.setItem(MAXHR_KEY, String(maxHr)); }catch(e){}
     if(parseInt(els.maxHrInput.value, 10) !== maxHr) els.maxHrInput.value = maxHr;
     renderZoneTable();
+    if(typeof savePrefs === 'function' && !applyingPrefs) savePrefs();   // sync to cloud
   }
   els.maxHrInput.addEventListener('input', function(){
     var v = parseInt(this.value, 10);
@@ -3846,6 +3859,7 @@
     try{ localStorage.setItem(WEIGHT_KEY, String(weight)); }catch(e){}
     if(parseFloat(els.weightInput.value) !== weight) els.weightInput.value = weight;
     renderWkg();
+    if(typeof savePrefs === 'function' && !applyingPrefs) savePrefs();   // sync to cloud
   }
   els.weightInput.value = hasWeight() ? weight : '';
   els.weightInput.addEventListener('input', function(){
@@ -6636,7 +6650,7 @@
   function rideAllRaw(){ return rideTx('readonly', function(st){ return st.getAll(); }).then(function(all){ return all || []; }); }
   function rideAll(){
     return rideAllRaw().then(function(all){
-      return all.filter(function(r){ return !r.deleted; }).sort(function(a, b){ return a.startDateMs - b.startDateMs; });
+      return all.filter(function(r){ return !r.deleted && !r.pref; }).sort(function(a, b){ return a.startDateMs - b.startDateMs; });
     });
   }
   function ridePatch(id, patch){
@@ -6951,6 +6965,7 @@
         '</div>';
       }
       els.logGrid.innerHTML = html;
+      renderTrendStrip(all);
     }).catch(function(e){
       els.logGrid.innerHTML = '<p class="log-error">The log couldn’t be opened: ' + (e && e.message) + '</p>';
     });
@@ -6971,6 +6986,66 @@
     var id = +en.getAttribute('data-id');
     rideGet(id).then(function(r){ if(r) showDetail(r); });
   });
+
+  // ---- 12-week trend strip (weekly TSS or hours) ----
+  var weekMetric = 'tss';   // 'tss' | 'hours'
+  function computeWeeks(all){
+    var weeks = [], cur = mondayOf(Date.now());
+    for(var i = 11; i >= 0; i--) weeks.push({start: cur - i * 7 * 86400000, tss: 0, sec: 0});
+    all.forEach(function(r){
+      var ws = mondayOf(r.startDateMs);
+      for(var j = 0; j < 12; j++){ if(weeks[j].start === ws){ weeks[j].tss += r.tss || 0; weeks[j].sec += r.durationSec || 0; break; } }
+    });
+    return weeks;
+  }
+  function drawWeeklyTrend(cv, weeks, metric){
+    var W = cv.clientWidth || 600, H = 66, dpr = Math.min(3, window.devicePixelRatio || 1);
+    cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
+    var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    var faint = cssVar('--text-faint'), accent = cssVar('--accent');
+    var vals = weeks.map(function(w){ return metric === 'tss' ? w.tss : w.sec / 3600; });
+    var max = niceMax(Math.max.apply(null, vals) || (metric === 'tss' ? 100 : 1));
+    var padL = 30, padR = 6, padT = 6, padB = 14, n = 12, gap = 6;
+    var bw = (W - padL - padR - gap * (n - 1)) / n;
+    function y(v){ return H - padB - v / max * (H - padT - padB); }
+    ctx.font = '9px ' + IMG_MONO; ctx.fillStyle = faint; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+    ctx.fillText(metric === 'tss' ? Math.round(max) : Math.round(max) + 'h', padL - 4, y(max));
+    ctx.fillText('0', padL - 4, y(0));
+    ctx.strokeStyle = 'rgba(255,255,255,0.08)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL, y(0) + 0.5); ctx.lineTo(W - padR, y(0) + 0.5); ctx.stroke();
+    for(var i = 0; i < n; i++){
+      var v = vals[i], h = v > 0 ? Math.max(2, v / max * (H - padT - padB)) : 0, x = padL + i * (bw + gap);
+      ctx.fillStyle = (i === n - 1) ? accent : 'rgba(110,139,255,0.42)';   // current week brighter
+      if(h > 0){ roundRect(ctx, x, H - padB - h, bw, h, 2); ctx.fill(); }
+    }
+    var mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    ctx.fillStyle = faint; ctx.font = '8px ' + IMG_MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
+    [0, 6, 11].forEach(function(i){ var d = new Date(weeks[i].start); ctx.fillText(d.getDate() + ' ' + mons[d.getMonth()], padL + i * (bw + gap) + bw / 2, H - 3); });
+  }
+  function renderTrendStrip(all){
+    var el = els.logTrend; if(!el) return;
+    function go(list){
+      var weeks = computeWeeks(list), cur = weeks[11];
+      var total = weeks.reduce(function(a, w){ return a + w.tss + w.sec; }, 0);
+      if(!total){ el.innerHTML = '<p class="lt-empty">Log activities to build your 12-week trend.</p>'; return; }
+      var valText = weekMetric === 'tss' ? (Math.round(cur.tss) + ' TSS') : fmtHours(cur.sec);
+      el.innerHTML =
+        '<div class="lt-head"><span class="lt-title">Last 12 weeks · <b>' + valText + '</b> this week</span>' +
+          '<div class="trends-range lt-toggle">' +
+            '<button type="button" class="tr-range-btn' + (weekMetric === 'tss' ? ' on' : '') + '" data-m="tss">TSS</button>' +
+            '<button type="button" class="tr-range-btn' + (weekMetric === 'hours' ? ' on' : '') + '" data-m="hours">Hours</button>' +
+          '</div></div>' +
+        '<canvas class="lt-canvas" id="ltCanvas"></canvas>';
+      drawWeeklyTrend(document.getElementById('ltCanvas'), weeks, weekMetric);
+    }
+    if(all) go(all); else rideAll().then(go);
+  }
+  // Metric toggle — same flick switch as watts / W·kg.
+  els.logTrend.addEventListener('click', function(e){
+    var b = e.target.closest('[data-m]'); if(!b) return;
+    weekMetric = b.getAttribute('data-m');
+    renderTrendStrip();
+  });
+  window.addEventListener('resize', function(){ if(els.logModal.style.display !== 'none') renderTrendStrip(); });
 
   // ---- plan a workout ----
   // The + on a future day opens this: pick a category, then one quick target,
@@ -8102,6 +8177,28 @@
     csFlashTimer = setTimeout(function(){ setCloudStatus(cloudRest()); }, 4000);
   }
 
+  // ---- rider preferences (FTP / max HR / weight) ----
+  // Kept as one special record (id 'prefs') in the same cloud blob, so the rider
+  // numbers follow across devices. `applyPrefs` updates the app from a pulled copy
+  // without looping back into a save.
+  var applyingPrefs = false;
+  function prefRecord(){
+    return {id: 'prefs', pref: true,
+      ftp: (typeof hasFtp === 'function' && hasFtp()) ? ftp : null,
+      maxHr: maxHr || null,
+      weight: (typeof hasWeight === 'function' && hasWeight()) ? weight : null};
+  }
+  function havePrefValues(){ return (typeof hasFtp === 'function' && hasFtp()) || maxHr || (typeof hasWeight === 'function' && hasWeight()); }
+  function savePrefs(){ if(cloudEnabled()) rideSave(prefRecord()); }   // stamps updatedAt + nudges sync
+  function applyPrefs(rec){
+    applyingPrefs = true;
+    try{
+      if(rec.ftp != null && typeof setFtp === 'function') setFtp(rec.ftp);
+      if(rec.maxHr != null && typeof setMaxHr === 'function') setMaxHr(rec.maxHr);
+      if(rec.weight != null && typeof setWeight === 'function') setWeight(rec.weight);
+    } finally { applyingPrefs = false; }
+  }
+
   var syncing = false, syncQueued = false, syncTimer = null;
   // Debounced push-after-change: a burst of edits (e.g. a Strava import) becomes
   // one sync.
@@ -8116,6 +8213,11 @@
     var since = 0; try{ since = +localStorage.getItem(SYNC_PULLED_KEY) || 0; }catch(e){}
     return stravaAccessToken().then(function(token){
       return rideAllRaw().then(function(all){
+        // First device to enable cloud: seed a prefs record from current values.
+        if(!all.some(function(r){ return r.id === 'prefs'; }) && havePrefValues()){
+          var pref = prefRecord(); pref.updatedAt = Date.now();
+          rideApply(pref); all = all.concat([pref]);
+        }
         // Push whatever changed since we last pulled (a little overlap for safety).
         var outgoing = all.map(function(r){ if(!r.updatedAt) r.updatedAt = r.savedAt || Date.now(); return r; })
                           .filter(function(r){ return (r.updatedAt || 0) > since - 5000; })
@@ -8143,7 +8245,7 @@
           var merged = r;
           if(local) HEAVY.forEach(function(k){ if(local[k] !== undefined) merged[k] = local[k]; });
           applied++;
-          return p.then(function(){ return rideApply(merged); });
+          return p.then(function(){ return rideApply(merged).then(function(){ if(merged.pref) applyPrefs(merged); }); });
         }, Promise.resolve()).then(function(){
           try{ localStorage.setItem(SYNC_PULLED_KEY, String(maxSeen)); }catch(e){}
           if(applied){ renderLog(); refreshDoneMarks(); }
