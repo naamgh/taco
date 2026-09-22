@@ -301,6 +301,8 @@
   }
   .list-pane{border-right:1px solid var(--border-soft);background:var(--bg-list);}
   .list-pane .pane-head{background:var(--bg-list);}
+  /* Wraps the header (+ mobile filter host) as one block; only sticky on mobile. */
+  .list-top{flex:none;min-width:0;}
   .list-body{flex:1 1 auto;overflow-y:auto;padding:12px 14px 60px;}
   .list-note{color:var(--text-faint);font-size:11px;font-family:var(--mono);margin-left:auto;}
 
@@ -309,6 +311,13 @@
   /* Detail header holds the actions (they stay put while the table scrolls),
      flush with the body's 30 px content edge. */
   .detail-pane .pane-head{padding:0 30px;gap:8px;}
+
+  /* Mobile-only affordances: the filter sheet toggle and the slide-over's back
+     button. Hidden on desktop; the max-width:900px block reveals them. */
+  .filters-toggle{display:none;}
+  .detail-back{display:none;}
+  /* On desktop the filter host is empty (filters live in the sidebar). */
+  .list-filters:empty{display:none;}
   .detail-title{display:flex;align-items:center;gap:10px;margin:0 0 12px;}
   .detail-title h1{margin:0;font-size:26px;font-weight:750;color:var(--text-strong);letter-spacing:-0.015em;line-height:1.2;}
   .detail-title .star-btn{padding:2px;}
@@ -339,12 +348,67 @@
   @media (max-width:1280px){
     .app-shell{grid-template-columns:var(--side-w, 58px) minmax(300px, 380px) 1fr;}
   }
-  /* Below this a third column stops being usable: stack instead. */
+  /* Below this the third column stops being usable. Rather than stack all three
+     (which buried the list under the workout detail), we lead with the sidebar's
+     devices + a collapsed filter sheet, then the list; the detail rides in over
+     the top as a slide-over on tap. This matches the real scene: a rider on the
+     trainer wants to connect, pick, and go — not read one workout's detail. */
   @media (max-width:900px){
+    body{overflow-x:clip;}
     .app-shell{grid-template-columns:1fr;height:auto;overflow:visible;}
     .sidebar{border-right:none;border-bottom:1px solid var(--border);}
-    .list-pane,.detail-pane{overflow:visible;border-right:none;}
-    .detail-pane{order:-1;border-bottom:1px solid var(--border);}
+    .list-pane{overflow:visible;border-right:none;}
+    /* The search/sort header AND the relocated filters stick together over the
+       list, so refining stays one reach away while the cards scroll past. */
+    .list-top{
+      position:sticky;top:0;z-index:6;background:var(--bg-list);
+      border-bottom:1px solid var(--border-soft);
+    }
+    /* The filter sliders, relocated here from the sidebar (see syncFilterLocation),
+       sit directly under the header and collapse behind the toggle. */
+    .list-filters{display:flex;flex-direction:column;gap:14px;padding:12px 14px;}
+    .filters-toggle{
+      display:flex;align-items:center;gap:8px;width:100%;min-height:44px;
+      padding:10px 12px;background:var(--bg-card);border:1px solid var(--border);
+      border-radius:10px;color:var(--text-dim);font:inherit;font-size:13px;
+      font-weight:600;cursor:pointer;
+    }
+    .filters-toggle:hover{color:var(--text);background:var(--bg-card-hover);}
+    .filters-toggle .ft-caret{margin-left:auto;transition:transform .2s ease;}
+    #listFilters.filters-open .filters-toggle .ft-caret{transform:rotate(180deg);}
+    #gTime,#gZone,#gSpice,#gShape,#resetFilters{display:none;}
+    #listFilters.filters-open #gTime,
+    #listFilters.filters-open #gZone,
+    #listFilters.filters-open #gSpice,
+    #listFilters.filters-open #gShape{display:flex;}
+    #listFilters.filters-open #resetFilters{display:block;}
+    /* No dangling device/filter divider now that the sliders live under the list. */
+    #listFilters .side-group-first{border-top:none;padding-top:0;}
+
+    /* Detail is a slide-over, off-canvas until a card is tapped. */
+    .detail-pane{
+      position:fixed;inset:0;z-index:40;overflow-y:auto;
+      -webkit-overflow-scrolling:touch;background:var(--bg);
+      border-right:none;border-bottom:none;
+      transform:translateX(100%);visibility:hidden;
+      transition:transform .28s cubic-bezier(.4,0,.2,1),visibility 0s linear .28s;
+      will-change:transform;padding-bottom:env(safe-area-inset-bottom);
+    }
+    .app-shell.detail-open .detail-pane{
+      transform:none;visibility:visible;
+      transition:transform .28s cubic-bezier(.4,0,.2,1);
+    }
+    .detail-back{
+      display:flex;align-items:center;gap:6px;position:sticky;top:0;z-index:2;
+      width:100%;min-height:48px;padding:12px 20px;background:var(--bg);
+      border:0;border-bottom:1px solid var(--border-soft);color:var(--text-dim);
+      font:inherit;font-size:14px;font-weight:600;cursor:pointer;
+    }
+    .detail-back:hover{color:var(--text);}
+  }
+  @media (max-width:900px) and (prefers-reduced-motion:reduce){
+    .detail-pane{transition:visibility 0s linear .01s;}
+    .app-shell.detail-open .detail-pane{transition:none;}
   }
 
   /* ---------- FILTERS ---------- */
@@ -781,9 +845,9 @@
   /* ---------- RECOMMENDED PILL ----------
      A hand-picked shortlist for riders who don't yet know what they want.
      Tiny, gold, sits after the name at cap height. Gradient with a light
-     top edge so it reads as a small object rather than a flat label; a soft
-     sheen sweeps across every few seconds and three four-point sparks wink
-     on different beats, so it glints rather than flashes. */
+     top edge so it reads as a small object rather than a flat label; three
+     four-point sparks wink on different beats, so it glints quietly rather
+     than flashing (the old left-to-right sheen sweep was removed). */
   .rec{
     position:relative;display:inline-flex;align-items:center;flex:none;
     font-size:7px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;line-height:1;
@@ -793,13 +857,6 @@
     text-shadow:0 1px 0 rgba(255,255,255,.25);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;
   }
-  .rec .sheen{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none;}
-  .rec .sheen::before{
-    content:'';position:absolute;top:-40%;bottom:-40%;width:45%;left:-60%;
-    background:linear-gradient(105deg,rgba(255,255,255,0) 0%,rgba(255,255,255,.55) 50%,rgba(255,255,255,0) 100%);
-    transform:skewX(-18deg);animation:recSheen 4.2s ease-in-out infinite;
-  }
-  @keyframes recSheen{ 0%,55%{left:-60%;} 85%,100%{left:130%;} }
   .rec .tw{
     position:absolute;width:7px;height:7px;pointer-events:none;color:#fff;opacity:0;
     animation:recTwinkle 3.1s ease-in-out infinite;filter:drop-shadow(0 0 2px rgba(255,255,255,.9));
@@ -815,7 +872,7 @@
   /* White sparks vanish on a white card, so light mode twinkles in gold. */
   :root[data-theme="light"] .rec .tw{color:#F2A93B;}
   @media (prefers-reduced-motion:reduce){
-    .rec .sheen::before,.rec .tw{animation:none;}
+    .rec .tw{animation:none;}
     .rec .tw.a{opacity:.9;}
   }
   /* The list-pane toggle: the same pill, bigger, wrapped in a button. It's a
@@ -828,7 +885,7 @@
   .rec-toggle .rec{font-size:10px;padding:6px 10px;letter-spacing:.1em;}
   .rec-toggle:not(.on){opacity:.45;filter:grayscale(.9);}
   .rec-toggle:not(.on):hover{opacity:.7;}
-  .rec-toggle:not(.on) .sheen::before,.rec-toggle:not(.on) .tw{animation:none;}
+  .rec-toggle:not(.on) .tw{animation:none;}
   /* In the list the name row becomes a flex line so the pill sits beside
      the name and wraps under it only when there's genuinely no room. */
   .workout-titles h3{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
@@ -1906,6 +1963,14 @@
         </div>
       </div>
 
+      <!-- Mobile only: collapses the filter sliders so the workout list sits
+           right under the devices instead of below a wall of controls. -->
+      <button class="filters-toggle" id="filtersToggle" type="button" aria-expanded="false" aria-controls="gTime gZone gSpice gShape">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+        <span>Filters</span>
+        <svg class="ft-caret" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M6 9.5l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
       <div class="side-group side-group-first" id="gTime">
         <div class="filter-head"><span class="filter-label">Time</span><span class="filter-val any" id="durVal">Any</span></div>
         <div class="fsl" id="durFilter" role="slider" aria-label="Time" aria-valuemin="0" aria-valuenow="0"></div>
@@ -1952,7 +2017,10 @@
 
   <main class="list-pane" id="listPane">
     <!-- These act on the list, so they live above it rather than tucked into
-         the bottom of the sidebar. -->
+         the bottom of the sidebar. On mobile the filter sliders relocate into
+         #listFilters below, so this whole block stays sticky over the list for
+         quick refining while scrolling. -->
+    <div class="list-top" id="listTop">
     <div class="pane-head">
       <span class="pane-label" id="resultCount">Workouts</span>
       <div class="list-actions">
@@ -1965,7 +2033,7 @@
         </button>
         <!-- Recommended-only toggle: the same gold pill the cards carry. -->
         <button class="rec-toggle" id="recFilterBtn" type="button" title="Show recommended only" aria-label="Show recommended only" aria-pressed="false">
-          <span class="rec"><span class="sheen"></span>REC<i class="tw a"></i><i class="tw b"></i><i class="tw c"></i></span>
+          <span class="rec">REC<i class="tw a"></i><i class="tw b"></i><i class="tw c"></i></span>
         </button>
         <button class="icon-btn" id="starFilterBtn" title="Show starred only" aria-label="Show starred only">
           <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
@@ -1984,6 +2052,9 @@
         </div>
       </div>
     </div>
+    <!-- Mobile host for the relocated filter sliders (stays empty on desktop). -->
+    <div class="list-filters" id="listFilters"></div>
+    </div>
     <div class="list-body">
       <div id="workoutCards"></div>
       <p class="no-results" id="noResults" style="display:none;">Nothing matches those filters. Try widening one.</p>
@@ -1991,6 +2062,11 @@
   </main>
 
   <section class="detail-pane" id="detailPane" aria-live="polite">
+    <!-- Mobile only: the detail is a slide-over; this returns to the list. -->
+    <button class="detail-back" id="detailBack" type="button">
+      <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M14.5 5.5L8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span>Workouts</span>
+    </button>
     <div class="pane-head" id="detailHead"></div>
     <div class="detail-body" id="detailBody"></div>
   </section>
@@ -2504,6 +2580,9 @@
     detailPane: document.getElementById('detailPane'),
     detailHead: document.getElementById('detailHead'),
     detailBody: document.getElementById('detailBody'),
+    detailBack: document.getElementById('detailBack'),
+    filtersToggle: document.getElementById('filtersToggle'),
+    listFilters: document.getElementById('listFilters'),
     railTrainerDot: document.getElementById('railTrainerDot'),
     railHrDot: document.getElementById('railHrDot'),
     searchBtn: document.getElementById('searchBtn'),
@@ -3002,12 +3081,9 @@
     var out = WORKOUTS.filter(function(w){ return passesFilters(w, filters); });
     var s = filters.sort;
     out.sort(function(a, b){
-      // With recommendations on, badged rides lead whatever the sort, so a
-      // newcomer's first pick is at the top of the list rather than in it.
-      if(showRec){
-        var ra = a.recommended ? 0 : 1, rb = b.recommended ? 0 : 1;
-        if(ra !== rb) return ra - rb;
-      }
+      // Recommended rides carry their gold badge but sort in naturally with
+      // everything else, so the badge stands out against plain neighbours
+      // rather than forming a wall at the top of the list.
       if(s === 'starred'){
         var fa = isFav(a.key) ? 0 : 1, fb = isFav(b.key) ? 0 : 1;
         if(fa !== fb) return fa - fb;
@@ -3228,7 +3304,7 @@
   var REC_STAR = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M5 0C5.4 3 7 4.6 10 5C7 5.4 5.4 7 5 10C4.6 7 3 5.4 0 5C3 4.6 4.6 3 5 0Z"/></svg>';
   function recPill(wo){
     if(!showRec || !wo.recommended) return '';
-    return '<span class="rec" title="Recommended"><span class="sheen"></span>Recommended' +
+    return '<span class="rec" title="Recommended">Recommended' +
       '<i class="tw a">' + REC_STAR + '</i><i class="tw b">' + REC_STAR + '</i><i class="tw c">' + REC_STAR + '</i></span>';
   }
 
@@ -3264,7 +3340,12 @@
           'aria-label="Toggle favourite">' + starSvg() + '</button>' +
       '</div>';
 
-    card.addEventListener('click', function(){ selectWorkout(wo.key); });
+    card.addEventListener('click', function(e){
+      selectWorkout(wo.key);
+      // A real tap on a card opens the detail (mobile slide-over); tapping the
+      // star just favourites without pushing the panel over the list.
+      if(!e.target.closest('.star-btn')) openDetailMobile();
+    });
     return card;
   }
 
@@ -3284,6 +3365,48 @@
       if(el) el.scrollIntoView({block:'nearest'});
     }
   }
+
+  // ---- mobile: detail as a slide-over, filters as a collapsible sheet ----
+  // On a phone the three desktop columns can't coexist. The detail rides in
+  // over the list only on an explicit card tap (never on the default/guided
+  // selection, which would re-bury the list on load), and the filter sliders
+  // collapse behind a toggle so the list sits right under the devices.
+  var mqMobile = window.matchMedia('(max-width:900px)');
+  function openDetailMobile(){ if(mqMobile.matches) els.appShell.classList.add('detail-open'); }
+  function closeDetailMobile(){ els.appShell.classList.remove('detail-open'); }
+  if(els.detailBack) els.detailBack.addEventListener('click', closeDetailMobile);
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && els.appShell.classList.contains('detail-open')) closeDetailMobile();
+  });
+
+  // The filter controls live in the sidebar on desktop, but on mobile they
+  // relocate into #listFilters — a sticky block right under the "N workouts"
+  // search/sort header — so refining stays one reach away while scrolling the
+  // list. moveEls preserves the built sliders and their handlers (appendChild
+  // moves nodes, it doesn't clone), so state survives the relocation.
+  var sideScroll = document.querySelector('.side-scroll');
+  var filterIds = ['filtersToggle','gTime','gZone','gSpice','gShape','resetFilters'];
+  function syncFilterLocation(){
+    var host = mqMobile.matches ? els.listFilters : sideScroll;
+    if(!host) return;
+    filterIds.forEach(function(id){
+      var el = document.getElementById(id);
+      if(el && el.parentNode !== host) host.appendChild(el);   // to the end; the device group stays first in the sidebar
+    });
+    if(!mqMobile.matches && els.listFilters) els.listFilters.classList.remove('filters-open');
+  }
+  syncFilterLocation();
+
+  // Returning to a wide viewport drops the overlay state and puts the filters
+  // back in the sidebar so desktop is clean.
+  var mqHandler = function(e){ if(!e.matches) closeDetailMobile(); syncFilterLocation(); };
+  if(mqMobile.addEventListener) mqMobile.addEventListener('change', mqHandler);
+  else if(mqMobile.addListener) mqMobile.addListener(mqHandler);
+
+  if(els.filtersToggle) els.filtersToggle.addEventListener('click', function(){
+    var open = els.listFilters.classList.toggle('filters-open');
+    els.filtersToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  });
 
   // ---- timeline scrubbing ----
   // Moving across the chart drags a hairline with the elapsed time above it,
