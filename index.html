@@ -1230,8 +1230,8 @@
   }
   /* One header line: workout name (left), segment name (centre), End (right) —
      frees the vertical space the separate name row used to take. */
-  .live-top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin-bottom:16px;}
-  .live-top .live-workout-name{justify-self:start;}
+  .live-top{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:14px;margin-bottom:16px;}
+  .live-top .live-workout-name{justify-self:stretch;}
   .live-top .live-end-btn{justify-self:end;}
   .live-workout-name{margin:0;font-size:15px;color:var(--text-dim);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .live-segment-index{margin:2px 0 16px;font-size:13px;color:var(--text-faint);font-family:var(--mono);letter-spacing:.04em;text-align:center;}
@@ -1252,14 +1252,15 @@
   #livePlayer .live-chart-wrap{order:5;min-height:150px;}
   #livePlayer .live-next{order:6;}
   #livePlayer .tr-grid{order:7;}
-  #livePlayer .live-controls{order:8;}
+  #livePlayer .live-intensity{order:8;}
+  #livePlayer .live-controls{order:9;}
   #livePlayer .live-chart-legend{display:none;}
 
   /* Readout rail: compact cards. Re-ranked for ERG — the trainer holds the
      watts, so cadence (what the rider controls) and the interval countdown
      lead, and cadence is the filled emphasis card. */
   .tr-grid{
-    display:grid;grid-template-columns:repeat(6,1fr);gap:14px;
+    display:grid;grid-template-columns:repeat(12,1fr);gap:14px;
     margin-bottom:18px;flex:none;
   }
   /* Title pinned top-left, number pinned bottom-left (margin-top:auto on the
@@ -1269,13 +1270,28 @@
     padding:16px 18px 18px;text-align:left;position:relative;min-width:0;
     display:flex;flex-direction:column;min-height:116px;
   }
-  /* Left to right: Target, Power, Cadence, HR, Interval, Elapsed. */
-  .tr-grid .tr-cell:nth-child(4){order:0;}
-  .tr-grid .tr-cell:nth-child(1){order:1;}
-  .tr-grid .tr-cell:nth-child(6){order:2;}
-  .tr-grid .tr-cell:nth-child(3){order:3;}
-  .tr-grid .tr-cell:nth-child(2){order:4;}
-  .tr-grid .tr-cell:nth-child(5){order:5;}
+  /* ERG hierarchy: interval-time-left and cadence are the two hero cards —
+     cadence filled, since it's the rider's only lever, and the trainer holds
+     the watts. Power / HR / Total / Target form a quieter second row; Target is
+     demoted because ERG guarantees it. (DOM order stays for the fly-in.) */
+  .tr-grid .tr-cell:nth-child(2){order:0;grid-column:span 6;}   /* Interval Time */
+  .tr-grid .tr-cell:nth-child(6){order:1;grid-column:span 6;background:var(--accent);border-color:var(--accent);}  /* Cadence, filled */
+  .tr-grid .tr-cell:nth-child(1){order:2;grid-column:span 3;}   /* Power */
+  .tr-grid .tr-cell:nth-child(3){order:3;grid-column:span 3;}   /* Heart rate */
+  .tr-grid .tr-cell:nth-child(5){order:4;grid-column:span 3;}   /* Total time */
+  .tr-grid .tr-cell:nth-child(4){order:5;grid-column:span 3;}   /* Target, demoted */
+  .tr-grid .tr-cell:nth-child(2) .tr-val,
+  .tr-grid .tr-cell:nth-child(6) .tr-val{font-size:clamp(40px,min(6vw,8.5vh),72px);}
+  .tr-grid .tr-cell:nth-child(6) .tr-label{color:color-mix(in srgb, var(--on-accent) 62%, transparent);}
+  .tr-grid .tr-cell:nth-child(6) .tr-val{color:var(--on-accent);}
+  .tr-grid .tr-cell:nth-child(1),
+  .tr-grid .tr-cell:nth-child(3),
+  .tr-grid .tr-cell:nth-child(4),
+  .tr-grid .tr-cell:nth-child(5){min-height:84px;}
+  .tr-grid .tr-cell:nth-child(1) .tr-val,
+  .tr-grid .tr-cell:nth-child(3) .tr-val,
+  .tr-grid .tr-cell:nth-child(4) .tr-val,
+  .tr-grid .tr-cell:nth-child(5) .tr-val{font-size:clamp(22px,min(2.8vw,4vh),32px);}
   .tr-label{
     display:block;font-size:12px;color:var(--text-dim);text-transform:uppercase;
     letter-spacing:0.12em;font-weight:600;margin-bottom:9px;
@@ -1296,7 +1312,14 @@
   .tr-cell > .tr-bar-track{margin:6px 0 0;}
   .tr-bar-track{height:5px;background:var(--bg-elev);border-radius:3px;margin-top:10px;overflow:hidden;}
   .tr-bar-fill{height:100%;width:100%;background:var(--ok);transform:scaleX(0);transform-origin:left;transition:transform 1s linear, background .2s ease;}
-  @media(max-width:760px){ .tr-grid{grid-template-columns:repeat(3,1fr);} }
+  /* Mobile: the two hero cards stay a full row each; the four small cards drop
+     to two-per-row. */
+  @media(max-width:640px){
+    .tr-grid .tr-cell:nth-child(1),
+    .tr-grid .tr-cell:nth-child(3),
+    .tr-grid .tr-cell:nth-child(4),
+    .tr-grid .tr-cell:nth-child(5){grid-column:span 6;}
+  }
 
   .live-test-note{
     font-size:14.5px;color:var(--c-test);background:rgba(255,93,117,0.08);border:1px solid rgba(255,93,117,0.28);
@@ -1325,6 +1348,20 @@
   .leg-dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
 
   .live-next{margin:0 0 16px;font-size:14.5px;color:var(--text-dim);text-align:center;flex:none;}
+
+  /* Intensity trim stepper — a touch-first control for the ERG multiplier. */
+  .live-intensity{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 14px;flex:none;}
+  .li-label{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);}
+  .li-val{font-family:var(--mono);font-size:17px;font-weight:700;color:var(--text-strong);min-width:56px;text-align:center;}
+  .li-val.adj{color:var(--accent);}
+  .li-btn{
+    width:44px;height:44px;border-radius:12px;border:1px solid var(--border);background:var(--bg-card);
+    color:var(--text);font-size:22px;font-weight:600;line-height:1;cursor:pointer;font-family:inherit;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .li-btn:hover{background:var(--bg-card-hover);}
+  .li-btn:active{transform:scale(.96);}
+  .live-intensity.locked{opacity:.4;pointer-events:none;}
 
   .live-controls{display:flex;gap:14px;}
   .live-btn{
@@ -1775,8 +1812,6 @@
   .ftp-estimate .action-btn[disabled]{opacity:0.6;cursor:default;}
 
   @media(max-width:480px){
-    .tr-grid{grid-template-columns:repeat(3,1fr);}
-    .tr-val{font-size:22px;}
     .summary-grid{grid-template-columns:1fr 1fr;}
   }
 
@@ -2316,7 +2351,6 @@
       <div class="tr-cell">
         <span class="tr-label">Target</span>
         <span class="tr-val" id="trTarget">—</span>
-        <span class="tr-sub" id="trIntensity"></span>
       </div>
       <div class="tr-cell">
         <span class="tr-label">Total Time</span>
@@ -2326,6 +2360,14 @@
         <span class="tr-label">Cadence</span>
         <span class="tr-val" id="trCadence">—</span>
       </div>
+    </div>
+
+    <!-- Intensity trim: ERG holds the plan, these scale it up or down. -->
+    <div class="live-intensity" id="liveIntensity">
+      <span class="li-label">Intensity</span>
+      <button class="li-btn" id="intMinus" type="button" aria-label="Decrease intensity">&#8722;</button>
+      <span class="li-val" id="trIntensity">100%</span>
+      <button class="li-btn" id="intPlus" type="button" aria-label="Increase intensity">+</button>
     </div>
 
     <p class="live-test-note" id="liveTestNote" style="display:none;">This is your test effort — the trainer is left in resistance mode so you can push past your old FTP. Pace it evenly.</p>
@@ -2699,6 +2741,9 @@
     trHr: document.getElementById('trHr'),
     trTarget: document.getElementById('trTarget'),
     trIntensity: document.getElementById('trIntensity'),
+    liveIntensity: document.getElementById('liveIntensity'),
+    intMinus: document.getElementById('intMinus'),
+    intPlus: document.getElementById('intPlus'),
     trTotalTime: document.getElementById('trTotalTime'),
     trCadence: document.getElementById('trCadence'),
     liveTestNote: document.getElementById('liveTestNote'),
@@ -5422,6 +5467,10 @@
       adjustIntensity(e.key === 'ArrowUp' ? 1 : -1);
     }
   });
+  // Touch-first intensity trim: the +/- buttons nudge in 5% steps (arrows stay
+  // 1% for fine control).
+  if(els.intMinus) els.intMinus.addEventListener('click', function(){ adjustIntensity(-5); });
+  if(els.intPlus) els.intPlus.addEventListener('click', function(){ adjustIntensity(5); });
 
   function tickLive(){
     if(!liveState.active || liveState.paused || liveState.phase !== 'running') return;
@@ -5622,19 +5671,22 @@
     els.trTotalTime.textContent = mmss(liveState.elapsedTotal);
 
     var pctShown = Math.round(liveState.intensity * 100);
+    var intLocked = intensityLocked();
     if(step.pct === null){
       els.trTarget.textContent = 'All-out';
       els.liveTestNote.style.display = 'block';
-      els.trIntensity.textContent = '';
     } else {
       // On a ramp, show where the target is heading as well as where it is.
       els.trTarget.textContent = isRamp(step)
         ? targetWatts(step) + ' → ' + Math.round(watts(step.pctEnd) * liveState.intensity)
         : '' + targetWatts(step);
       els.liveTestNote.style.display = 'none';
-      els.trIntensity.textContent = intensityLocked() ? 'fixed for test' : '↑↓ ' + pctShown + '%';
     }
-    els.trIntensity.classList.toggle('adj', pctShown !== 100 && !intensityLocked());
+    // Intensity stepper: the value sits between the +/- buttons; locked on tests
+    // and on free-ride/all-out segments where a target multiplier is meaningless.
+    els.trIntensity.textContent = intLocked ? 'Locked' : pctShown + '%';
+    els.trIntensity.classList.toggle('adj', pctShown !== 100 && !intLocked);
+    els.liveIntensity.classList.toggle('locked', intLocked || step.pct === null);
 
     // Coaching cue for this segment. Re-inserting the node restarts the
     // fade-in, so a new cue is noticed even when the text is similar.
@@ -5933,6 +5985,15 @@
   window.addEventListener('resize', function(){
     if(liveState.active){ setupLiveChartCanvas(); drawLiveChart(); }
   });
+  // The chart wrap can change size without a window resize — the modal height
+  // settling, the readout rail rewrapping — which left the canvas taller than
+  // its box, so blocks overflowed the chart and spilled onto the "next" line.
+  // Lock the canvas to the wrap so it always fits exactly.
+  if(window.ResizeObserver && els.liveChartCanvas && els.liveChartCanvas.parentElement){
+    new ResizeObserver(function(){
+      if(liveState.active){ setupLiveChartCanvas(); drawLiveChart(); }
+    }).observe(els.liveChartCanvas.parentElement);
+  }
 
   // ---- workout summary ----
   function computeSummary(samples){
