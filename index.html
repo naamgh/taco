@@ -12,93 +12,100 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <style>
   :root{
-    --bg:#0A0C11;
-    --bg-elev:#12151D;
-    --bg-card:#161A24;
-    --bg-card-hover:#1B2030;
-    --border:#252B3A;
-    --border-soft:#1D2230;
-    --text:#E8EAF2;
-    --text-dim:#B9BFD4;         /* lifted from #9BA1B8: secondary text was reading too grey */
-    --text-faint:#7E869E;       /* lifted from #5C6278 */
-    --accent:#6E8BFF;
-    --accent-soft:rgba(110,139,255,0.14);
-    --accent-hover:rgba(110,139,255,0.24);
+    /* Minimal-mono dark: warm near-black, ink is near-white, one flat accent
+       (the ink itself, so primary controls read as inverted pills). No glows. */
+    --bg:#141310;
+    --bg-elev:#242118;
+    --bg-card:#1E1C16;
+    --bg-card-hover:#26241C;
+    --border:#2D2A22;
+    --border-soft:#242019;
+    --text:#EDEBE3;
+    --text-dim:#B7B4A8;
+    --text-faint:#8B8879;
+    --accent:#EDEBE3;
+    --accent-soft:rgba(237,235,227,0.10);
+    --accent-hover:rgba(237,235,227,0.18);
     --lav:#B79CFF;
-    --text-strong:#FFFFFF;      /* headings, big numbers */
-    --on-accent:#0A0C11;        /* text sitting on the accent colour */
-    --ok:#5FE39A;
-    --ok-soft:rgba(95,227,154,0.09);
-    --ok-line:rgba(95,227,154,0.55);
-    --warn:#F2B84A;
-    --warn-soft:rgba(242,184,74,0.08);
-    --warn-line:rgba(242,184,74,0.3);
-    --star:#F5C43B;
-    --ink-rgb:255,255,255;      /* overlay lines drawn over cards and charts */
-    /* Live chart traces. Power is bright yellow so it stands off every zone
-       colour, including the amber sweet-spot blocks it most often sits on. */
-    --line-power:#FFF04D;
-    --line-cadence:#B79CFF;
-    --scrim:rgba(6,7,10,0.94);  /* behind the player and summary */
-    --divider:#323A4E;          /* hairlines inside a card: a step above --border */
-    --chip-text:#0A0C11;        /* text on a zone-coloured chip */
-    --bg-list:var(--bg);        /* workout list pane and its cards */
-    --bg-card-list:var(--bg-card);
-    --glow-bg:rgba(110,139,255,0.10);
-    --glow-bg2:rgba(183,156,255,0.08);
+    --text-strong:#F6F5F1;
+    --on-accent:#141310;
+    --ok:#5CCDC1;
+    --ok-soft:rgba(92,205,193,0.10);
+    --ok-line:rgba(92,205,193,0.5);
+    --warn:#E7B84E;
+    --warn-soft:rgba(231,184,78,0.10);
+    --warn-line:rgba(231,184,78,0.35);
+    --star:#E7B84E;
+    --ink-rgb:237,235,227;      /* overlay lines drawn over cards and charts */
+    /* Live chart traces: yellow power, grey cadence (red HR is inline). */
+    --line-power:#F5C518;
+    --line-cadence:#C9C6BC;
+    --scrim:rgba(10,9,7,0.6);   /* behind the player and summary */
+    --divider:#2D2A22;
+    --chip-text:#141310;        /* text on a zone-coloured chip */
+    --bg-list:#181611;          /* workout list pane and its cards */
+    --bg-card-list:#1E1C16;
+    --glow-bg:rgba(0,0,0,0);    /* glows removed for the minimal look */
+    --glow-bg2:rgba(0,0,0,0);
     --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas, monospace;
     --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 
-    --c-recovery:#454C60;
-    --c-endurance:#5B8DEF;
+    --c-recovery:#8C93A6;
+    --c-endurance:#6E9BEF;
     --c-tempo:#49B4B0;
     --c-sweetspot:#E8B24D;
     --c-threshold:#F2764A;
     --c-vo2:#C77DFF;
     --c-anaerobic:#FF5D75;
     --c-test:#FF5D75;
-    --seg-any:#3A4152;          /* the neutral "Any" segment on the filter sliders */
+    /* Soft zone tints for block fills (profiles, chips) — quiet structure that
+       lets the saturated --c-* read as dots/accents on top. */
+    --zt-recovery:#3A3C40; --zt-endurance:#2B3A57; --zt-tempo:#224743;
+    --zt-sweetspot:#574524; --zt-threshold:#5B3323; --zt-vo2:#4D355D; --zt-anaerobic:#5F2B30;
+    --seg-any:#3A372C;          /* the neutral "Any" segment on the filter sliders */
     /* The glow that points the way off an unavailable segment. `rest` is only
        used by the reduced-motion fallback. */
-    --lure-off:rgba(255,255,255,0); --lure-halo:rgba(255,255,255,0.62); --lure-rest:rgba(255,255,255,0.30);
+    --lure-off:rgba(255,255,255,0); --lure-halo:rgba(255,255,255,0.55); --lure-rest:rgba(255,255,255,0.28);
     color-scheme:dark;
   }
   /* Light: same structure, inverted surfaces. The accent and status colours
      are deepened so they still clear 4.5:1 against white, and the zone
      colours are nudged darker where a pastel would wash out. */
   :root[data-theme="light"]{
-    --bg:#F4F5F9;
+    /* Minimal-mono light (the default): warm off-white, ink text, ink accent
+       for flat black primary controls, soft zone tints. This is the world. */
+    --bg:#F4F3EF;
     --bg-elev:#FFFFFF;
     --bg-card:#FFFFFF;
-    --bg-card-hover:#EEF1F8;
-    --border:#D5DAE6;
-    --border-soft:#E4E8F0;
-    --text:#1B2030;
-    --text-dim:#4E5670;
-    --text-faint:#7A8299;
-    --accent:#3B5BDB;
-    --accent-soft:rgba(59,91,219,0.12);
-    --accent-hover:rgba(59,91,219,0.22);
-    --lav:#6F4FD6;
-    --text-strong:#0B0E17;
-    --on-accent:#FFFFFF;
-    --ok:#178A4C;
-    --ok-soft:rgba(23,138,76,0.10);
-    --ok-line:rgba(23,138,76,0.55);
-    --warn:#A8690A;
-    --warn-soft:rgba(168,105,10,0.08);
-    --warn-line:rgba(168,105,10,0.35);
+    --bg-card-hover:#ECEAE3;
+    --border:#E7E5DD;
+    --border-soft:#EFEDE6;
+    --text:#14140F;
+    --text-dim:#4A4A44;
+    --text-faint:#6E6B60;
+    --accent:#14140F;
+    --accent-soft:rgba(20,20,15,0.06);
+    --accent-hover:rgba(20,20,15,0.12);
+    --lav:#8C6BE0;
+    --text-strong:#14140F;
+    --on-accent:#F4F3EF;
+    --ok:#1C8579;
+    --ok-soft:rgba(28,133,121,0.10);
+    --ok-line:rgba(28,133,121,0.5);
+    --warn:#8A6410;
+    --warn-soft:rgba(138,100,16,0.09);
+    --warn-line:rgba(138,100,16,0.3);
     --star:#D99A00;
-    --ink-rgb:20,24,36;
-    --line-power:#FFF04D;       /* same yellow as dark mode, by request */
-    --line-cadence:#6F4FD6;
-    --scrim:rgba(232,235,243,0.92);
-    --divider:#E4E8F0;
-    --chip-text:#FFFFFF;
-    --bg-list:#FFFFFF;          /* list pane sits white, like the sidebar */
-    --bg-card-list:#F5F6FA;
-    --glow-bg:rgba(59,91,219,0.06);
-    --glow-bg2:rgba(111,79,214,0.05);
+    --ink-rgb:20,20,15;
+    --line-power:#E0A400;
+    --line-cadence:#55554E;
+    --scrim:rgba(20,20,15,0.35);
+    --divider:#E7E5DD;
+    --chip-text:#14140F;
+    --bg-list:#FBFAF7;          /* list pane sits a hair off the cards */
+    --bg-card-list:#FFFFFF;
+    --glow-bg:rgba(0,0,0,0);
+    --glow-bg2:rgba(0,0,0,0);
 
     --c-recovery:#8A92A8;
     --c-endurance:#3F79E8;
@@ -108,10 +115,12 @@
     --c-vo2:#A65BF0;
     --c-anaerobic:#E8395A;
     --c-test:#E8395A;
-    --seg-any:#C4CAD8;
+    --zt-recovery:#DADCE0; --zt-endurance:#CFDAF0; --zt-tempo:#CDE6E1;
+    --zt-sweetspot:#F1E3C6; --zt-threshold:#F5D6C6; --zt-vo2:#E9D9F5; --zt-anaerobic:#F8D2D6;
+    --seg-any:#DEDCD3;
     /* White is invisible against a near-white sidebar, so light mode lures with
        ink instead — same "look here", opposite ink. */
-    --lure-off:rgba(27,32,48,0); --lure-halo:rgba(27,32,48,0.45); --lure-rest:rgba(27,32,48,0.20);
+    --lure-off:rgba(20,20,15,0); --lure-halo:rgba(20,20,15,0.42); --lure-rest:rgba(20,20,15,0.18);
     color-scheme:light;
   }
 
@@ -703,10 +712,15 @@
   .chip .chilli{width:13px;height:13px;}
 
   .card-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  /* Soft zone tint derived from the zone's own colour, with a saturated dot —
+     calm on the off-white, still unmistakably that zone. --zc is set inline. */
   .zone-tag{
-    font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;
-    font-family:var(--mono);letter-spacing:0.02em;color:var(--on-accent);
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:11px;font-weight:600;padding:4px 10px 4px 9px;border-radius:20px;
+    font-family:var(--mono);letter-spacing:0.01em;color:var(--text);
+    background:color-mix(in srgb, var(--zc, var(--accent)) 22%, var(--bg-card));
   }
+  .zone-tag::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--zc, var(--accent));flex:none;}
   .tss-tag{font-family:var(--mono);font-size:11.5px;color:var(--text-faint);}
 
   .star-btn{
@@ -804,12 +818,8 @@
     transition:border-color .12s ease, background .12s ease;
   }
   .workout-card:hover{background:var(--bg-card-hover);border-color:var(--border);}
-  /* A left accent bar reads as a list selection; a filled panel reads as a
-     different kind of object sitting in the list. */
-  .workout-card.selected{border-color:var(--accent);background:var(--bg-card-hover);}
-  .workout-card.selected:before{
-    content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--accent);
-  }
+  /* Selected reads as a clean ink ring around the card — no side stripe. */
+  .workout-card.selected{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);background:var(--bg-card-hover);}
   /* Left column: thumbnail with the zone pill beneath — "what kind of ride"
      in one glance. Right column: duration over TSS, so the numbers line up
      down the list. The text column is just name, structure, chillies. */
@@ -915,16 +925,16 @@
     position:absolute;left:0;right:0;top:0;bottom:18px;
     display:flex;align-items:flex-end;gap:1px;padding:0 1px;
   }
-  /* Blocks read as solid objects: rounded shoulders and a light-to-dark
-     fill. --seg is the zone colour, set inline per block. */
+  /* Blocks are quiet zone tints with a stronger same-hue top edge naming the
+     zone. --seg is the zone colour, set inline per block. */
   .tl-seg{
-    min-width:3px;position:relative;border-radius:4px 4px 0 0;
-    background:linear-gradient(to bottom, color-mix(in srgb, var(--seg) 72%, white), var(--seg) 78%);
+    min-width:3px;position:relative;border-radius:5px 5px 0 0;
+    background:color-mix(in srgb, var(--seg) 22%, var(--bg-card));
+    box-shadow:inset 0 2.5px 0 color-mix(in srgb, var(--seg) 60%, var(--bg-card));
   }
   .tl-seg.zone-test{
-    background-image:
-      repeating-linear-gradient(135deg, rgba(var(--ink-rgb),0.16) 0, rgba(var(--ink-rgb),0.16) 4px, transparent 4px, transparent 8px),
-      linear-gradient(to bottom, color-mix(in srgb, var(--seg) 72%, white), var(--seg) 78%);
+    background-image:repeating-linear-gradient(135deg, rgba(var(--ink-rgb),0.14) 0, rgba(var(--ink-rgb),0.14) 4px, transparent 4px, transparent 8px);
+    background-color:color-mix(in srgb, var(--seg) 22%, var(--bg-card));
   }
   /* A fixed line above the chart, so the eye always finds the answer in the
      same place. Beats a cursor-chasing tooltip here: a one-minute rest in a
@@ -1100,15 +1110,13 @@
   }
   .action-btn.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
   .action-btn.primary:hover{filter:brightness(1.08);}
-  /* Start Workout: the one button that gets a gradient — accent into the
-     lavender, with a soft glow — so it's unmistakably the main act. */
+  /* Start Workout: the main act — a solid ink pill, flat and calm. */
   .action-btn.start-btn{
-    background:linear-gradient(135deg, var(--accent) 0%, var(--lav) 100%);
-    border-color:transparent;color:#fff;font-size:13.5px;font-weight:700;padding:10px 18px;
-    box-shadow:0 6px 18px -8px rgba(110,139,255,0.9), inset 0 1px 0 rgba(255,255,255,0.22);
-    text-shadow:0 1px 1px rgba(0,0,0,0.25);letter-spacing:0.01em;
+    background:var(--accent);border-color:var(--accent);color:var(--on-accent);
+    font-size:13.5px;font-weight:700;padding:11px 20px;border-radius:24px;letter-spacing:0.02em;
   }
-  .action-btn.start-btn:active{filter:brightness(0.96);transform:translateY(1px);}
+  .action-btn.start-btn:hover{background:var(--text-strong);}
+  .action-btn.start-btn:active{transform:translateY(1px);}
   /* Only plain buttons get the neutral hover. Every coloured variant is
      excluded because this rule outranks their own hovers and would repaint
      them the card colour — which in light mode is near-white, leaving white
@@ -1227,29 +1235,52 @@
   .live-top{flex:none;}
   .live-controls{flex:none;}
 
+  /* Chart is the hero: it sits directly under the segment label and grows to
+     fill, with the readouts as a compact rail beneath. (The DOM keeps the old
+     order for the countdown number-fly-in; CSS order does the reflow.) */
+  #livePlayer .live-top{order:1;}
+  #livePlayer .live-segment-label{order:2;}
+  #livePlayer .live-test-note{order:3;}
+  #livePlayer .live-cue{order:3;}
+  #livePlayer .live-chart-wrap{order:4;min-height:150px;}
+  #livePlayer .live-chart-legend{order:5;}
+  #livePlayer .tr-grid{order:6;}
+  #livePlayer .live-next{order:7;}
+  #livePlayer .live-controls{order:8;}
+
+  /* Readout rail: compact cards. Re-ranked for ERG — the trainer holds the
+     watts, so cadence (what the rider controls) and the interval countdown
+     lead, and cadence is the filled emphasis card. */
   .tr-grid{
-    display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
-    background:var(--border-soft);border:1px solid var(--border-soft);border-radius:14px;
-    overflow:hidden;margin-bottom:10px;flex:none;
+    display:grid;grid-template-columns:repeat(6,1fr);gap:10px;
+    margin-bottom:12px;flex:none;
   }
   .tr-cell{
-    background:var(--bg-elev);padding:12px 12px 11px;text-align:center;position:relative;
+    background:var(--bg-card);border:1px solid var(--border);border-radius:14px;
+    padding:13px 15px 14px;text-align:left;position:relative;min-width:0;
   }
+  .tr-grid .tr-cell:nth-child(6){order:0;background:var(--accent);border-color:var(--accent);}
+  .tr-grid .tr-cell:nth-child(2){order:1;}
+  .tr-grid .tr-cell:nth-child(1){order:2;}
+  .tr-grid .tr-cell:nth-child(3){order:3;}
+  .tr-grid .tr-cell:nth-child(4){order:4;}
+  .tr-grid .tr-cell:nth-child(5){order:5;}
+  .tr-grid .tr-cell:nth-child(6) .tr-label{color:color-mix(in srgb, var(--on-accent) 60%, transparent);}
+  .tr-grid .tr-cell:nth-child(6) .tr-val{color:var(--on-accent);}
+  .tr-grid .tr-cell:nth-child(6) .tr-sub{color:color-mix(in srgb, var(--on-accent) 55%, transparent);}
   .tr-label{
-    display:block;font-size:13px;color:var(--text-dim);text-transform:uppercase;
-    letter-spacing:0.07em;margin-bottom:10px;
+    display:block;font-size:12px;color:var(--text-dim);text-transform:uppercase;
+    letter-spacing:0.12em;font-weight:600;margin-bottom:9px;
   }
-  /* Sized by the smaller of width and height, so the numbers stay big on a
-     large screen but shrink on a short one rather than pushing the Skip and
-     Pause buttons off the bottom. */
-  .tr-val{display:block;font-family:var(--mono);font-size:clamp(26px,min(4.4vw,7.4vh),56px);font-weight:700;color:var(--text-strong);line-height:1;}
+  .tr-val{display:block;font-family:var(--mono);font-size:clamp(24px,min(3.4vw,5.4vh),44px);font-weight:700;color:var(--text-strong);line-height:.95;letter-spacing:-.01em;}
   .tr-sub{
-    display:block;font-family:var(--mono);font-size:13px;color:var(--text-faint);
-    margin-top:9px;letter-spacing:0.02em;
+    display:block;font-family:var(--mono);font-size:12px;color:var(--text-faint);
+    margin-top:8px;letter-spacing:0.02em;
   }
   .tr-sub.adj{color:var(--accent);font-weight:700;}
-  .tr-bar-track{height:4px;background:var(--bg-card);border-radius:2px;margin-top:10px;overflow:hidden;}
-  .tr-bar-fill{height:100%;width:0%;background:var(--ok);transition:width 1s linear, background .2s ease;}
+  .tr-bar-track{height:5px;background:var(--bg-elev);border-radius:3px;margin-top:10px;overflow:hidden;}
+  .tr-bar-fill{height:100%;width:100%;background:var(--ok);transform:scaleX(0);transform-origin:left;transition:transform 1s linear, background .2s ease;}
+  @media(max-width:760px){ .tr-grid{grid-template-columns:repeat(3,1fr);} }
 
   .live-test-note{
     font-size:14.5px;color:var(--c-test);background:rgba(255,93,117,0.08);border:1px solid rgba(255,93,117,0.28);
@@ -1259,8 +1290,8 @@
      from the bike; it fades in on each change so the eye catches it. */
   .live-cue{
     font-size:15.5px;line-height:1.45;color:var(--text);
-    background:var(--accent-soft);border:1px solid rgba(110,139,255,0.30);border-left:3px solid var(--accent);
-    border-radius:10px;padding:12px 16px;margin:0 0 14px;text-align:center;
+    background:var(--accent-soft);border:1px solid var(--border);
+    border-radius:12px;padding:12px 16px;margin:0 0 14px;text-align:center;
     animation:cueIn .35s ease;
   }
   @keyframes cueIn{from{opacity:0;transform:translateY(3px);}to{opacity:1;transform:none;}}
@@ -1741,12 +1772,12 @@
   .load-logo{width:56px;height:56px;border-radius:14px;}
   .load-bar{width:220px;height:6px;border-radius:3px;background:var(--bg-card);border:1px solid var(--border-soft);overflow:hidden;}
   .load-bar span{
-    display:block;height:100%;width:0;border-radius:3px;
-    background:linear-gradient(90deg, var(--accent), var(--lav));
-    animation:loadFill 5s cubic-bezier(.15,.75,.25,1) forwards;transition:width .3s ease;
+    display:block;height:100%;width:100%;border-radius:3px;background:var(--accent);
+    transform:scaleX(0);transform-origin:left;
+    animation:loadFill 5s cubic-bezier(.15,.75,.25,1) forwards;transition:transform .3s ease;
   }
-  @keyframes loadFill{to{width:90%;}}
-  .load-screen.done .load-bar span{width:100%;animation:none;}
+  @keyframes loadFill{to{transform:scaleX(0.9);}}
+  .load-screen.done .load-bar span{transform:scaleX(1);animation:none;}
   .load-text{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);}
 
   /* ---------- TRAINING CHARTS ---------- */
@@ -1842,9 +1873,11 @@
   }
 </style>
 <script>
-  // Apply the saved theme before anything paints, so a light-mode user
-  // doesn't get a flash of the dark shell on every open.
-  try{ if(localStorage.getItem('ftpPlan_theme_v1') === 'light') document.documentElement.setAttribute('data-theme', 'light'); }catch(e){}
+  // Apply the saved theme before anything paints, so there's no flash of the
+  // wrong shell on open. Light is the default now; only an explicit 'dark'
+  // preference drops the near-black theme.
+  try{ if(localStorage.getItem('ftpPlan_theme_v1') !== 'dark') document.documentElement.setAttribute('data-theme', 'light'); }catch(e){ document.documentElement.setAttribute('data-theme', 'light'); }
+
 </script>
 </head>
 <body>
@@ -3324,7 +3357,7 @@
           '<div class="card-thumb">' + thumbSvg(wo) + '</div>' +
           (wo.test
             ? '<span class="test-tag">TEST</span>'
-            : '<span class="zone-tag" style="background:' + z.color + '">' + z.label + '</span>') +
+            : '<span class="zone-tag" style="--zc:' + z.color + '">' + z.label + '</span>') +
         '</div>' +
         '<div class="workout-titles">' +
           '<h3>' + wo.name + recPill(wo) + '</h3>' +
@@ -5537,10 +5570,10 @@
       var target = targetWatts(step);
       if(!target) target = 1;
       var frac = Math.max(0, Math.min(1.2, liveReadouts.power / target)) / 1.2;
-      els.trPowerBar.style.width = Math.round(frac * 100) + '%';
+      els.trPowerBar.style.transform = 'scaleX(' + frac.toFixed(3) + ')';
       els.trPowerBar.style.background = liveReadouts.power >= target * 0.95 && liveReadouts.power <= target * 1.05 ? 'var(--ok)' : 'var(--warn)';
     } else {
-      els.trPowerBar.style.width = '0%';
+      els.trPowerBar.style.transform = 'scaleX(0)';
     }
   }
 
@@ -5647,32 +5680,28 @@
     r = Math.round(r + (255 - r) * mixWhite); g = Math.round(g + (255 - g) * mixWhite); b = Math.round(b + (255 - b) * mixWhite);
     return 'rgb(' + r + ',' + g + ',' + b + ')';
   }
+  // Minimal look: a soft zone tint (low-alpha fill composited over the chart
+  // background, so it reads as a pale tint in light and a dark tint in dark)
+  // with a stronger same-hue top edge naming the zone. `alpha` dims ridden blocks.
   function paintBlock(ctx, hex, x, w, yTopL, yTopR, H, alpha, radius){
-    var top = Math.min(yTopL, yTopR);
-    var grad = ctx.createLinearGradient(0, top, 0, H);
-    grad.addColorStop(0, lightenHex(hex, 0.28));
-    grad.addColorStop(0.78, hexToRgba(hex, 1));
-    grad.addColorStop(1, hexToRgba(hex, 1));
+    var top = Math.min(yTopL, yTopR), r = Math.min(radius, w / 2);
+    function path(){
+      ctx.beginPath();
+      if(yTopL === yTopR && r > 0){
+        ctx.moveTo(x, H); ctx.lineTo(x, top + r); ctx.arcTo(x, top, x + r, top, r);
+        ctx.lineTo(x + w - r, top); ctx.arcTo(x + w, top, x + w, top + r, r); ctx.lineTo(x + w, H);
+      } else {
+        ctx.moveTo(x, H); ctx.lineTo(x, yTopL); ctx.lineTo(x + w, yTopR); ctx.lineTo(x + w, H);
+      }
+      ctx.closePath();
+    }
     ctx.save();
     ctx.globalAlpha = alpha;
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    var r = Math.min(radius, w / 2);
-    if(yTopL === yTopR && r > 0){
-      ctx.moveTo(x, H);
-      ctx.lineTo(x, top + r);
-      ctx.arcTo(x, top, x + r, top, r);
-      ctx.lineTo(x + w - r, top);
-      ctx.arcTo(x + w, top, x + w, top + r, r);
-      ctx.lineTo(x + w, H);
-    } else {
-      ctx.moveTo(x, H);
-      ctx.lineTo(x, yTopL);
-      ctx.lineTo(x + w, yTopR);
-      ctx.lineTo(x + w, H);
-    }
-    ctx.closePath();
-    ctx.fill();
+    ctx.fillStyle = hexToRgba(hex, 0.22);
+    path(); ctx.fill();
+    ctx.strokeStyle = hexToRgba(hex, 0.75);
+    ctx.lineWidth = 2.5; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.moveTo(x + (r ? r * 0.4 : 0), yTopL); ctx.lineTo(x + w - (r ? r * 0.4 : 0), yTopR); ctx.stroke();
     ctx.restore();
   }
 
