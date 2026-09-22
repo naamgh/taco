@@ -1143,7 +1143,7 @@
   }
   /* The workout modal runs taller and more airy than the other modals. */
   #livePlayer{padding:14px;}
-  #livePlayer .live-inner{padding:30px 34px 26px;min-height:min(840px, calc(100vh - 28px));}
+  #livePlayer .live-inner{position:relative;padding:30px 34px 26px;min-height:min(840px, calc(100vh - 28px));}
 
   /* ---------- WAITING-TO-START OVERLAY ---------- */
   .live-waiting{
@@ -1232,7 +1232,12 @@
      frees the vertical space the separate name row used to take. */
   .live-top{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:14px;margin-bottom:16px;}
   .live-top .live-workout-name{justify-self:stretch;}
-  .live-top .live-end-btn{justify-self:end;}
+  .live-top .live-top-actions{justify-self:end;display:flex;align-items:center;gap:10px;}
+  .live-cog-btn{
+    width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:transparent;
+    color:var(--text-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;
+  }
+  .live-cog-btn:hover{background:var(--bg-card-hover);color:var(--text);}
   .live-workout-name{margin:0;font-size:15px;color:var(--text-dim);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .live-segment-index{margin:2px 0 16px;font-size:13px;color:var(--text-faint);font-family:var(--mono);letter-spacing:.04em;text-align:center;}
   .live-end-btn{background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:9px 20px;border-radius:9px;font-size:15px;cursor:pointer;flex:none;}
@@ -1246,13 +1251,11 @@
      then the "next block" line (where the plot legend used to sit), then the
      rail. (The DOM keeps the old order for the countdown number-fly-in.) */
   #livePlayer .live-top{order:1;}
-  #livePlayer .live-segment-index{order:3;}
   #livePlayer .live-test-note{order:4;}
   #livePlayer .live-cue{order:4;}
   #livePlayer .live-chart-wrap{order:5;min-height:150px;}
-  #livePlayer .live-next{order:6;}
+  #livePlayer .live-cue-row{order:6;}
   #livePlayer .tr-grid{order:7;}
-  #livePlayer .live-intensity{order:8;}
   #livePlayer .live-controls{order:9;}
   #livePlayer .live-chart-legend{display:none;}
 
@@ -1270,28 +1273,18 @@
     padding:16px 18px 18px;text-align:left;position:relative;min-width:0;
     display:flex;flex-direction:column;min-height:116px;
   }
-  /* ERG hierarchy: interval-time-left and cadence are the two hero cards —
-     cadence filled, since it's the rider's only lever, and the trainer holds
-     the watts. Power / HR / Total / Target form a quieter second row; Target is
-     demoted because ERG guarantees it. (DOM order stays for the fly-in.) */
-  .tr-grid .tr-cell:nth-child(2){order:0;grid-column:span 6;}   /* Interval Time */
-  .tr-grid .tr-cell:nth-child(6){order:1;grid-column:span 6;background:var(--accent);border-color:var(--accent);}  /* Cadence, filled */
-  .tr-grid .tr-cell:nth-child(1){order:2;grid-column:span 3;}   /* Power */
-  .tr-grid .tr-cell:nth-child(3){order:3;grid-column:span 3;}   /* Heart rate */
-  .tr-grid .tr-cell:nth-child(5){order:4;grid-column:span 3;}   /* Total time */
-  .tr-grid .tr-cell:nth-child(4){order:5;grid-column:span 3;}   /* Target, demoted */
-  .tr-grid .tr-cell:nth-child(2) .tr-val,
-  .tr-grid .tr-cell:nth-child(6) .tr-val{font-size:clamp(40px,min(6vw,8.5vh),72px);}
-  .tr-grid .tr-cell:nth-child(6) .tr-label{color:color-mix(in srgb, var(--on-accent) 62%, transparent);}
-  .tr-grid .tr-cell:nth-child(6) .tr-val{color:var(--on-accent);}
-  .tr-grid .tr-cell:nth-child(1),
-  .tr-grid .tr-cell:nth-child(3),
-  .tr-grid .tr-cell:nth-child(4),
-  .tr-grid .tr-cell:nth-child(5){min-height:84px;}
-  .tr-grid .tr-cell:nth-child(1) .tr-val,
-  .tr-grid .tr-cell:nth-child(3) .tr-val,
-  .tr-grid .tr-cell:nth-child(4) .tr-val,
-  .tr-grid .tr-cell:nth-child(5) .tr-val{font-size:clamp(22px,min(2.8vw,4vh),32px);}
+  /* Rail layout is user-choosable (the display cog). Default: every card small;
+     .hero marks the two emphasized big cards the rider picked; .tr-grid.even
+     drops the emphasis so all six are equal. Heroes sort first, the rest keep
+     DOM order, and Target is demoted to last among the small cards. */
+  /* Cell order is driven per-preset by --cell-order (set in JS); the mobile
+     even-grid media query overrides it back to DOM order with a flat order:0. */
+  .tr-grid .tr-cell{order:var(--cell-order,1);grid-column:span 3;min-height:84px;}
+  .tr-grid .tr-cell .tr-val{font-size:clamp(22px,min(2.8vw,4vh),32px);}
+  .tr-grid .tr-cell.hero{grid-column:span 6;min-height:116px;}
+  .tr-grid .tr-cell.hero .tr-val{font-size:clamp(40px,min(6vw,8.5vh),72px);}
+  .tr-grid.even .tr-cell{order:0;grid-column:span 4;min-height:100px;}
+  .tr-grid.even .tr-cell .tr-val{font-size:clamp(24px,min(3.4vw,5vh),40px);}
   .tr-label{
     display:block;font-size:12px;color:var(--text-dim);text-transform:uppercase;
     letter-spacing:0.12em;font-weight:600;margin-bottom:9px;
@@ -1312,13 +1305,14 @@
   .tr-cell > .tr-bar-track{margin:6px 0 0;}
   .tr-bar-track{height:5px;background:var(--bg-elev);border-radius:3px;margin-top:10px;overflow:hidden;}
   .tr-bar-fill{height:100%;width:100%;background:var(--ok);transform:scaleX(0);transform-origin:left;transition:transform 1s linear, background .2s ease;}
-  /* Mobile: the two hero cards stay a full row each; the four small cards drop
-     to two-per-row. */
+  /* On phones the rail is always the even grid — two per row, equal weight —
+     whatever the desktop readout-layout choice is, so the layout picker (and
+     its cog) is a desktop-only affordance here. */
   @media(max-width:640px){
-    .tr-grid .tr-cell:nth-child(1),
-    .tr-grid .tr-cell:nth-child(3),
-    .tr-grid .tr-cell:nth-child(4),
-    .tr-grid .tr-cell:nth-child(5){grid-column:span 6;}
+    .tr-grid .tr-cell,
+    .tr-grid .tr-cell.hero{order:0;grid-column:span 6;min-height:96px;}
+    .tr-grid .tr-cell.hero .tr-val{font-size:clamp(24px,min(3.4vw,5vh),40px);}
+    .live-cog-btn{display:none;}
   }
 
   .live-test-note{
@@ -1347,28 +1341,61 @@
   .live-chart-legend span{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-dim);}
   .leg-dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
 
-  .live-next{margin:0 0 16px;font-size:14.5px;color:var(--text-dim);text-align:center;flex:none;}
+  /* The 'next up' line and the intensity trim share a row above the rail, well
+     clear of Skip/Pause so a mid-effort tap can't land on them by mistake. */
+  .live-cue-row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 16px;flex:none;}
+  .live-next{margin:0;font-size:14.5px;color:var(--text-dim);text-align:left;flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
-  /* Intensity trim stepper — a touch-first control for the ERG multiplier. */
-  .live-intensity{display:flex;align-items:center;justify-content:center;gap:14px;margin:0 0 14px;flex:none;}
-  .li-label{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);}
-  .li-val{font-family:var(--mono);font-size:17px;font-weight:700;color:var(--text-strong);min-width:56px;text-align:center;}
+  /* Intensity trim stepper — a compact touch control for the ERG multiplier.
+     A power bolt labels the readout; +/- nudge it 1% at a time. */
+  .live-intensity{display:flex;align-items:center;gap:8px;margin:0;flex:none;}
+  .li-readout{display:flex;align-items:center;gap:5px;}
+  .li-icon{display:block;color:var(--text-dim);flex:none;}
+  .li-val{font-family:var(--mono);font-size:16px;font-weight:700;color:var(--text-strong);min-width:44px;text-align:center;}
   .li-val.adj{color:var(--accent);}
   .li-btn{
-    width:44px;height:44px;border-radius:12px;border:1px solid var(--border);background:var(--bg-card);
-    color:var(--text);font-size:22px;font-weight:600;line-height:1;cursor:pointer;font-family:inherit;
-    display:flex;align-items:center;justify-content:center;
+    width:34px;height:34px;border-radius:9px;border:1px solid var(--border);background:var(--bg-card);
+    color:var(--text);font-size:19px;font-weight:600;line-height:1;cursor:pointer;font-family:inherit;
+    display:flex;align-items:center;justify-content:center;flex:none;
   }
   .li-btn:hover{background:var(--bg-card-hover);}
   .li-btn:active{transform:scale(.96);}
   .live-intensity.locked{opacity:.4;pointer-events:none;}
+
+  /* Display-settings overlay: a centered card that lets the rider pick which
+     readouts get the big hero slots. Sits over the whole live-inner. */
+  .live-settings{
+    position:absolute;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;
+    padding:20px;background:color-mix(in srgb, var(--bg) 62%, transparent);backdrop-filter:blur(3px);
+  }
+  .live-settings[hidden]{display:none;}
+  .ls-card{
+    width:100%;max-width:420px;background:var(--bg-card);border:1px solid var(--border);
+    border-radius:18px;padding:22px 22px 24px;box-shadow:var(--shadow-lg, 0 18px 50px rgba(0,0,0,.28));
+  }
+  .ls-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;}
+  .ls-head h3{margin:0;font-size:17px;font-weight:700;color:var(--text-strong);}
+  .ls-done{
+    padding:9px 18px;border-radius:999px;border:1px solid var(--accent);background:var(--accent);
+    color:var(--bg);font-size:14px;font-weight:650;cursor:pointer;font-family:inherit;
+  }
+  .ls-done:hover{filter:brightness(1.06);}
+  .ls-label{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;}
+  .ls-opts{display:flex;flex-direction:column;gap:10px;}
+  .ls-opt{
+    display:block;width:100%;text-align:left;padding:15px 16px;border-radius:13px;
+    border:1px solid var(--border);background:var(--bg-elev);color:var(--text);
+    font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;
+  }
+  .ls-opt:hover{background:var(--bg-card-hover);}
+  .ls-opt.on{border-color:var(--accent);background:var(--accent);color:var(--bg);}
 
   .live-controls{display:flex;gap:14px;}
   .live-btn{
     flex:1;padding:20px;border-radius:14px;border:1px solid var(--border);background:var(--bg-elev);
     color:var(--text);font-size:17px;font-weight:650;cursor:pointer;
   }
-  .live-btn-primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
+  /* Pause carries no special fill — it reads the same as Skip beside it. */
   .live-btn:hover{filter:brightness(1.08);}
 
   /* On a phone the live player goes full-bleed — every pixel to the chart and
@@ -2330,44 +2357,41 @@
     <div class="live-top">
       <p class="live-workout-name" id="liveWorkoutName"></p>
       <p class="live-segment-label" id="liveSegmentLabel"></p>
-      <button class="live-end-btn" id="liveEndBtn">End</button>
+      <div class="live-top-actions">
+        <button class="live-cog-btn" id="settingsBtn" type="button" aria-label="Display settings">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3.1"/><path d="M12 2.8v2.3M12 18.9v2.3M4.6 7.3l2 1.15M17.4 15.55l2 1.15M4.6 16.7l2-1.15M17.4 8.45l2-1.15" stroke-linecap="round"/></svg>
+        </button>
+        <button class="live-end-btn" id="liveEndBtn">End</button>
+      </div>
     </div>
-    <p class="live-segment-index" id="liveSegmentIndex"></p>
 
-    <div class="tr-grid">
-      <div class="tr-cell">
+    <div class="tr-grid" id="trGrid">
+      <div class="tr-cell" data-m="power">
         <span class="tr-label">Power</span>
         <span class="tr-val" id="trPower">—</span>
         <div class="tr-bar-track"><div class="tr-bar-fill" id="trPowerBar"></div></div>
       </div>
-      <div class="tr-cell">
+      <div class="tr-cell hero" data-m="interval">
         <span class="tr-label">Interval Time</span>
+        <span class="tr-sub" id="liveSegmentIndex"></span>
         <span class="tr-val" id="trIntervalTime">00:00</span>
       </div>
-      <div class="tr-cell">
+      <div class="tr-cell" data-m="hr">
         <span class="tr-label">Heart Rate</span>
         <span class="tr-val" id="trHr">—</span>
       </div>
-      <div class="tr-cell">
+      <div class="tr-cell" data-m="target">
         <span class="tr-label">Target</span>
         <span class="tr-val" id="trTarget">—</span>
       </div>
-      <div class="tr-cell">
+      <div class="tr-cell" data-m="total">
         <span class="tr-label">Total Time</span>
         <span class="tr-val" id="trTotalTime">00:00</span>
       </div>
-      <div class="tr-cell">
+      <div class="tr-cell hero" data-m="cadence">
         <span class="tr-label">Cadence</span>
         <span class="tr-val" id="trCadence">—</span>
       </div>
-    </div>
-
-    <!-- Intensity trim: ERG holds the plan, these scale it up or down. -->
-    <div class="live-intensity" id="liveIntensity">
-      <span class="li-label">Intensity</span>
-      <button class="li-btn" id="intMinus" type="button" aria-label="Decrease intensity">&#8722;</button>
-      <span class="li-val" id="trIntensity">100%</span>
-      <button class="li-btn" id="intPlus" type="button" aria-label="Increase intensity">+</button>
     </div>
 
     <p class="live-test-note" id="liveTestNote" style="display:none;">This is your test effort — the trainer is left in resistance mode so you can push past your old FTP. Pace it evenly.</p>
@@ -2383,11 +2407,40 @@
       <span><i class="leg-dot" style="background:var(--line-cadence)"></i>Cadence</span>
     </div>
 
-    <p class="live-next" id="liveNext"></p>
+    <div class="live-cue-row">
+      <p class="live-next" id="liveNext"></p>
+      <!-- Intensity trim: ERG holds the plan, these scale it up or down.
+           Sits by the 'next' line, clear of Skip/Pause to avoid mid-effort mis-taps. -->
+      <div class="live-intensity" id="liveIntensity">
+        <button class="li-btn" id="intMinus" type="button" aria-label="Decrease intensity">&#8722;</button>
+        <span class="li-readout">
+          <svg class="li-icon" viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M13.5 2 5 13.2h5l-1.6 8.8L18.5 10h-5z"/></svg>
+          <span class="li-val" id="trIntensity">100%</span>
+        </span>
+        <button class="li-btn" id="intPlus" type="button" aria-label="Increase intensity">+</button>
+      </div>
+    </div>
 
     <div class="live-controls">
       <button class="live-btn" id="liveSkipBtn">Skip ⏭</button>
       <button class="live-btn live-btn-primary" id="livePauseBtn">Pause</button>
+    </div>
+
+    <!-- Display settings: pick the readout layout. Overlays the player. -->
+    <div class="live-settings" id="liveSettings" hidden>
+      <div class="ls-card">
+        <div class="ls-head">
+          <h3>Display</h3>
+          <button class="ls-done" id="settingsClose" type="button">Done</button>
+        </div>
+        <div class="ls-label">Readout layout</div>
+        <div class="ls-opts" id="layoutOpts">
+          <button class="ls-opt" type="button" data-layout="ic">Interval + Cadence</button>
+          <button class="ls-opt" type="button" data-layout="hc">Heart Rate + Cadence</button>
+          <button class="ls-opt" type="button" data-layout="ih">Interval + Heart Rate</button>
+          <button class="ls-opt" type="button" data-layout="even">Even grid</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -2744,6 +2797,11 @@
     liveIntensity: document.getElementById('liveIntensity'),
     intMinus: document.getElementById('intMinus'),
     intPlus: document.getElementById('intPlus'),
+    trGrid: document.getElementById('trGrid'),
+    settingsBtn: document.getElementById('settingsBtn'),
+    liveSettings: document.getElementById('liveSettings'),
+    settingsClose: document.getElementById('settingsClose'),
+    layoutOpts: document.getElementById('layoutOpts'),
     trTotalTime: document.getElementById('trTotalTime'),
     trCadence: document.getElementById('trCadence'),
     liveTestNote: document.getElementById('liveTestNote'),
@@ -5127,7 +5185,7 @@
     liveReadouts.hr = null;
 
     els.livePlayer.style.display = 'flex';
-    els.liveWorkoutName.textContent = wo.name + ' \u00b7 ' + wo.short;
+    els.liveWorkoutName.textContent = wo.name;
 
     // Set the trainer up front so the resistance is already correct for the
     // first segment the moment the rider starts turning the cranks. ERG writes
@@ -5469,8 +5527,61 @@
   });
   // Touch-first intensity trim: the +/- buttons nudge in 5% steps (arrows stay
   // 1% for fine control).
-  if(els.intMinus) els.intMinus.addEventListener('click', function(){ adjustIntensity(-5); });
-  if(els.intPlus) els.intPlus.addEventListener('click', function(){ adjustIntensity(5); });
+  if(els.intMinus) els.intMinus.addEventListener('click', function(){ adjustIntensity(-1); });
+  if(els.intPlus) els.intPlus.addEventListener('click', function(){ adjustIntensity(1); });
+
+  // ---- readout layout (choosable via the display cog, remembered) ----
+  var RAIL_LAYOUT_KEY = 'ftpPlan_railLayout_v1';
+  // Each preset names its two hero cells plus the full left-to-right cell order
+  // (heroes first on the top row, then the four quiet cells on the second row).
+  var RAIL_LAYOUTS = {
+    ic:   {heroes:['interval','cadence'], order:['interval','cadence','total','hr','target','power']},
+    hc:   {heroes:['hr','cadence'],       order:['hr','cadence','interval','total','target','power']},
+    ih:   {heroes:['interval','hr'],      order:['interval','hr','total','cadence','target','power']},
+    even: {even:true}
+  };
+  function currentRailLayout(){
+    var k; try{ k = localStorage.getItem(RAIL_LAYOUT_KEY); }catch(e){}
+    return RAIL_LAYOUTS[k] ? k : 'ic';
+  }
+  function applyRailLayout(key){
+    var cfg = RAIL_LAYOUTS[key] || RAIL_LAYOUTS.ic;
+    if(els.trGrid){
+      els.trGrid.classList.toggle('even', !!cfg.even);
+      [].forEach.call(els.trGrid.querySelectorAll('.tr-cell'), function(c){
+        var m = c.getAttribute('data-m');
+        if(cfg.even){
+          c.classList.remove('hero');
+          c.style.removeProperty('--cell-order');
+        } else {
+          var idx = cfg.order.indexOf(m);
+          // Set the order as a CSS var (not the order property) so the mobile
+          // even-grid media query can still flatten it back to DOM order.
+          if(idx >= 0){ c.style.setProperty('--cell-order', idx); }
+          else { c.style.removeProperty('--cell-order'); }
+          c.classList.toggle('hero', cfg.heroes.indexOf(m) >= 0);
+        }
+      });
+    }
+    if(els.layoutOpts){
+      [].forEach.call(els.layoutOpts.querySelectorAll('.ls-opt'), function(b){
+        b.classList.toggle('on', b.getAttribute('data-layout') === key);
+      });
+    }
+    if(liveState.active){ setupLiveChartCanvas(); drawLiveChart(); }
+  }
+  function setRailLayout(key){
+    if(!RAIL_LAYOUTS[key]) return;
+    try{ localStorage.setItem(RAIL_LAYOUT_KEY, key); }catch(e){}
+    applyRailLayout(key);
+  }
+  applyRailLayout(currentRailLayout());
+  if(els.settingsBtn) els.settingsBtn.addEventListener('click', function(){ els.liveSettings.hidden = false; });
+  if(els.settingsClose) els.settingsClose.addEventListener('click', function(){ els.liveSettings.hidden = true; });
+  if(els.liveSettings) els.liveSettings.addEventListener('click', function(e){ if(e.target === els.liveSettings) els.liveSettings.hidden = true; });
+  if(els.layoutOpts) els.layoutOpts.addEventListener('click', function(e){
+    var b = e.target.closest('.ls-opt'); if(b) setRailLayout(b.getAttribute('data-layout'));
+  });
 
   function tickLive(){
     if(!liveState.active || liveState.paused || liveState.phase !== 'running') return;
@@ -5665,7 +5776,7 @@
     if(!liveState.active) return;
     var step = liveState.flat[liveState.idx];
     var next = liveState.flat[liveState.idx + 1];
-    els.liveSegmentIndex.textContent = 'Segment ' + (liveState.idx + 1) + ' of ' + liveState.flat.length;
+    els.liveSegmentIndex.textContent = (liveState.idx + 1) + ' of ' + liveState.flat.length;
     els.liveSegmentLabel.textContent = step.label;
     els.trIntervalTime.textContent = mmss(liveState.remaining);
     els.trTotalTime.textContent = mmss(liveState.elapsedTotal);
