@@ -195,12 +195,17 @@
     letter-spacing:0.09em;font-weight:650;white-space:nowrap;
   }
   .side-head{justify-content:space-between;}
+  /* The menu button is the one committed-ink control in the side head: a filled
+     ink square with the glyph knocked out in paper. */
   .hamburger{
-    background:transparent;border:1px solid transparent;color:var(--text-dim);
-    width:32px;height:32px;border-radius:8px;cursor:pointer;flex:none;
+    background:var(--accent);border:1px solid var(--accent);color:var(--on-accent);
+    width:32px;height:32px;border-radius:9px;cursor:pointer;flex:none;
     display:flex;align-items:center;justify-content:center;padding:0;
+    transition:filter .15s ease,transform .08s ease;
   }
-  .hamburger:hover,.hamburger[aria-expanded="true"]{background:var(--bg-card-hover);color:var(--text);border-color:var(--border);}
+  .hamburger:hover,.hamburger[aria-expanded="true"]{filter:brightness(1.14);}
+  .hamburger:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .hamburger:active{transform:scale(.94);}
   /* Menu: theme, guide, zones and the rider numbers. Opens under the head. */
   .side-menu{
     flex:none;margin:0 12px 4px;padding:6px;background:var(--bg-elev);
@@ -325,6 +330,22 @@
      button. Hidden on desktop; the max-width:900px block reveals them. */
   .filters-toggle{display:none;}
   .detail-back{display:none;}
+  /* The bottom tab bar, Filters button, and bottom sheets are mobile-only; the
+     desktop grid keeps its 3 columns and the sidebar footer Cal/Charts. */
+  .mtabs{display:none;}
+  .filters-fab{display:none;}
+  .training-hub{display:flex;flex-direction:column;gap:12px;padding:16px 14px;}
+  .hub-btn{
+    display:flex;align-items:center;gap:14px;width:100%;text-align:left;
+    padding:16px;border-radius:14px;border:1px solid var(--border);
+    background:var(--bg-card);color:var(--text);cursor:pointer;font:inherit;
+  }
+  .hub-btn:hover{background:var(--bg-card-hover);}
+  .hub-btn > svg:first-child{flex:none;color:var(--text-dim);}
+  .hub-text{display:flex;flex-direction:column;gap:2px;min-width:0;}
+  .hub-title{font-size:16px;font-weight:700;color:var(--text-strong);}
+  .hub-sub{font-size:12.5px;color:var(--text-dim);}
+  .hub-go{flex:none;margin-left:auto;color:var(--text-faint);}
   /* On desktop the filter host is empty (filters live in the sidebar). */
   .list-filters:empty{display:none;}
   .detail-title{display:flex;align-items:center;gap:10px;margin:0 0 12px;}
@@ -362,51 +383,80 @@
      devices + a collapsed filter sheet, then the list; the detail rides in over
      the top as a slide-over on tap. This matches the real scene: a rider on the
      trainer wants to connect, pick, and go — not read one workout's detail. */
+  /* Below this the three desktop columns can't coexist, so the app becomes four
+     bottom tabs (Workouts / View / Training / Menu); one pane fills the screen
+     above a fixed tab bar, chosen by #appShell[data-tab]. */
   @media (max-width:900px){
     body{overflow-x:clip;}
-    .app-shell{grid-template-columns:1fr;height:auto;overflow:visible;}
-    .sidebar{border-right:none;border-bottom:1px solid var(--border);}
-    .list-pane{overflow:visible;border-right:none;}
-    /* The search/sort header AND the relocated filters stick together over the
-       list, so refining stays one reach away while the cards scroll past. */
+    .app-shell{
+      display:block;grid-template-columns:none;
+      height:100vh;height:100dvh;overflow:hidden;
+      --mtab-h:calc(56px + env(safe-area-inset-bottom));
+    }
+    .sidebar,.list-pane,.detail-pane{
+      position:fixed;left:0;right:0;top:0;bottom:var(--mtab-h);z-index:5;
+      display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;
+      background:var(--bg);border:none;min-width:0;
+    }
+    #appShell[data-tab="workouts"] .list-pane{display:flex;}
+    #appShell[data-tab="view"] .detail-pane{display:flex;}
+    /* These two scroll via their inner body, not the pane, so the sticky
+       header / back-arrow stay pinned. */
+    .list-pane,.detail-pane{overflow:hidden;}
+
+    /* Menu is a bottom sheet: the device group + #sideMenu relocate into it, and
+       #sideMenu is forced open here (its hamburger toggle isn't shown on mobile). */
+    #menuSheetBody{display:flex;flex-direction:column;gap:16px;}
+    #menuSheetBody #sideMenu,#menuSheetBody #sideMenu[hidden]{display:flex;}
+
+    /* Workouts tab: the search/sort header sticks over the list; the filter
+       sliders live in the bottom sheet, reached via the Filters button. */
+    .list-pane{background:var(--bg-list);}
     .list-top{
       position:sticky;top:0;z-index:6;background:var(--bg-list);
       border-bottom:1px solid var(--border-soft);
     }
-    /* The filter sliders, relocated here from the sidebar (see syncFilterLocation),
-       sit directly under the header and collapse behind the toggle. */
-    .list-filters{display:flex;flex-direction:column;gap:14px;padding:12px 14px;}
-    .filters-toggle{
-      display:flex;align-items:center;gap:8px;width:100%;min-height:44px;
-      padding:10px 12px;background:var(--bg-card);border:1px solid var(--border);
-      border-radius:10px;color:var(--text-dim);font:inherit;font-size:13px;
-      font-weight:600;cursor:pointer;
-    }
-    .filters-toggle:hover{color:var(--text);background:var(--bg-card-hover);}
-    .filters-toggle .ft-caret{margin-left:auto;transition:transform .2s ease;}
-    #listFilters.filters-open .filters-toggle .ft-caret{transform:rotate(180deg);}
-    #gTime,#gZone,#gSpice,#gShape,#resetFilters{display:none;}
-    #listFilters.filters-open #gTime,
-    #listFilters.filters-open #gZone,
-    #listFilters.filters-open #gSpice,
-    #listFilters.filters-open #gShape{display:flex;}
-    #listFilters.filters-open #resetFilters{display:block;}
-    /* No dangling device/filter divider now that the sliders live under the list. */
-    #listFilters .side-group-first{border-top:none;padding-top:0;}
+    .filters-toggle{display:none;}
+    .list-filters{display:none;}
 
-    /* Detail is a slide-over, off-canvas until a card is tapped. */
-    .detail-pane{
-      position:fixed;inset:0;z-index:40;overflow-y:auto;
-      -webkit-overflow-scrolling:touch;background:var(--bg);
-      border-right:none;border-bottom:none;
-      transform:translateX(100%);visibility:hidden;
-      transition:transform .28s cubic-bezier(.4,0,.2,1),visibility 0s linear .28s;
-      will-change:transform;padding-bottom:env(safe-area-inset-bottom);
+    /* Filters button, pinned bottom-right of the Workouts tab above the bar. */
+    .filters-fab{
+      display:flex;align-items:center;gap:7px;position:fixed;right:14px;
+      bottom:calc(var(--mtab-h) + 12px);z-index:46;padding:11px 16px;border-radius:999px;
+      background:var(--accent);color:var(--on-accent);border:0;cursor:pointer;
+      font:inherit;font-size:13.5px;font-weight:650;box-shadow:0 6px 20px rgba(0,0,0,.22);
     }
-    .app-shell.detail-open .detail-pane{
-      transform:none;visibility:visible;
-      transition:transform .28s cubic-bezier(.4,0,.2,1);
+    .filters-fab .fab-badge{
+      min-width:18px;height:18px;padding:0 5px;border-radius:9px;
+      background:var(--on-accent);color:var(--accent);font-size:11px;font-weight:700;
+      display:flex;align-items:center;justify-content:center;
     }
+    .filters-fab .fab-badge[hidden]{display:none;}
+
+    /* Bottom sheets: scrim + a panel that slides up. */
+    .sheet{position:fixed;inset:0;z-index:60;}
+    .sheet[hidden]{display:none;}
+    .sheet-scrim{position:absolute;inset:0;background:var(--scrim);opacity:0;transition:opacity .26s ease;}
+    .sheet.open .sheet-scrim{opacity:1;}
+    .sheet-panel{
+      position:absolute;left:0;right:0;bottom:0;max-height:82vh;overflow-y:auto;
+      background:var(--bg-card);border-top:1px solid var(--border);
+      border-radius:18px 18px 0 0;box-shadow:0 -14px 42px rgba(0,0,0,.24);
+      padding:6px 16px calc(20px + env(safe-area-inset-bottom));
+      transform:translateY(100%);transition:transform .28s cubic-bezier(.4,0,.2,1);
+    }
+    .sheet.open .sheet-panel{transform:none;}
+    .sheet-grip{width:38px;height:4px;border-radius:2px;background:var(--border);margin:8px auto;}
+    .sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+    .sheet-head h3{margin:0;font-size:16px;font-weight:700;color:var(--text-strong);}
+    .sheet-done{
+      padding:7px 16px;border-radius:999px;border:1px solid var(--accent);
+      background:var(--accent);color:var(--on-accent);font:inherit;font-size:13px;font-weight:650;cursor:pointer;
+    }
+    #filterSheetBody{display:flex;flex-direction:column;gap:16px;}
+    #filterSheetBody .side-group-first{border-top:none;padding-top:0;}
+
+    /* View tab back-arrow returns to Workouts. */
     .detail-back{
       display:flex;align-items:center;gap:6px;position:sticky;top:0;z-index:2;
       width:100%;min-height:48px;padding:12px 20px;background:var(--bg);
@@ -414,10 +464,25 @@
       font:inherit;font-size:14px;font-weight:600;cursor:pointer;
     }
     .detail-back:hover{color:var(--text);}
+
+    /* The fixed bottom tab bar. Sits under the full-screen modals (z 100). */
+    .mtabs{
+      display:flex;position:fixed;left:0;right:0;bottom:0;z-index:45;
+      height:var(--mtab-h);padding-bottom:env(safe-area-inset-bottom);
+      background:var(--bg);border-top:1px solid var(--border);
+    }
+    .mtab{
+      flex:1 1 0;min-width:0;display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:3px;
+      background:none;border:0;color:var(--text-faint);cursor:pointer;
+      font:inherit;font-size:10.5px;font-weight:600;letter-spacing:0.02em;padding:6px 2px;
+    }
+    .mtab svg{width:23px;height:23px;}
+    .mtab.on{color:var(--text-strong);}
+    .mtab:active{background:var(--bg-card-hover);}
   }
   @media (max-width:900px) and (prefers-reduced-motion:reduce){
-    .detail-pane{transition:visibility 0s linear .01s;}
-    .app-shell.detail-open .detail-pane{transition:none;}
+    .sheet-scrim,.sheet-panel{transition:none;}
   }
 
   /* ---------- FILTERS ---------- */
@@ -1988,7 +2053,7 @@
   <div class="load-text">Loading workouts</div>
 </div>
 
-<div class="app-shell" id="appShell">
+<div class="app-shell" id="appShell" data-tab="workouts">
 
   <aside class="sidebar" id="sidebar">
     <div class="pane-head side-head">
@@ -2058,7 +2123,7 @@
 
     <div class="side-scroll">
       <!-- Devices and FTP together: the things set once, before a ride. -->
-      <div class="side-group">
+      <div class="side-group" id="deviceGroup">
         <!-- One button per device: "Connect trainer" until attached, then the
              device name (hover: Disconnect). -->
         <div class="device-row">
@@ -2164,10 +2229,6 @@
             <path d="M15.2 15.2L20 20" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/>
           </svg>
         </button>
-        <!-- Recommended-only toggle: the same gold pill the cards carry. -->
-        <button class="rec-toggle" id="recFilterBtn" type="button" title="Show recommended only" aria-label="Show recommended only" aria-pressed="false">
-          <span class="rec">REC<i class="tw a"></i><i class="tw b"></i><i class="tw c"></i></span>
-        </button>
         <button class="icon-btn" id="starFilterBtn" title="Show starred only" aria-label="Show starred only">
           <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true">
             <path d="M12 3.6l2.6 5.3 5.8.85-4.2 4.1 1 5.75L12 16.9l-5.2 2.7 1-5.75-4.2-4.1 5.8-.85L12 3.6z"
@@ -2192,6 +2253,12 @@
       <div id="workoutCards"></div>
       <p class="no-results" id="noResults" style="display:none;">Nothing matches those filters. Try widening one.</p>
     </div>
+    <!-- Mobile only: opens the filter sheet from the bottom. -->
+    <button class="filters-fab" id="filtersFab" type="button" aria-haspopup="dialog" aria-label="Filters">
+      <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+      <span>Filters</span>
+      <span class="fab-badge" id="filtersFabBadge" hidden></span>
+    </button>
   </main>
 
   <section class="detail-pane" id="detailPane" aria-live="polite">
@@ -2203,6 +2270,64 @@
     <div class="pane-head" id="detailHead"></div>
     <div class="detail-body" id="detailBody"></div>
   </section>
+
+  <!-- Mobile-only bottom tab bar. Desktop keeps the 3-column layout. -->
+  <nav class="mtabs" id="mTabs" aria-label="Sections">
+    <button class="mtab" type="button" data-tab="workouts" aria-selected="true">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+      <span>Workouts</span>
+    </button>
+    <button class="mtab" type="button" data-tab="view">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      <span>View</span>
+    </button>
+    <button class="mtab" type="button" data-tab="training">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V11M9.3 19V6M14.7 19v-5M20 19V9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+      <span>Training</span>
+    </button>
+    <button class="mtab" type="button" data-tab="menu">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Menu</span>
+    </button>
+  </nav>
+</div>
+
+<!-- Mobile-only bottom sheets (animated). Filters holds the relocated sliders;
+     Training is the Calendar/Charts chooser the Training tab pops up. -->
+<div class="sheet" id="filterSheet" role="dialog" aria-modal="true" aria-label="Filters" hidden>
+  <div class="sheet-scrim" data-close></div>
+  <div class="sheet-panel">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><h3>Filters</h3><button class="sheet-done" type="button" data-close>Done</button></div>
+    <div class="sheet-body" id="filterSheetBody"></div>
+  </div>
+</div>
+<div class="sheet" id="menuSheet" role="dialog" aria-modal="true" aria-label="Menu" hidden>
+  <div class="sheet-scrim" data-close></div>
+  <div class="sheet-panel">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><h3>Menu</h3><button class="sheet-done" type="button" data-close>Done</button></div>
+    <div class="sheet-body" id="menuSheetBody"></div>
+  </div>
+</div>
+<div class="sheet" id="trainingSheet" role="dialog" aria-modal="true" aria-label="Training" hidden>
+  <div class="sheet-scrim" data-close></div>
+  <div class="sheet-panel">
+    <div class="sheet-grip"></div>
+    <div class="sheet-head"><h3>Training</h3><button class="sheet-done" type="button" data-close>Done</button></div>
+    <div class="training-hub">
+      <button class="hub-btn" id="hubCalendarBtn" type="button">
+        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M3.5 9.5h17M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="7" y="12.5" width="3" height="3" rx=".7" fill="currentColor"/><rect x="12.5" y="12.5" width="3" height="3" rx=".7" fill="currentColor"/></svg>
+        <span class="hub-text"><span class="hub-title">Calendar</span><span class="hub-sub">Your ride log, month by month</span></span>
+        <svg class="hub-go" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="hub-btn" id="hubChartsBtn" type="button">
+        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M4 4v15.5a1 1 0 0 0 1 1h15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7.5 14.5l3.5-4 3 2.5 4.5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="hub-text"><span class="hub-title">Charts</span><span class="hub-sub">Fitness, form and your power curve</span></span>
+        <svg class="hub-go" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </div>
 </div>
 
 <!-- Lives outside the sidebar: it would otherwise be clipped by the sidebar's
@@ -2518,7 +2643,7 @@
       </div>
       <div class="summary-row">
         <button class="action-btn danger" id="summaryDeleteBtn" style="display:none;">Delete ride</button>
-        <button class="action-btn danger" id="summaryCloseBtn">Close</button>
+        <button class="action-btn primary" id="summaryCloseBtn">Close</button>
       </div>
     </div>
   </div>
@@ -2728,6 +2853,14 @@
     spiceSegLabels: document.getElementById('spiceSegLabels'),
     searchBox: document.getElementById('searchBox'),
     appShell: document.getElementById('appShell'),
+    mTabs: document.getElementById('mTabs'),
+    filterSheet: document.getElementById('filterSheet'),
+    filterSheetBody: document.getElementById('filterSheetBody'),
+    trainingSheet: document.getElementById('trainingSheet'),
+    menuSheet: document.getElementById('menuSheet'),
+    menuSheetBody: document.getElementById('menuSheetBody'),
+    filtersFab: document.getElementById('filtersFab'),
+    filtersFabBadge: document.getElementById('filtersFabBadge'),
     sidebar: document.getElementById('sidebar'),
     railToggle: document.getElementById('railToggle'),
     menuBtn: document.getElementById('menuBtn'),
@@ -2752,7 +2885,6 @@
     sortBtn: document.getElementById('sortBtn'),
     sortMenu: document.getElementById('sortMenu'),
     starFilterBtn: document.getElementById('starFilterBtn'),
-    recFilterBtn: document.getElementById('recFilterBtn'),
     resetFilters: document.getElementById('resetFilters'),
     zonePopFtp: document.getElementById('zonePopFtp'),
     zonePop: document.getElementById('zonePop'),
@@ -2866,9 +2998,9 @@
   // filter: on, the badged rides wear the pill and lead the list; off, the
   // library is just the library and the rider picks their own way through.
   // On by default, so a newcomer gets the guidance; remembered once changed.
-  var SHOW_REC_KEY = 'ftpPlan_showRec_v1';
+  // Recommended rides always wear their badge and lead the list. (The toggle
+  // that could hide them was removed 2026-09-24.)
   var showRec = true;
-  try{ showRec = localStorage.getItem(SHOW_REC_KEY) !== '0'; }catch(e){}
 
   // Display order for the Shape filter. Labels come from the library so the
   // app and generator can't disagree about what a shape is called.
@@ -3543,34 +3675,117 @@
   // selection, which would re-bury the list on load), and the filter sliders
   // collapse behind a toggle so the list sits right under the devices.
   var mqMobile = window.matchMedia('(max-width:900px)');
-  function openDetailMobile(){ if(mqMobile.matches) els.appShell.classList.add('detail-open'); }
-  function closeDetailMobile(){ els.appShell.classList.remove('detail-open'); }
+  // On mobile the desktop columns become bottom tabs (Workouts / View / Menu),
+  // one pane at a time via #appShell[data-tab]. Tapping a card jumps to View;
+  // the detail back-arrow (and Esc) returns to Workouts. Training and Filters
+  // are animated bottom sheets that pop up over the tabs instead of being panes.
+  var MOBILE_TABS = {workouts:1, view:1};
+  function setMobileTab(name){
+    if(!MOBILE_TABS[name]) name = 'workouts';
+    els.appShell.setAttribute('data-tab', name);
+    if(els.mTabs) Array.prototype.forEach.call(els.mTabs.querySelectorAll('.mtab'), function(b){
+      var on = b.getAttribute('data-tab') === name;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', on ? 'true' : 'false');
+    });
+  }
+  function openDetailMobile(){ if(mqMobile.matches) setMobileTab('view'); }
+  function closeDetailMobile(){ if(mqMobile.matches) setMobileTab('workouts'); }
   if(els.detailBack) els.detailBack.addEventListener('click', closeDetailMobile);
-  document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape' && els.appShell.classList.contains('detail-open')) closeDetailMobile();
+
+  // ---- bottom sheets (Filters, Training) ----
+  function openSheet(sheet){ if(!sheet) return; sheet.hidden = false; void sheet.offsetHeight; sheet.classList.add('open'); }
+  function closeSheet(sheet){
+    if(!sheet || !sheet.classList.contains('open')) return;
+    sheet.classList.remove('open');
+    var done = function(){ sheet.hidden = true; sheet.removeEventListener('transitionend', done); clearTimeout(t); };
+    var t = setTimeout(done, 360);
+    sheet.addEventListener('transitionend', done);
+  }
+  [els.filterSheet, els.trainingSheet].forEach(function(sheet){
+    if(sheet) sheet.addEventListener('click', function(e){ if(e.target.closest('[data-close]')) closeSheet(sheet); });
   });
 
-  // The filter controls live in the sidebar on desktop, but on mobile they
-  // relocate into #listFilters — a sticky block right under the "N workouts"
-  // search/sort header — so refining stays one reach away while scrolling the
-  // list. moveEls preserves the built sliders and their handlers (appendChild
-  // moves nodes, it doesn't clone), so state survives the relocation.
+  // Training and Menu are sheet-launchers, not panes.
+  var TAB_SHEETS = {training: els.trainingSheet, menu: els.menuSheet};
+  if(els.mTabs) els.mTabs.addEventListener('click', function(e){
+    var b = e.target.closest('.mtab'); if(!b) return;
+    var t = b.getAttribute('data-tab');
+    if(TAB_SHEETS[t]){ openSheet(TAB_SHEETS[t]); return; }
+    setMobileTab(t);
+  });
+  if(els.filtersFab) els.filtersFab.addEventListener('click', function(){ openSheet(els.filterSheet); });
+
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape') return;
+    var open = document.querySelector('.sheet.open');
+    if(open){ closeSheet(open); return; }
+    if(mqMobile.matches && els.appShell.getAttribute('data-tab') === 'view') setMobileTab('workouts');
+  });
+
+  // Training sheet buttons open the existing Calendar / Charts modals.
+  var hubCal = document.getElementById('hubCalendarBtn'), hubCharts = document.getElementById('hubChartsBtn');
+  if(hubCal && els.logBtn) hubCal.addEventListener('click', function(){ closeSheet(els.trainingSheet); els.logBtn.click(); });
+  if(hubCharts && els.trendsBtn) hubCharts.addEventListener('click', function(){ closeSheet(els.trainingSheet); els.trendsBtn.click(); });
+
+  // The Filters button shows a badge with how many sliders are off "Any".
+  function activeFilterCount(){
+    var n = 0;
+    if(filters.duration !== null) n++;
+    if(filters.zone !== null) n++;
+    if(filters.shape !== null) n++;
+    if(filters.spice !== null) n++;
+    return n;
+  }
+  function updateFiltersFab(){
+    if(!els.filtersFabBadge) return;
+    var n = activeFilterCount();
+    els.filtersFabBadge.hidden = n === 0;
+    els.filtersFabBadge.textContent = n ? String(n) : '';
+    if(els.filtersFab) els.filtersFab.classList.toggle('active', n > 0);
+  }
+  setMobileTab(els.appShell.getAttribute('data-tab') || 'workouts');
+
+  // The filter controls live in the sidebar on desktop; on mobile they relocate
+  // into the Filters bottom sheet. appendChild moves the built sliders (with
+  // their handlers and state) rather than cloning, so nothing is rebuilt.
   var sideScroll = document.querySelector('.side-scroll');
-  var filterIds = ['filtersToggle','gTime','gZone','gSpice','gShape','resetFilters'];
+  var filterIds = ['gTime','gZone','gSpice','gShape','resetFilters'];
   function syncFilterLocation(){
-    var host = mqMobile.matches ? els.listFilters : sideScroll;
+    var host = mqMobile.matches ? els.filterSheetBody : sideScroll;
     if(!host) return;
     filterIds.forEach(function(id){
       var el = document.getElementById(id);
-      if(el && el.parentNode !== host) host.appendChild(el);   // to the end; the device group stays first in the sidebar
+      if(el && el.parentNode !== host) host.appendChild(el);
     });
-    if(!mqMobile.matches && els.listFilters) els.listFilters.classList.remove('filters-open');
   }
   syncFilterLocation();
 
-  // Returning to a wide viewport drops the overlay state and puts the filters
-  // back in the sidebar so desktop is clean.
-  var mqHandler = function(e){ if(!e.matches) closeDetailMobile(); syncFilterLocation(); };
+  // Same relocation for the Menu: the device group and the #sideMenu block move
+  // into the Menu sheet on mobile, and back to their sidebar homes on desktop.
+  var deviceGroupEl = document.getElementById('deviceGroup');
+  var sideMenuEl = els.sideMenu;
+  var deviceHome = deviceGroupEl ? {p: deviceGroupEl.parentNode, n: deviceGroupEl.nextElementSibling} : null;
+  var sideMenuHome = sideMenuEl ? {p: sideMenuEl.parentNode, n: sideMenuEl.nextElementSibling} : null;
+  function syncMenuLocation(){
+    if(!els.menuSheetBody || !deviceGroupEl || !sideMenuEl) return;
+    if(mqMobile.matches){
+      if(deviceGroupEl.parentNode !== els.menuSheetBody) els.menuSheetBody.appendChild(deviceGroupEl);
+      if(sideMenuEl.parentNode !== els.menuSheetBody) els.menuSheetBody.appendChild(sideMenuEl);
+    } else {
+      if(deviceHome && deviceGroupEl.parentNode !== deviceHome.p) deviceHome.p.insertBefore(deviceGroupEl, deviceHome.n);
+      if(sideMenuHome && sideMenuEl.parentNode !== sideMenuHome.p) sideMenuHome.p.insertBefore(sideMenuEl, sideMenuHome.n);
+    }
+  }
+  syncMenuLocation();
+
+  // Returning to a wide viewport puts the filters back in the sidebar and drops
+  // any open sheet, so desktop is clean.
+  var mqHandler = function(e){
+    if(!e.matches){ closeDetailMobile(); var s = document.querySelector('.sheet.open'); if(s) closeSheet(s); }
+    syncFilterLocation();
+    syncMenuLocation();
+  };
   if(mqMobile.addEventListener) mqMobile.addEventListener('change', mqHandler);
   else if(mqMobile.addListener) mqMobile.addListener(mqHandler);
 
@@ -3821,6 +4036,7 @@
 
   function renderWorkoutCards(){
     var list = filteredWorkouts();
+    updateFiltersFab();
     visibleKeys = list.map(function(w){ return w.key; });
     els.workoutCards.innerHTML = '';
     els.noResults.style.display = list.length ? 'none' : 'block';
@@ -4320,22 +4536,6 @@
     updateStarFilterUI();
     renderWorkoutCards();
   });
-
-  // Recommendations on/off. The pill inside is the same one the cards wear;
-  // lit while the badges are showing, dimmed while the rider has them off.
-  [].forEach.call(els.recFilterBtn.querySelectorAll('.tw'), function(i){ i.innerHTML = REC_STAR; });
-  function updateRecFilterUI(){
-    els.recFilterBtn.classList.toggle('on', showRec);
-    els.recFilterBtn.setAttribute('aria-pressed', showRec ? 'true' : 'false');
-    els.recFilterBtn.title = showRec ? 'Recommendations on — click to hide the badges' : 'Recommendations off — click to show the badges';
-  }
-  els.recFilterBtn.addEventListener('click', function(){
-    showRec = !showRec;
-    try{ localStorage.setItem(SHOW_REC_KEY, showRec ? '1' : '0'); }catch(e){}
-    updateRecFilterUI();
-    renderWorkoutCards();   // pills, order and the detail's reason line all follow
-  });
-  updateRecFilterUI();
 
   // ---- keyboard ----
   // Left/right work the sidebar, up/down move through the list, Enter starts.
@@ -6267,7 +6467,11 @@
     els.summaryStravaLink.style.display = synced ? '' : 'none';
     if(synced) els.summaryStravaLink.href = 'https://www.strava.com/activities/' + liveState.stravaActivityId;
     els.summaryStravaStatus.style.display = 'none';
-    els.summaryDeleteBtn.style.display = opts.fromLog ? '' : 'none';
+    // Both cases can drop the ride: from the log it's a Delete, fresh off a ride
+    // it's a Discard (the ride auto-saves on this screen, so discard removes it).
+    els.summaryDeleteBtn.style.display = '';
+    els.summaryDeleteBtn.textContent = opts.fromLog ? 'Delete ride' : 'Discard ride';
+    els.summaryCloseBtn.textContent = opts.fromLog ? 'Close' : 'Save & close';
     liveState.summaryFromLog = !!opts.fromLog;
     els.summaryModal.style.display = 'flex';
     if(!opts.fromLog) saveCurrentRide();
@@ -6458,7 +6662,10 @@
     if(e.key === 'Escape' && els.summaryModal.style.display !== 'none') closeSummary();
   });
   els.summaryDeleteBtn.addEventListener('click', function(){
-    if(!liveState.savedId || !confirm('Delete this ride from the log? This can’t be undone.')) return;
+    var msg = liveState.summaryFromLog
+      ? 'Delete this ride from the log? This can’t be undone.'
+      : 'Discard this ride? It won’t be saved.';
+    if(!liveState.savedId || !confirm(msg)) return;
     rideDelete(liveState.savedId).then(function(){
       liveState.savedId = null;
       refreshDoneMarks();
@@ -7173,6 +7380,7 @@
     els.logAdd.style.display = 'none';
     els.logModal.style.display = 'flex';
     renderLog();
+    dedupeIndoorTwins().then(function(n){ if(n) renderLog(); });
     pbBackfill();
     maybeAutoSync();
     if(typeof cloudSync === 'function') cloudSync();
@@ -7195,6 +7403,38 @@
     }).catch(function(e){ console.log('pbCurve backfill skipped:', e && e.message); });
   }
   function closeLog(){ els.logModal.style.display = 'none'; }
+
+  // ---- de-duplicating indoor rides against their Strava twin ----
+  // A trainer ride saved here and the same ride synced from Strava end up as two
+  // calendar entries (different ids, and the local one carries no Strava link).
+  // We keep the Strava copy — it has the name, route and shareable link — and
+  // drop the local indoor twin. A "same session" is a still-unlinked indoor ride
+  // whose start (within 15 min) and duration (within 10 min or 40%) line up with
+  // an imported Strava ride. Only 'ride' activities are considered, so a run or
+  // gym session at a nearby time is never mistaken for the trainer ride.
+  function sameSession(indoor, strava){
+    if(Math.abs((indoor.startDateMs || 0) - (strava.startDateMs || 0)) > 15 * 60 * 1000) return false;
+    var a = indoor.durationSec || 0, b = strava.durationSec || 0;
+    if(!a || !b) return true;
+    var lo = Math.min(a, b), hi = Math.max(a, b);
+    return (hi - lo) <= Math.max(600, hi * 0.4);
+  }
+  function indoorTwinIds(rides){
+    var strava = rides.filter(function(r){ return r.imported && r.stravaActivityId && r.type === 'ride'; });
+    var kill = [];
+    rides.forEach(function(r){
+      if(r.type !== 'indoor' || r.stravaActivityId) return;
+      if(strava.some(function(s){ return sameSession(r, s); })) kill.push(r.id);
+    });
+    return kill;
+  }
+  function dedupeIndoorTwins(){
+    return rideAll().then(function(all){
+      var kill = indoorTwinIds(all);
+      return kill.reduce(function(p, id){ return p.then(function(){ return rideDelete(id); }); }, Promise.resolve())
+        .then(function(){ return kill.length; });
+    }).catch(function(e){ console.log('Indoor/Strava de-dupe skipped:', e && e.message); return 0; });
+  }
 
   // ---- auto-sync from Strava on calendar open ----
   // New activities land on the calendar without a click. It's throttled so
@@ -7225,6 +7465,7 @@
       var news = acts.map(stravaToRecord).filter(function(rec){ return rec.stravaActivityId && !have[rec.stravaActivityId]; });
       if(!news.length){ syncNote(''); return; }
       news.reduce(function(p, rec){ return p.then(function(){ return rideSave(rec); }); }, Promise.resolve())
+        .then(dedupeIndoorTwins)
         .then(function(){ renderLog(); refreshDoneMarks(); syncNote(news.length + ' new from Strava', true); });
     }).catch(function(){ syncNote(''); });
   }
@@ -7540,41 +7781,47 @@
     for(var i = 0; i < HR_ZONES.length; i++){ if(HR_ZONES[i].hi === null || pct < HR_ZONES[i].hi) return i; }
     return HR_ZONES.length - 1;
   }
+  // Time-in-zone as a funnel: one centred segment per HR zone, Z1 at the top to
+  // Z5 at the foot, each segment's width proportional to its share of the ride.
+  // Zone name sits in the left gutter, the share on the right, and the ride's
+  // average HR is a dashed line drawn across the zone it falls in.
   function drawHrZones(cv, dist, total, avg, m){
-    var W = cv.clientWidth || 300, H = 190, dpr = Math.min(3, window.devicePixelRatio || 1);
+    var W = cv.clientWidth || 300, H = 200, dpr = Math.min(3, window.devicePixelRatio || 1);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';
     var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     var faintC = getComputedStyle(document.documentElement).getPropertyValue('--text-faint').trim();
+    var dimC = getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim();
     var strongC = getComputedStyle(document.documentElement).getPropertyValue('--text-strong').trim();
+    var trackC = getComputedStyle(document.documentElement).getPropertyValue('--bg-elev').trim();
+    var bgC = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#fff';
     var bpm = hrZoneBpm(m), n = HR_ZONES.length;
-    // Narrower bars, close together, centred; extra top headroom for the pill.
-    var padT = 44, padB = 26, barW = 40, gap = 8;
-    var groupW = n * barW + (n - 1) * gap, startX = Math.max(6, (W - groupW) / 2);
+    ctx.clearRect(0, 0, W, H);
+    var padT = 20, padB = 12, leftW = 84, rightW = 42;
+    var fx0 = leftW, fx1 = Math.max(fx0 + 24, W - rightW), fcx = (fx0 + fx1) / 2, funnelW = fx1 - fx0;
+    var bandH = (H - padT - padB) / n;
     var maxFrac = Math.max.apply(null, dist.map(function(c){ return total ? c / total : 0; })) || 1;
-    var plotH = H - padT - padB;
-    function slotX(i){ return startX + i * (barW + gap); }
     for(var i = 0; i < n; i++){
-      var frac = total ? dist[i] / total : 0, h = Math.max(2, frac / maxFrac * plotH);
-      var x = slotX(i), y = H - padB - h;
-      ctx.fillStyle = bpm[i].color; roundRect(ctx, x, y, barW, h, 4); ctx.fill();
-      ctx.fillStyle = frac > 0 ? strongC : faintC; ctx.font = '600 12px ' + IMG_MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-      ctx.fillText(Math.round(frac * 100) + '%', x + barW / 2, y - 6);
-      ctx.fillStyle = strongC; ctx.font = '700 12px ' + IMG_SANS; ctx.textBaseline = 'top';
-      ctx.fillText(bpm[i].z, x + barW / 2, H - padB + 7);
+      var frac = total ? dist[i] / total : 0;
+      var segW = frac > 0 ? Math.max(6, frac / maxFrac * funnelW) : 0;
+      var bandY = padT + i * bandH, segH = Math.min(26, bandH * 0.66), segY = bandY + (bandH - segH) / 2, midY = bandY + bandH / 2;
+      if(segW > 0){ ctx.fillStyle = bpm[i].color; roundRect(ctx, fcx - segW / 2, segY, segW, segH, 5); ctx.fill(); }
+      else { ctx.fillStyle = trackC; roundRect(ctx, fcx - 3, midY - 1.5, 6, 3, 1.5); ctx.fill(); }   // 0% nub keeps the row on the centreline
+      ctx.textBaseline = 'middle';
+      ctx.textAlign = 'left'; ctx.fillStyle = bpm[i].color; ctx.font = '700 11px ' + IMG_MONO; ctx.fillText(bpm[i].z, 6, midY);
+      ctx.fillStyle = dimC; ctx.font = '600 10.5px ' + IMG_SANS; ctx.fillText(bpm[i].label, 26, midY);
+      ctx.textAlign = 'right'; ctx.fillStyle = frac > 0 ? strongC : faintC; ctx.font = '700 12px ' + IMG_MONO;
+      ctx.fillText(Math.round(frac * 100) + '%', W - 6, midY);
     }
-    // average-HR marker: a line from the Avg pill down to the bars.
+    // average-HR reference: a dashed line across the funnel at the avg's zone.
     if(avg && m){
-      var zi = hrZoneOf(avg, m), lo = bpm[zi].lo, hi = bpm[zi].hi === null ? Math.max(m, lo + 1) : bpm[zi].hi;
-      var f = Math.min(1, Math.max(0, (avg - lo) / (hi - lo)));
-      var mx = slotX(zi) + f * barW;
+      var zi = hrZoneOf(avg, m), ly = padT + zi * bandH + bandH / 2;
       ctx.strokeStyle = strongC; ctx.lineWidth = 1.4; ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.moveTo(mx, 18); ctx.lineTo(mx, H - padB); ctx.stroke(); ctx.setLineDash([]);
-      var lbl = 'Avg ' + Math.round(avg); ctx.font = '700 9.5px ' + IMG_MONO;
-      var tw = ctx.measureText(lbl).width + 12, lx = Math.min(W - tw, Math.max(0, mx - tw / 2));
-      ctx.fillStyle = strongC; roundRect(ctx, lx, 2, tw, 15, 4); ctx.fill();
-      ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg').trim() || '#000';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText(lbl, lx + tw / 2, 10);
+      ctx.beginPath(); ctx.moveTo(fx0, ly); ctx.lineTo(fx1, ly); ctx.stroke(); ctx.setLineDash([]);
+      var lbl = 'Avg ' + Math.round(avg) + ' bpm'; ctx.font = '700 9.5px ' + IMG_MONO;
+      var tw = ctx.measureText(lbl).width + 12, pillY = Math.max(2, ly - 19);
+      ctx.fillStyle = strongC; roundRect(ctx, fx0, pillY, tw, 15, 4); ctx.fill();
+      ctx.fillStyle = bgC; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(lbl, fx0 + tw / 2, pillY + 7.5);
     }
   }
   function renderDetailGraph(rec){
@@ -8045,6 +8292,7 @@
       if(!picked.length){ hideSide(); return; }
       save.disabled = true; save.textContent = 'Importing…';
       picked.reduce(function(p, rec){ return p.then(function(){ return rideSave(rec); }); }, Promise.resolve())
+        .then(dedupeIndoorTwins)
         .then(function(){ hideSide(); renderLog(); refreshDoneMarks(); });
     });
   }
@@ -8205,41 +8453,63 @@
   // Fitness (CTL) and Fatigue (ATL) share one axis, scaled to just those two so
   // the lines fill the chart. The vertical gap between them is Form — shaded
   // green where fitness leads (fresh), red where fatigue leads (buried).
+  // The Fitness/Fatigue chart paints itself in on appearance: the axes hold
+  // still while the Form shading, both lines, and month ticks are revealed
+  // left-to-right by a growing clip, on an ease-out — so the data looks drawn
+  // on rather than snapped in. Honours prefers-reduced-motion.
+  var fitAnim = null;
   function drawFitness(cv, series, rangeDays){
     var W = cv.clientWidth || 720, H = 210, ctx = setupCanvas(cv, W, H);
     var padL = 38, padR = 14, padT = 12, padB = 24;
     var accent = cssVar('--accent') || '#6E8BFF', warn = cssVar('--c-threshold') || '#F2764A';
     var faint = cssVar('--text-faint') || '#7E869E', grid = 'rgba(255,255,255,0.06)';
-    ctx.clearRect(0, 0, W, H);
-    if(series.length < 2){ ctx.fillStyle = faint; ctx.font = '13px ' + IMG_SANS; ctx.textAlign = 'center'; ctx.fillText('Not enough history yet', W/2, H/2); return; }
+    if(fitAnim){ cancelAnimationFrame(fitAnim); fitAnim = null; }
+    if(series.length < 2){ ctx.clearRect(0, 0, W, H); ctx.fillStyle = faint; ctx.font = '13px ' + IMG_SANS; ctx.textAlign = 'center'; ctx.fillText('Not enough history yet', W/2, H/2); return; }
     var view = rangeView(series, rangeDays);
     var t0 = view[0].t, t1 = view[view.length - 1].t, span = Math.max(1, t1 - t0);
     var vMax = niceMax(Math.max.apply(null, view.map(function(d){ return Math.max(d.ctl, d.atl); })) || 10);
     function x(t){ return padL + (t - t0) / span * (W - padL - padR); }
     function y(v){ return H - padB - v / vMax * (H - padT - padB); }
-    ctx.font = '10px ' + IMG_MONO; ctx.fillStyle = faint; ctx.textBaseline = 'middle';
-    for(var g = 0; g <= 4; g++){
-      var lv = vMax * g / 4, gy = y(lv);
-      ctx.strokeStyle = grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W - padR, gy); ctx.stroke();
-      ctx.textAlign = 'right'; ctx.fillText(Math.round(lv), padL - 6, gy);
-    }
-    // the gap = Form, filled per segment by which line is on top
-    for(var i = 1; i < view.length; i++){
-      var a = view[i-1], b = view[i];
-      ctx.beginPath();
-      ctx.moveTo(x(a.t), y(a.ctl)); ctx.lineTo(x(b.t), y(b.ctl));
-      ctx.lineTo(x(b.t), y(b.atl)); ctx.lineTo(x(a.t), y(a.atl)); ctx.closePath();
-      ctx.fillStyle = ((a.ctl + b.ctl) >= (a.atl + b.atl)) ? 'rgba(95,227,154,0.16)' : 'rgba(255,93,117,0.16)';
-      ctx.fill();
-    }
     function line(key, colour, width){
       ctx.beginPath();
       view.forEach(function(d, i){ var px = x(d.t), py = y(d[key]); i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); });
       ctx.strokeStyle = colour; ctx.lineWidth = width; ctx.lineJoin = 'round'; ctx.stroke();
     }
-    line('atl', warn, 1.8);
-    line('ctl', accent, 2.6);
-    monthTicks(ctx, view, x, H, faint);
+    // Draw one frame at reveal fraction p (0..1): axes full, data clipped in.
+    function frame(p){
+      ctx.clearRect(0, 0, W, H);
+      ctx.font = '10px ' + IMG_MONO; ctx.textBaseline = 'middle';
+      for(var g = 0; g <= 4; g++){
+        var lv = vMax * g / 4, gy = y(lv);
+        ctx.strokeStyle = grid; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W - padR, gy); ctx.stroke();
+        ctx.fillStyle = faint; ctx.textAlign = 'right'; ctx.fillText(Math.round(lv), padL - 6, gy);
+      }
+      ctx.save();
+      ctx.beginPath(); ctx.rect(padL, 0, Math.max(0, (W - padL - padR) * p), H); ctx.clip();
+      // the gap = Form, filled per segment by which line is on top
+      for(var i = 1; i < view.length; i++){
+        var a = view[i-1], b = view[i];
+        ctx.beginPath();
+        ctx.moveTo(x(a.t), y(a.ctl)); ctx.lineTo(x(b.t), y(b.ctl));
+        ctx.lineTo(x(b.t), y(b.atl)); ctx.lineTo(x(a.t), y(a.atl)); ctx.closePath();
+        ctx.fillStyle = ((a.ctl + b.ctl) >= (a.atl + b.atl)) ? 'rgba(95,227,154,0.16)' : 'rgba(255,93,117,0.16)';
+        ctx.fill();
+      }
+      line('atl', warn, 1.8);
+      line('ctl', accent, 2.6);
+      monthTicks(ctx, view, x, H, faint);
+      ctx.restore();
+    }
+    var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(reduce){ frame(1); return; }
+    var start = null, DUR = 620;
+    function stepFrame(ts){
+      if(start === null) start = ts;
+      var p = Math.min(1, (ts - start) / DUR), e = 1 - Math.pow(1 - p, 3);   // ease-out cubic
+      frame(e);
+      fitAnim = (p < 1) ? requestAnimationFrame(stepFrame) : null;
+    }
+    fitAnim = requestAnimationFrame(stepFrame);
   }
 
   // Form (TSB = Fitness − Fatigue) on its own zero-centred axis, coloured by
