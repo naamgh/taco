@@ -2009,13 +2009,17 @@
   .tr-range-btn.on{background:var(--accent);color:var(--on-accent);}
   .trends-scroll{overflow-y:auto;padding-top:16px;flex:1;}
 
-  .tr-tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:18px;}
-  .tr-tile{
-    background:var(--bg-card-list);border:1px solid var(--border);border-radius:13px;
-    padding:12px 14px;display:flex;flex-direction:column;gap:1px;min-width:0;
+  /* One instrument strip: cells joined by hairlines (1px grid gap over a border
+     ground), not five floating cards. */
+  .tr-tiles{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:1px;margin-bottom:18px;
+    background:var(--border);border:1px solid var(--border);border-radius:14px;overflow:hidden;
   }
-  .tr-tile span{font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
-  .tr-tile b{font-family:var(--mono);font-size:26px;font-weight:750;color:var(--text-strong);line-height:1.1;letter-spacing:-0.01em;}
+  .tr-tile{
+    background:var(--bg-card);padding:12px 15px 13px;display:flex;flex-direction:column;gap:2px;min-width:0;
+  }
+  .tr-tile span{font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.07em;font-weight:600;}
+  .tr-tile b{font-family:var(--mono);font-size:23px;font-weight:750;color:var(--text-strong);line-height:1.05;letter-spacing:-0.01em;}
   .tr-tile i{font-size:10.5px;color:var(--text-dim);font-style:normal;display:flex;align-items:center;gap:5px;}
   .tr-tile.form.pos b{color:var(--ok);}
   .tr-tile.form.neg b{color:var(--c-anaerobic);}
@@ -2037,12 +2041,41 @@
   .col-right .tr-card:not(.wk-card) .tr-canvas{flex:1;min-height:230px;}
   .wk-card .wk-canvas{width:100%;}
   @media (max-width:620px){
+    /* The charts window goes full-screen on a phone (was a centered card that
+       overflowed the viewport, cutting off Close). */
+    #trendsModal{padding:0;}
+    #trendsModal .live-inner{
+      max-width:none;width:100%;height:100vh;height:100dvh;max-height:100dvh;
+      margin:0;border:0;border-radius:0;box-shadow:none;
+    }
+    .trends-inner{padding:14px 15px calc(10px + env(safe-area-inset-bottom));}
+    /* Header: title + Close on the top line, the range chips on their own row. */
+    .trends-head{flex-wrap:wrap;gap:10px 8px;}
+    .trends-title{order:1;}
+    #trendsCloseBtn{order:2;margin-left:auto;}
+    .trends-head .log-spacer{order:3;flex-basis:100%;height:0;margin:0;display:block;}
+    .trends-range{order:4;}
+    /* Charts stack full-width. */
     .trends-cols{flex-direction:column;}
     .col-right{width:auto;}
     .col-right .tr-card:not(.wk-card) .tr-canvas{height:300px;flex:none;}
   }
   .tr-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
   .tr-card-head h3{margin:0;font-size:14px;font-weight:700;color:var(--text-strong);}
+  /* A title with a small descriptive subtitle (Power Records). */
+  .tr-head-titles{display:flex;flex-direction:column;gap:1px;min-width:0;}
+  .tr-subtitle{font-size:10.5px;font-weight:500;color:var(--text-faint);letter-spacing:.01em;}
+  /* 12-week trend scrub: a tooltip pinned to the top of the plot, following x. */
+  .wk-plot{position:relative;}
+  .wk-tip{
+    position:absolute;z-index:2;pointer-events:none;
+    display:flex;flex-direction:column;align-items:flex-start;
+    background:var(--accent);color:var(--on-accent);border-radius:8px;padding:4px 9px;
+    line-height:1.25;white-space:nowrap;box-shadow:0 6px 18px rgba(0,0,0,.22);
+  }
+  .wk-tip[hidden]{display:none;}
+  .wk-tip b{font-weight:700;font-size:10px;opacity:.85;}
+  .wk-tip span{font-family:var(--mono);font-weight:700;font-size:12.5px;}
   .help-dot{
     width:16px;height:16px;border-radius:50%;border:1px solid var(--border);background:var(--bg-card);
     color:var(--text-faint);font-size:10px;font-weight:700;line-height:1;cursor:help;padding:0;
@@ -2079,12 +2112,15 @@
   .tr-note{margin:10px 0 0;font-size:11px;line-height:1.5;color:var(--text-faint);}
 
   .tr-prs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+  /* A new best: a flat pill outlined in the app's gold star token (no gradient). */
   .tr-pr{
-    font-size:11px;font-weight:600;color:#8A5A00;background:linear-gradient(180deg,#FFE08A,#F2A93B);
-    border-radius:20px;padding:4px 11px;letter-spacing:.01em;
+    font-size:11px;font-weight:650;color:var(--text-strong);background:var(--bg-card);
+    border:1px solid var(--star);border-radius:20px;padding:4px 11px;letter-spacing:.01em;
   }
 
   @media (max-width:720px){
+    /* The last stat spans the row when the count is odd, so the strip stays flush. */
+    .tr-tile:last-child:nth-child(odd){grid-column:1 / -1;}
     .tr-tiles{grid-template-columns:repeat(2,1fr);}
   }
 </style>
@@ -8358,6 +8394,20 @@
 
   // ---- drawing ----
   function cssVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+  // Theme-aware gridline colour (ink at low alpha — visible in both themes,
+  // unlike the old hardcoded white which vanished on the light default).
+  function gridColor(){ return 'rgba(' + (cssVar('--ink-rgb') || '128,128,128') + ',0.09)'; }
+  // A soft tint from a design token, so chart fills read as the app's zone/ink
+  // tints rather than one-off rgba literals.
+  function tint(name, a){
+    var c = cssVar(name);
+    if(c && c.charAt(0) === '#'){
+      var h = c.slice(1); if(h.length === 3) h = h[0]+h[0]+h[1]+h[1]+h[2]+h[2];
+      var n = parseInt(h, 16);
+      return 'rgba(' + ((n>>16)&255) + ',' + ((n>>8)&255) + ',' + (n&255) + ',' + a + ')';
+    }
+    return c || 'rgba(128,128,128,' + a + ')';
+  }
   function setupCanvas(cv, w, h){
     var dpr = Math.min(3, window.devicePixelRatio || 1);
     cv.width = Math.round(w * dpr); cv.height = Math.round(h * dpr);
@@ -8387,7 +8437,8 @@
     var W = cv.clientWidth || 720, H = 210, ctx = setupCanvas(cv, W, H);
     var padL = 38, padR = 14, padT = 12, padB = 24;
     var accent = cssVar('--accent') || '#6E8BFF', warn = cssVar('--c-threshold') || '#F2764A';
-    var faint = cssVar('--text-faint') || '#7E869E', grid = 'rgba(255,255,255,0.06)';
+    var faint = cssVar('--text-faint') || '#7E869E', grid = gridColor();
+    var freshFill = tint('--ok', 0.15), fatigFill = tint('--c-anaerobic', 0.14);
     if(fitAnim){ cancelAnimationFrame(fitAnim); fitAnim = null; }
     if(series.length < 2){ ctx.clearRect(0, 0, W, H); ctx.fillStyle = faint; ctx.font = '13px ' + IMG_SANS; ctx.textAlign = 'center'; ctx.fillText('Not enough history yet', W/2, H/2); return; }
     var view = rangeView(series, rangeDays);
@@ -8417,7 +8468,7 @@
         ctx.beginPath();
         ctx.moveTo(x(a.t), y(a.ctl)); ctx.lineTo(x(b.t), y(b.ctl));
         ctx.lineTo(x(b.t), y(b.atl)); ctx.lineTo(x(a.t), y(a.atl)); ctx.closePath();
-        ctx.fillStyle = ((a.ctl + b.ctl) >= (a.atl + b.atl)) ? 'rgba(95,227,154,0.16)' : 'rgba(255,93,117,0.16)';
+        ctx.fillStyle = ((a.ctl + b.ctl) >= (a.atl + b.atl)) ? freshFill : fatigFill;
         ctx.fill();
       }
       line('atl', warn, 1.8);
@@ -8443,7 +8494,7 @@
     var W = cv.clientWidth || 720, H = 168, ctx = setupCanvas(cv, W, H);
     var padL = 34, padR = 62, padT = 12, padB = 24;
     var ok = cssVar('--ok') || '#5FE39A', danger = cssVar('--c-anaerobic') || '#FF5D75';
-    var faint = cssVar('--text-faint') || '#7E869E', grid = 'rgba(255,255,255,0.06)';
+    var faint = cssVar('--text-faint') || '#7E869E', grid = gridColor();
     ctx.clearRect(0, 0, W, H);
     if(series.length < 2){ ctx.fillStyle = faint; ctx.font = '13px ' + IMG_SANS; ctx.textAlign = 'center'; ctx.fillText('Not enough history yet', W/2, H/2); return; }
     var view = rangeView(series, rangeDays);
@@ -8457,21 +8508,22 @@
       var yt = y(Math.min(hi, tsbAbs)), yb = y(Math.max(lo, -tsbAbs));
       ctx.fillStyle = fill; ctx.fillRect(padL, yt, W - padL - padR, yb - yt);
     }
-    band(25, tsbAbs, 'rgba(242,169,59,0.08)');
-    band(5, 25, 'rgba(95,227,154,0.10)');
-    band(-10, 5, 'rgba(150,156,176,0.07)');   // neutral / maintaining
-    band(-30, -10, 'rgba(110,139,255,0.14)');
-    band(-tsbAbs, -30, 'rgba(255,93,117,0.10)');
+    band(25, tsbAbs, tint('--star', 0.08));
+    band(5, 25, tint('--ok', 0.11));
+    band(-10, 5, tint('--text-faint', 0.08));   // neutral / maintaining
+    band(-30, -10, tint('--c-endurance', 0.13));
+    band(-tsbAbs, -30, tint('--c-anaerobic', 0.10));
     // zone labels down the right margin
     ctx.font = '9px ' + IMG_MONO; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = '#5FE39A'; ctx.fillText('Fresh', W - padR + 6, y(15));
-    ctx.fillStyle = '#9AA0B2'; ctx.fillText('Maintain', W - padR + 6, y(-2.5));
-    ctx.fillStyle = '#8CA0FF'; ctx.fillText('Productive', W - padR + 6, y(-20));
-    ctx.fillStyle = '#FF7D91'; ctx.fillText('Overreach', W - padR + 6, y(Math.min(-38, (-30 - tsbAbs) / 2)));
+    ctx.fillStyle = ok; ctx.fillText('Fresh', W - padR + 6, y(15));
+    ctx.fillStyle = faint; ctx.fillText('Maintain', W - padR + 6, y(-2.5));
+    ctx.fillStyle = cssVar('--c-endurance') || '#8CA0FF'; ctx.fillText('Productive', W - padR + 6, y(-20));
+    ctx.fillStyle = danger; ctx.fillText('Overreach', W - padR + 6, y(Math.min(-38, (-30 - tsbAbs) / 2)));
     ctx.font = '10px ' + IMG_MONO; ctx.textBaseline = 'middle';
+    var zeroLine = 'rgba(' + (cssVar('--ink-rgb') || '128,128,128') + ',0.22)';
     [tsbAbs, 0, -tsbAbs].forEach(function(lv){
       var gy = y(lv);
-      ctx.strokeStyle = (lv === 0) ? 'rgba(255,255,255,0.16)' : grid; ctx.lineWidth = 1;
+      ctx.strokeStyle = (lv === 0) ? zeroLine : grid; ctx.lineWidth = 1;
       ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W - padR, gy); ctx.stroke();
       ctx.fillStyle = faint; ctx.textAlign = 'right'; ctx.fillText((lv > 0 ? '+' : '') + Math.round(lv), padL - 6, gy);
     });
@@ -8481,7 +8533,7 @@
       ctx.beginPath();
       ctx.moveTo(x(a.t), y(a.tsb)); ctx.lineTo(x(b.t), y(b.tsb));
       ctx.lineTo(x(b.t), y(0)); ctx.lineTo(x(a.t), y(0)); ctx.closePath();
-      ctx.fillStyle = pos ? 'rgba(95,227,154,0.18)' : 'rgba(255,93,117,0.18)';
+      ctx.fillStyle = pos ? tint('--ok', 0.16) : tint('--c-anaerobic', 0.16);
       ctx.fill();
       ctx.beginPath(); ctx.moveTo(x(a.t), y(a.tsb)); ctx.lineTo(x(b.t), y(b.tsb));
       ctx.strokeStyle = pos ? ok : danger; ctx.lineWidth = 1.8; ctx.lineJoin = 'round'; ctx.stroke();
@@ -8495,8 +8547,8 @@
   function drawPowerCurve(cv, curve, unit){
     var W = cv.clientWidth || 240, H = cv.clientHeight || 320, ctx = setupCanvas(cv, W, H);
     var padL = 42, padR = 46, padT = 8, padB = 24;
-    var accent = cssVar('--accent') || '#6E8BFF', gold = '#F2A93B', faint = cssVar('--text-faint') || '#7E869E';
-    var strong = cssVar('--text-strong') || '#FFFFFF', grid = 'rgba(255,255,255,0.06)';
+    var accent = cssVar('--accent') || '#6E8BFF', gold = cssVar('--star') || '#D99A00', faint = cssVar('--text-faint') || '#7E869E';
+    var strong = cssVar('--text-strong') || '#FFFFFF', grid = gridColor();
     var wkg = unit === 'wkg' && hasWeight();
     function val(w){ return wkg ? w / weight : w; }
     function axisLabel(v){ return wkg ? v.toFixed(0) : Math.round(v); }
@@ -8547,7 +8599,7 @@
     });
     return weeks;
   }
-  function drawWeeklyTrendLine(cv, weeks, metric){
+  function drawWeeklyTrendLine(cv, weeks, metric, hoverIdx){
     var W = cv.clientWidth || 280, H = Math.round(W * 0.72), dpr = Math.min(3, window.devicePixelRatio || 1);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
     var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -8557,16 +8609,18 @@
     var padL = 34, padR = 10, padT = 12, padB = 22, n = 12;
     function x(i){ return padL + i / (n - 1) * (W - padL - padR); }
     function y(v){ return H - padB - v / max * (H - padT - padB); }
+    // Theme-aware gridlines at quarter steps (five guides, was three).
+    var gridC = gridColor();
     ctx.font = '9px ' + IMG_MONO; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    [0, max / 2, max].forEach(function(lv){
-      var gy = y(lv);
-      ctx.strokeStyle = 'rgba(255,255,255,0.06)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W - padR, gy); ctx.stroke();
+    [0, 0.25, 0.5, 0.75, 1].forEach(function(f){
+      var lv = max * f, gy = y(lv);
+      ctx.strokeStyle = gridC; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W - padR, gy); ctx.stroke();
       ctx.fillStyle = faint; ctx.fillText(metric === 'tss' ? Math.round(lv) : (Math.round(lv * 10) / 10) + 'h', padL - 5, gy);
     });
     ctx.beginPath(); vals.forEach(function(v, i){ i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(i), y(v)); });
     ctx.lineTo(x(n - 1), y(0)); ctx.lineTo(x(0), y(0)); ctx.closePath();
-    var grd = ctx.createLinearGradient(0, padT, 0, H - padB); grd.addColorStop(0, accent + '3a'); grd.addColorStop(1, accent + '05');
-    ctx.fillStyle = grd; ctx.fill();
+    ctx.fillStyle = tint('--accent', 0.06);   // flat soft ink tint (no gradient — see DESIGN.md)
+    ctx.fill();
     ctx.beginPath(); vals.forEach(function(v, i){ i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(i), y(v)); });
     ctx.strokeStyle = accent; ctx.lineWidth = 2.2; ctx.lineJoin = 'round'; ctx.stroke();
     vals.forEach(function(v, i){
@@ -8578,6 +8632,15 @@
     var mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     ctx.fillStyle = faint; ctx.font = '8.5px ' + IMG_MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
     [0, 6, 11].forEach(function(i){ var d = new Date(weeks[i].start); ctx.fillText(d.getDate() + ' ' + mons[d.getMonth()], x(i), H - 6); });
+    // Scrub crosshair: a dashed guide + ring on the hovered week (desktop hover).
+    if(hoverIdx != null && hoverIdx >= 0 && hoverIdx < n){
+      var hx = x(hoverIdx), hy = y(vals[hoverIdx]);
+      ctx.strokeStyle = faint; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+      ctx.beginPath(); ctx.moveTo(hx, padT); ctx.lineTo(hx, H - padB); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(hx, hy, 4.5, 0, Math.PI * 2); ctx.fillStyle = accent; ctx.fill();
+      ctx.strokeStyle = strong; ctx.lineWidth = 1.6; ctx.stroke();
+    }
+    cv._trend = {W: W, padL: padL, padR: padR, padT: padT, n: n};
   }
   function weeklyTrendCard(){
     return '<div class="tr-card wk-card"><div class="tr-card-head"><h3>12-week trend</h3>' +
@@ -8585,10 +8648,40 @@
           '<button type="button" class="tr-range-btn wk-btn' + (weekMetric === 'tss' ? ' on' : '') + '" data-wk="tss">TSS</button>' +
           '<button type="button" class="tr-range-btn wk-btn' + (weekMetric === 'hours' ? ' on' : '') + '" data-wk="hours">Hours</button>' +
         '</div></div>' +
-        '<canvas class="tr-canvas wk-canvas" id="wkCanvas"></canvas>' +
+        '<div class="wk-plot"><canvas class="tr-canvas wk-canvas" id="wkCanvas"></canvas><div class="wk-tip" id="wkTip" hidden></div></div>' +
       '</div>';
   }
-  function drawWeeklyTrend(acts){ drawWeeklyTrendLine(document.getElementById('wkCanvas'), computeWeeks(acts), weekMetric); }
+  function drawWeeklyTrend(acts){
+    var cv = document.getElementById('wkCanvas');
+    drawWeeklyTrendLine(cv, computeWeeks(acts), weekMetric);
+    wireWkHover(cv);
+  }
+  // Desktop scrub: hover the trend to read the week's date + TSS/hours.
+  var WK_MONS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function wireWkHover(cv){
+    if(!cv || cv._wired) return; cv._wired = true;
+    var tip = document.getElementById('wkTip');
+    cv.addEventListener('mousemove', function(e){
+      var g = cv._trend; if(!g || !lastActs || !tip) return;
+      var rect = cv.getBoundingClientRect();
+      var span = g.W - g.padL - g.padR;
+      var frac = span > 0 ? (e.clientX - rect.left - g.padL) / span : 0;
+      var idx = Math.max(0, Math.min(g.n - 1, Math.round(frac * (g.n - 1))));
+      var weeks = computeWeeks(lastActs);
+      drawWeeklyTrendLine(cv, weeks, weekMetric, idx);
+      var w = weeks[idx], d = new Date(w.start);
+      var val = weekMetric === 'tss' ? Math.round(w.tss) + ' TSS' : (Math.round(w.sec / 3600 * 10) / 10) + ' h';
+      tip.innerHTML = '<b>Wk of ' + d.getDate() + ' ' + WK_MONS[d.getMonth()] + '</b><span>' + val + '</span>';
+      tip.hidden = false;
+      var hx = g.padL + idx / (g.n - 1) * span;
+      tip.style.left = Math.max(0, Math.min(g.W - tip.offsetWidth, hx - tip.offsetWidth / 2)) + 'px';
+      tip.style.top = g.padT + 'px';
+    });
+    cv.addEventListener('mouseleave', function(){
+      if(tip) tip.hidden = true;
+      if(lastActs) drawWeeklyTrendLine(cv, computeWeeks(lastActs), weekMetric);
+    });
+  }
   function formWord(tsb){
     if(tsb > 15) return 'Fresh'; if(tsb > 5) return 'Rested'; if(tsb >= -10) return 'Neutral';
     if(tsb >= -30) return 'Building'; return 'Overreaching';
@@ -8635,7 +8728,7 @@
           '</div>' +
           '<div class="col-right">' +
             weeklyTrendCard() +
-            '<div class="tr-card"><div class="tr-card-head"><h3>Power curve</h3>' +
+            '<div class="tr-card"><div class="tr-card-head"><div class="tr-head-titles"><h3>Power Records</h3><span class="tr-subtitle">Best Average Power from Indoor Trainer Rides</span></div>' +
               (hasWeight()
                 ? '<div class="trends-range pc-unit">' +
                     '<button type="button" class="tr-range-btn pc-unit-btn' + (pcUnit==='w'?' on':'') + '" data-unit="w">W</button>' +
