@@ -238,24 +238,74 @@
     font-size:11px;color:var(--text-faint);letter-spacing:0.01em;
   }
   .menu-about .menu-item span{font-weight:600;}
-  /* Rider numbers: FTP, Max HR and Weight side by side, each a column with its
-     title above the input so all three fit the menu width. */
+  /* Rider numbers: FTP, Max HR and Weight side by side. Each chip is a tappable
+     card that shows the value as a plain read-only number; a tap opens the
+     keypad (#keypadOverlay) to edit it. */
   .menu-rider{display:flex;gap:8px;padding:0;}
   .menu-rider .ftp-chip{
-    flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:4px;padding:0;
+    flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:1px;
+    background:var(--bg-card);border:1px solid var(--border);border-radius:9px;
+    padding:6px 9px 7px;cursor:pointer;text-align:left;
+    transition:border-color .12s,background .12s;
   }
-  .menu-rider .ftp-chip label{font-size:9.5px;letter-spacing:0.05em;}
-  /* Input and its stepper on one line, the arrows tucked to the right. */
-  .menu-rider .ftp-field{
-    display:flex;align-items:center;gap:2px;
-    background:var(--bg-card);border:1px solid var(--border);border-radius:7px;padding:2px 3px 2px 6px;
+  .menu-rider .ftp-chip:hover{border-color:var(--accent);background:var(--bg-card-hover);}
+  .menu-rider .ftp-chip:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+  .menu-rider .ftp-chip label{
+    font-size:9.5px;letter-spacing:0.05em;color:var(--text-faint);
+    text-transform:uppercase;font-weight:600;cursor:pointer;
   }
-  .menu-rider .ftp-field:focus-within{border-color:var(--accent);}
-  .menu-rider .ftp-chip input{
-    width:100%;min-width:0;margin-left:0;padding:2px 0;
-    background:none;border:0;border-radius:0;font-size:14px;
+  .menu-rider .ftp-chip .num-display{
+    width:100%;min-width:0;margin:0;padding:0;background:none;border:0;border-radius:0;
+    font-family:var(--mono);font-size:18px;font-weight:650;color:var(--text-strong);
+    text-align:left;cursor:pointer;
   }
-  .menu-rider .ftp-chip input:focus{outline:none;}
+  .menu-rider .ftp-chip .num-display:focus{outline:none;}
+  .menu-rider .ftp-chip .num-display::placeholder{color:var(--text-faint);}
+
+  /* ---- number keypad ---- */
+  /* A centred panel on desktop; a bottom sheet on mobile (see the mobile block).
+     Opens over everything (z above the sheets and modals). */
+  .keypad-overlay{position:fixed;inset:0;z-index:130;display:flex;}
+  .keypad-overlay[hidden]{display:none;}
+  .keypad-scrim{position:absolute;inset:0;background:var(--scrim);opacity:0;transition:opacity .2s ease;}
+  .keypad-overlay.open .keypad-scrim{opacity:1;}
+  .keypad-panel{
+    position:relative;margin:auto;width:270px;max-width:calc(100vw - 32px);
+    background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:15px;
+    box-shadow:0 26px 60px -22px rgba(0,0,0,0.7);
+    transform:translateY(8px) scale(0.98);opacity:0;
+    transition:transform .18s ease,opacity .18s ease;
+  }
+  .keypad-overlay.open .keypad-panel{transform:none;opacity:1;}
+  .kp-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:13px;}
+  .kp-label{font-size:12px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.07em;font-weight:650;}
+  .kp-value b{font-family:var(--mono);font-size:30px;font-weight:700;color:var(--text-strong);letter-spacing:-0.01em;}
+  .kp-value i{font-family:var(--mono);font-size:12px;color:var(--text-faint);font-style:normal;margin-left:3px;}
+  .kp-nudge{display:flex;gap:8px;margin-bottom:10px;}
+  .kp-nudge button{
+    flex:1;height:34px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-dim);
+    border-radius:8px;font:inherit;font-size:13px;font-weight:650;cursor:pointer;font-family:var(--mono);
+  }
+  .kp-nudge button:hover{border-color:var(--accent);color:var(--text);}
+  .kp-nudge button:active{transform:scale(0.96);}
+  .kp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+  .kp-grid button{
+    height:46px;border:1px solid var(--border);background:var(--bg-card);color:var(--text-strong);
+    border-radius:10px;font:inherit;font-family:var(--mono);font-size:19px;font-weight:600;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .kp-grid button:hover{border-color:var(--accent);}
+  .kp-grid button:active{transform:scale(0.94);background:var(--bg-card-hover);}
+  #kpBack{color:var(--text-dim);}
+  .kp-actions{display:flex;gap:8px;margin-top:12px;}
+  .kp-actions button{
+    flex:1;height:44px;border-radius:10px;font:inherit;font-size:14px;font-weight:650;cursor:pointer;
+    border:1px solid var(--border);background:var(--bg-card);color:var(--text-dim);
+  }
+  .kp-actions button:hover{border-color:var(--accent);color:var(--text);}
+  .kp-actions .kp-set{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+  .kp-actions .kp-set:hover{background:var(--accent-hover);color:var(--on-accent);}
+
   /* W/kg readout under the row, shown once both FTP and weight are known. */
   .menu-wkg{
     padding:6px 6px 2px;font-family:var(--mono);font-size:11.5px;color:var(--text-dim);
@@ -282,6 +332,14 @@
   .conn-item{display:flex;align-items:center;gap:4px;}
   .conn-item svg{display:block;}
   .conn-status .device-dot{width:6px;height:6px;}
+  /* In the sidebar head (desktop/tablet) the indicators sit bare — no chip -
+     with slightly larger glyphs. The chip only survives where it relocates
+     into the busy workouts header on mobile. */
+  .side-head .conn-status{background:none;border:0;padding:0;height:auto;gap:14px;}
+  .side-head .conn-status:hover{background:none;color:var(--text);}
+  .side-head .conn-item{gap:5px;}
+  .side-head .conn-item svg{width:17px;height:17px;}
+  .side-head .conn-status .device-dot{width:7px;height:7px;}
 
   /* Sidebar foot: the two views — Calendar and Charts. */
   .side-foot{flex:none;padding:10px 14px 12px;border-top:1px solid var(--border-soft);display:flex;gap:6px;}
@@ -344,6 +402,10 @@
      desktop grid keeps its 3 columns and the sidebar footer Cal/Charts. */
   .mtabs{display:none;}
   .filters-fab{display:none;}
+  .conn-bar{display:none;}
+  /* Device names only show in the mobile connection bar; the sidebar-head
+     indicator stays icon + dot. */
+  .conn-name{display:none;}
   .training-hub{display:flex;flex-direction:column;gap:12px;padding:16px 14px;}
   .hub-btn{
     display:flex;align-items:center;gap:14px;width:100%;text-align:left;
@@ -400,16 +462,38 @@
      above a fixed tab bar, chosen by #appShell[data-tab]. */
   @media (max-width:900px){
     /* Tab-bar height lives on body so the sheets (outside .app-shell) can read it too. */
-    body{overflow-x:clip;--mtab-h:calc(56px + env(safe-area-inset-bottom));}
+    body{overflow-x:clip;--mtab-h:calc(56px + env(safe-area-inset-bottom));--connbar-h:38px;}
     .app-shell{
       display:block;grid-template-columns:none;
       height:100vh;height:100dvh;overflow:hidden;
     }
+    /* Panes stop above BOTH the connection bar and the tab bar. */
     .sidebar,.list-pane,.detail-pane{
-      position:fixed;left:0;right:0;top:0;bottom:var(--mtab-h);z-index:5;
+      position:fixed;left:0;right:0;top:0;bottom:calc(var(--mtab-h) + var(--connbar-h));z-index:5;
       display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;
       background:var(--bg);border:none;min-width:0;
     }
+
+    /* Connection bar: a labeled strip pinned directly above the tab buttons,
+       visible on every tab. The whole strip is the #connStatus button, so a tap
+       anywhere opens the Menu. Each cell shows glyph + name + status dot. */
+    .conn-bar{
+      display:block;position:fixed;left:0;right:0;bottom:var(--mtab-h);z-index:44;
+      height:var(--connbar-h);background:var(--bg-list);border-top:1px solid var(--border-soft);
+    }
+    #connBar .conn-status{
+      width:100%;height:100%;background:none;border:0;border-radius:0;padding:0;gap:0;
+      display:flex;align-items:stretch;color:var(--text-dim);
+    }
+    #connBar .conn-status:hover{background:none;}
+    /* Each indicator claims exactly one third of the bar, centred in its cell. */
+    #connBar .conn-item{flex:1 1 0;min-width:0;gap:6px;padding:0 6px;justify-content:center;}
+    #connBar .conn-item svg{width:15px;height:15px;flex:none;}
+    #connBar .conn-name{
+      display:inline;min-width:0;font-size:11.5px;font-weight:600;letter-spacing:-0.01em;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    #connBar .conn-status .device-dot{width:6px;height:6px;flex:none;}
     #appShell[data-tab="workouts"] .list-pane{display:flex;}
     #appShell[data-tab="view"] .detail-pane{display:flex;}
     /* These two scroll via their inner body, not the pane, so the sticky
@@ -437,7 +521,7 @@
     /* Filters button, pinned bottom-right of the Workouts tab above the bar. */
     .filters-fab{
       display:flex;align-items:center;gap:7px;position:fixed;right:14px;
-      bottom:calc(var(--mtab-h) + 12px);z-index:46;padding:11px 16px;border-radius:999px;
+      bottom:calc(var(--mtab-h) + var(--connbar-h) + 12px);z-index:46;padding:11px 16px;border-radius:999px;
       background:var(--accent);color:var(--on-accent);border:0;cursor:pointer;
       font:inherit;font-size:13.5px;font-weight:650;box-shadow:0 6px 20px rgba(0,0,0,.22);
     }
@@ -509,9 +593,24 @@
     .mtab svg{width:23px;height:23px;}
     .mtab.on{color:var(--text-strong);}
     .mtab:active{background:var(--bg-card-hover);}
+
+    /* Keypad becomes a bottom sheet: full width, seated at the bottom, sliding
+       up. Bigger keys for thumbs. */
+    .keypad-overlay{align-items:flex-end;}
+    .keypad-panel{
+      margin:0;width:100%;max-width:none;border-radius:20px 20px 0 0;
+      border-left:0;border-right:0;border-bottom:0;padding:16px 16px calc(18px + env(safe-area-inset-bottom));
+      transform:translateY(110%);
+      transition:transform .26s cubic-bezier(.4,0,.2,1);
+    }
+    .keypad-overlay.open .keypad-panel{transform:none;}
+    .kp-value b{font-size:34px;}
+    .kp-nudge button{height:40px;font-size:14px;}
+    .kp-grid button{height:54px;font-size:21px;}
+    .kp-actions button{height:48px;}
   }
   @media (max-width:900px) and (prefers-reduced-motion:reduce){
-    .sheet-scrim,.sheet-panel{transition:none;}
+    .sheet-scrim,.sheet-panel,.keypad-panel{transition:none;}
   }
 
   /* ---------- FILTERS ---------- */
@@ -543,9 +642,14 @@
      track: segment 0 is a neutral "Any", and the knob snaps to the centre of
      whichever segment is chosen. */
   .filter-head{display:flex;align-items:center;justify-content:space-between;gap:8px;}
-  /* Separates the device row from the filters — they're different kinds of
-     control and ran together as one list. */
-  .side-group-first{border-top:1px solid var(--border-soft);padding-top:16px;}
+  .side-group-first{padding-top:0;}
+  /* Caption over the filter sliders (desktop/tablet). Matches the menu section
+     captions; on mobile the sliders relocate into the Filters sheet, which
+     carries its own header, so this stays hidden with the sidebar. */
+  .filters-title{
+    margin:0;font-size:11px;color:var(--text-faint);text-transform:uppercase;
+    letter-spacing:0.09em;font-weight:650;padding:0 2px;
+  }
   /* Filters that don't apply to the fitness tests, while those are selected. */
   .side-group.filter-off{opacity:0.38;transition:opacity .15s;}
   .side-group.filter-off .fsl,
@@ -2176,14 +2280,17 @@
       <button class="conn-status" id="connStatus" type="button" title="Connections" aria-label="Connections - open menu">
         <span class="conn-item">
           <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><circle cx="6" cy="16.5" r="3.1" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="16.5" r="3.1" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M6 16.5l3.6-7h5.2l3.2 7M12.2 16.5l2.6-7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="conn-name" id="connTrainerName">Trainer</span>
           <span class="device-dot" id="connTrainerDot"></span>
         </span>
         <span class="conn-item">
           <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 20S3.6 15 3.6 9.3A4.3 4.3 0 0112 7.1a4.3 4.3 0 018.4 2.2C20.4 15 12 20 12 20z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          <span class="conn-name" id="connHrName">Heart rate</span>
           <span class="device-dot" id="connHrDot"></span>
         </span>
         <span class="conn-item">
-          <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M11 3l-5.4 10.4h3.1L11 8.9l2.3 4.5h3.1z" fill="currentColor"/><path d="M13.9 13.4l-1.4 2.7-1.4-2.7H8.4l4.1 7.6 4.1-7.6z" fill="currentColor" opacity=".55"/></svg>
+          <svg class="conn-strava" viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" fill="currentColor"/></svg>
+          <span class="conn-name" id="connStravaName">Strava</span>
           <span class="device-dot" id="connStravaDot"></span>
         </span>
       </button>
@@ -2195,36 +2302,21 @@
     <div class="side-menu" id="sideMenu" hidden>
       <section class="menu-sec">
         <h3 class="menu-sec-h">Your numbers</h3>
+      <!-- Read-only number chips: the value shows as a plain number; tapping a
+           chip opens the large keypad (#keypadOverlay) to edit it. The inputs
+           stay in the DOM (readonly) as the display that every setter syncs. -->
       <div class="menu-rider">
-        <div class="ftp-chip">
-          <label for="ftpInput">FTP</label>
-          <div class="ftp-field">
-            <input id="ftpInput" type="number" inputmode="numeric" min="80" max="500" step="1" value="220" title="FTP in watts">
-            <span class="ftp-step">
-              <button type="button" id="ftpUp" title="FTP +1 W (hold to repeat)" aria-label="Increase FTP by one watt"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 5l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <button type="button" id="ftpDown" title="FTP −1 W (hold to repeat)" aria-label="Decrease FTP by one watt"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-            </span>
-          </div>
+        <div class="ftp-chip" data-num="ftp" role="button" tabindex="0" aria-label="FTP, tap to edit">
+          <label>FTP</label>
+          <input id="ftpInput" class="num-display" type="text" readonly inputmode="none" tabindex="-1" value="220">
         </div>
-        <div class="ftp-chip">
-          <label for="maxHrInput">Max HR</label>
-          <div class="ftp-field">
-            <input id="maxHrInput" type="number" inputmode="numeric" min="120" max="230" step="1" placeholder="—" title="Maximum heart rate in bpm">
-            <span class="ftp-step">
-              <button type="button" id="maxHrUp" title="Max HR +1 (hold to repeat)" aria-label="Increase max heart rate by one"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 5l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <button type="button" id="maxHrDown" title="Max HR −1 (hold to repeat)" aria-label="Decrease max heart rate by one"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-            </span>
-          </div>
+        <div class="ftp-chip" data-num="maxhr" role="button" tabindex="0" aria-label="Max heart rate, tap to edit">
+          <label>Max HR</label>
+          <input id="maxHrInput" class="num-display" type="text" readonly inputmode="none" tabindex="-1" placeholder="—">
         </div>
-        <div class="ftp-chip">
-          <label for="weightInput">Weight</label>
-          <div class="ftp-field">
-            <input id="weightInput" type="number" inputmode="decimal" min="30" max="200" step="0.1" placeholder="—" title="Body weight in kg (for W/kg)">
-            <span class="ftp-step">
-              <button type="button" id="weightUp" title="Weight +0.1 kg (hold to repeat)" aria-label="Increase weight by a tenth of a kilogram"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 5l4-4 4 4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-              <button type="button" id="weightDown" title="Weight −0.1 kg (hold to repeat)" aria-label="Decrease weight by a tenth of a kilogram"><svg viewBox="0 0 10 6" width="9" height="6"><path d="M1 1l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-            </span>
-          </div>
+        <div class="ftp-chip" data-num="weight" role="button" tabindex="0" aria-label="Weight, tap to edit">
+          <label>Weight</label>
+          <input id="weightInput" class="num-display" type="text" readonly inputmode="none" tabindex="-1" placeholder="—">
         </div>
       </div>
       <div class="menu-wkg" id="menuWkg" hidden></div>
@@ -2291,6 +2383,8 @@
         <span>Filters</span>
         <svg class="ft-caret" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M6 9.5l6 6 6-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
+
+      <h3 class="filters-title">Filters</h3>
 
       <div class="side-group side-group-first" id="gTime">
         <div class="filter-head"><span class="filter-label">Time</span><span class="filter-val any" id="durVal">Any</span></div>
@@ -2393,6 +2487,10 @@
     <div class="detail-body" id="detailBody"></div>
   </section>
 
+  <!-- Mobile-only: a narrow connection-status bar above the tab buttons. The
+       #connStatus button relocates in here on mobile (from the sidebar head). -->
+  <div class="conn-bar" id="connBar" aria-hidden="false"></div>
+
   <!-- Mobile-only bottom tab bar. Desktop keeps the 3-column layout. -->
   <nav class="mtabs" id="mTabs" aria-label="Sections">
     <button class="mtab" type="button" data-tab="workouts" aria-selected="true">
@@ -2400,7 +2498,7 @@
       <span>Workouts</span>
     </button>
     <button class="mtab" type="button" data-tab="view">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18.5L8 8h2v5h4V8h2l5 10.5Z" fill="currentColor"/></svg>
       <span>View</span>
     </button>
     <button class="mtab" type="button" data-tab="training">
@@ -2445,6 +2543,41 @@
         <span class="hub-text"><span class="hub-title">Charts</span><span class="hub-sub">Fitness, form and your power curve</span></span>
         <svg class="hub-go" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- Number keypad: opens when a "Your numbers" chip is tapped. A centred panel
+     on desktop, a bottom sheet on mobile. Keys build the value, the nudge row
+     steps it, Set commits through the field's setter (which clamps + syncs). -->
+<div class="keypad-overlay" id="keypadOverlay" hidden>
+  <div class="keypad-scrim" data-kpclose></div>
+  <div class="keypad-panel" role="dialog" aria-modal="true" aria-labelledby="kpLabel">
+    <div class="kp-head">
+      <span class="kp-label" id="kpLabel">FTP</span>
+      <span class="kp-value"><b id="kpValue">220</b><i id="kpUnit">W</i></span>
+    </div>
+    <div class="kp-nudge">
+      <button type="button" id="kpMinus" aria-label="Decrease">−5</button>
+      <button type="button" id="kpPlus" aria-label="Increase">+5</button>
+    </div>
+    <div class="kp-grid" id="kpGrid">
+      <button type="button" data-k="1">1</button>
+      <button type="button" data-k="2">2</button>
+      <button type="button" data-k="3">3</button>
+      <button type="button" data-k="4">4</button>
+      <button type="button" data-k="5">5</button>
+      <button type="button" data-k="6">6</button>
+      <button type="button" data-k="7">7</button>
+      <button type="button" data-k="8">8</button>
+      <button type="button" data-k="9">9</button>
+      <button type="button" data-k="." id="kpDot">.</button>
+      <button type="button" data-k="0">0</button>
+      <button type="button" data-k="back" id="kpBack" aria-label="Delete"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M9 5.5h10.5a1.5 1.5 0 0 1 1.5 1.5v10a1.5 1.5 0 0 1-1.5 1.5H9L3 12z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M11.5 9.5l5 5M16.5 9.5l-5 5" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></button>
+    </div>
+    <div class="kp-actions">
+      <button type="button" id="kpCancel">Cancel</button>
+      <button type="button" id="kpSet" class="kp-set">Set</button>
     </div>
   </div>
 </div>
@@ -2933,6 +3066,17 @@
     ftpInput: document.getElementById('ftpInput'),
     maxHrInput: document.getElementById('maxHrInput'),
     weightInput: document.getElementById('weightInput'),
+    menuRider: document.querySelector('.menu-rider'),
+    keypadOverlay: document.getElementById('keypadOverlay'),
+    kpLabel: document.getElementById('kpLabel'),
+    kpValue: document.getElementById('kpValue'),
+    kpUnit: document.getElementById('kpUnit'),
+    kpDot: document.getElementById('kpDot'),
+    kpGrid: document.getElementById('kpGrid'),
+    kpMinus: document.getElementById('kpMinus'),
+    kpPlus: document.getElementById('kpPlus'),
+    kpSet: document.getElementById('kpSet'),
+    kpCancel: document.getElementById('kpCancel'),
     menuWkg: document.getElementById('menuWkg'),
     hrZoneTable: document.getElementById('hrZoneTable'),
     summaryPies: document.getElementById('summaryPies'),
@@ -2987,9 +3131,13 @@
     filtersToggle: document.getElementById('filtersToggle'),
     listFilters: document.getElementById('listFilters'),
     connStatus: document.getElementById('connStatus'),
+    connBar: document.getElementById('connBar'),
     connTrainerDot: document.getElementById('connTrainerDot'),
     connHrDot: document.getElementById('connHrDot'),
     connStravaDot: document.getElementById('connStravaDot'),
+    connTrainerName: document.getElementById('connTrainerName'),
+    connHrName: document.getElementById('connHrName'),
+    connStravaName: document.getElementById('connStravaName'),
     searchBtn: document.getElementById('searchBtn'),
     sortBtn: document.getElementById('sortBtn'),
     sortMenu: document.getElementById('sortMenu'),
@@ -3900,13 +4048,14 @@
   syncMenuLocation();
 
   // The connection indicator lives in the sidebar head on desktop/tablet; on
-  // mobile the sidebar is hidden, so it relocates into the workouts header.
+  // mobile the sidebar is hidden, so it relocates into the narrow status bar
+  // that sits above the tab buttons (#connBar).
   var connEl = els.connStatus;
   var connHome = connEl ? {p: connEl.parentNode, n: connEl.nextElementSibling} : null;
   function syncConnLocation(){
     if(!connEl) return;
     if(mqMobile.matches){
-      if(els.listActions && connEl.parentNode !== els.listActions) els.listActions.appendChild(connEl);
+      if(els.connBar && connEl.parentNode !== els.connBar) els.connBar.appendChild(connEl);
     } else {
       if(connHome && connEl.parentNode !== connHome.p) connHome.p.insertBefore(connEl, connHome.n);
     }
@@ -4491,31 +4640,102 @@
     setWeight(v);
   });
 
-  // Nudge buttons: one unit per click, and holding either one repeats after
-  // a short delay so a 10-unit change doesn't take ten clicks.
-  function bindNudge(btn, delta, apply, current, fallback){
-    var timer = null, repeat = null;
-    function step(){ var cur = current(); apply((cur === null ? fallback : cur) + delta); }
-    function stop(){ clearTimeout(timer); clearInterval(repeat); timer = repeat = null; }
-    btn.addEventListener('pointerdown', function(e){
-      e.preventDefault();
-      step();
-      timer = setTimeout(function(){ repeat = setInterval(step, 70); }, 450);
+  // ---- number keypad ----
+  // The three rider numbers are read-only chips; tapping one opens a large
+  // keypad instead of fighting a 30px field. Each field routes through its own
+  // existing setter (which clamps, persists and syncs the chip display).
+  var KP_FIELDS = {
+    ftp:    {label:'FTP',    unit:'W',   step:5,   decimal:false, def:200, min:80,  max:500, get:function(){ return hasFtp() ? ftp : null; },       set:setFtp},
+    maxhr:  {label:'Max HR', unit:'bpm', step:1,   decimal:false, def:180, min:120, max:230, get:function(){ return maxHr || null; },              set:setMaxHr},
+    weight: {label:'Weight', unit:'kg',  step:0.5, decimal:true,  def:70,  min:30,  max:200, get:function(){ return hasWeight() ? weight : null; }, set:setWeight}
+  };
+  var kpField = null, kpStr = '', kpFresh = true;
+  function kpFmt(n){ return (kpField && kpField.decimal) ? String(Math.round(n * 10) / 10) : String(Math.round(n)); }
+  function kpRender(){
+    els.kpValue.textContent = kpStr === '' ? '—' : kpStr;
+    els.kpUnit.textContent = kpField ? kpField.unit : '';
+  }
+  function openKeypad(key){
+    kpField = KP_FIELDS[key]; if(!kpField) return;
+    var cur = kpField.get();
+    kpStr = cur === null ? '' : kpFmt(cur);
+    kpFresh = true;   // the first digit typed replaces the seeded value
+    els.kpLabel.textContent = kpField.label;
+    els.kpMinus.textContent = '−' + kpField.step;
+    els.kpPlus.textContent = '+' + kpField.step;
+    els.kpDot.style.visibility = kpField.decimal ? '' : 'hidden';
+    kpRender();
+    els.keypadOverlay.hidden = false;
+    void els.keypadOverlay.offsetHeight;   // reflow so the open transition runs
+    els.keypadOverlay.classList.add('open');
+    els.kpSet.focus();
+  }
+  function closeKeypad(){
+    els.keypadOverlay.classList.remove('open');
+    var ov = els.keypadOverlay;
+    setTimeout(function(){ if(!ov.classList.contains('open')) ov.hidden = true; }, 220);
+    kpField = null;
+  }
+  function kpPress(k){
+    if(!kpField) return;
+    if(k === 'back'){ kpStr = kpStr.slice(0, -1); kpFresh = false; kpRender(); return; }
+    if(k === '.'){
+      if(!kpField.decimal) return;
+      if(kpFresh){ kpStr = '0.'; kpFresh = false; }
+      else if(kpStr.indexOf('.') === -1){ kpStr = (kpStr === '' ? '0' : kpStr) + '.'; }
+      kpRender(); return;
+    }
+    if(kpFresh){ kpStr = (k === '0') ? '' : k; kpFresh = false; }   // no leading zero
+    else {
+      if(kpField.decimal && kpStr.indexOf('.') !== -1 && kpStr.split('.')[1].length >= 1) return;  // one decimal place
+      if(kpStr.replace('.', '').length >= 4) return;   // keep it sane
+      kpStr += k;
+    }
+    kpRender();
+  }
+  function kpClamp(v){ return Math.min(kpField.max, Math.max(kpField.min, v)); }
+  function kpNudge(dir){
+    if(!kpField) return;
+    var base = kpStr === '' ? kpField.get() : parseFloat(kpStr);
+    if(base === null || isNaN(base)) base = kpField.def;
+    kpStr = kpFmt(kpClamp(base + dir * kpField.step));
+    kpFresh = false;
+    kpRender();
+  }
+  function kpCommit(){
+    if(!kpField) return;
+    var v = parseFloat(kpStr);
+    // A wild entry snaps to range rather than being silently ignored.
+    if(!isNaN(v)) kpField.set(kpClamp(v));
+    closeKeypad();
+  }
+  if(els.keypadOverlay){
+    els.menuRider.addEventListener('click', function(e){
+      var chip = e.target.closest('.ftp-chip[data-num]'); if(chip) openKeypad(chip.getAttribute('data-num'));
     });
-    ['pointerup', 'pointerleave', 'pointercancel'].forEach(function(ev){ btn.addEventListener(ev, stop); });
-    btn.addEventListener('keydown', function(e){
-      if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); step(); }
+    els.menuRider.addEventListener('keydown', function(e){
+      if(e.key !== 'Enter' && e.key !== ' ') return;
+      var chip = e.target.closest('.ftp-chip[data-num]'); if(!chip) return;
+      e.preventDefault(); openKeypad(chip.getAttribute('data-num'));
+    });
+    els.kpGrid.addEventListener('click', function(e){
+      var b = e.target.closest('button[data-k]'); if(b) kpPress(b.getAttribute('data-k'));
+    });
+    els.kpMinus.addEventListener('click', function(){ kpNudge(-1); });
+    els.kpPlus.addEventListener('click', function(){ kpNudge(1); });
+    els.kpSet.addEventListener('click', kpCommit);
+    els.kpCancel.addEventListener('click', closeKeypad);
+    els.keypadOverlay.querySelector('[data-kpclose]').addEventListener('click', closeKeypad);
+    // A physical keyboard drives it too, so desktop can just type and Enter.
+    document.addEventListener('keydown', function(e){
+      if(els.keypadOverlay.hidden) return;
+      if(e.key === 'Escape'){ closeKeypad(); return; }
+      if(e.key === 'Enter'){ kpCommit(); return; }
+      if(e.key === 'Backspace'){ e.preventDefault(); kpPress('back'); return; }
+      if(e.key >= '0' && e.key <= '9'){ kpPress(e.key); return; }
+      if(e.key === '.'){ kpPress('.'); return; }
     });
   }
-  // Nudging an unset FTP lands on 200 first rather than 201/199.
-  bindNudge(document.getElementById('ftpUp'), 1, setFtp, function(){ return ftp; }, 199);
-  bindNudge(document.getElementById('ftpDown'), -1, setFtp, function(){ return ftp; }, 201);
-  // Nudging an unset max HR starts from a sensible middle rather than 120.
-  bindNudge(document.getElementById('maxHrUp'), 1, setMaxHr, function(){ return maxHr; }, 179);
-  bindNudge(document.getElementById('maxHrDown'), -1, setMaxHr, function(){ return maxHr; }, 181);
-  // Weight moves in tenths; an unset weight starts near a sensible middle.
-  bindNudge(document.getElementById('weightUp'), 0.1, setWeight, function(){ return weight; }, 69.9);
-  bindNudge(document.getElementById('weightDown'), -0.1, setWeight, function(){ return weight; }, 70.1);
   renderWkg();
 
   var searchTimer = null;
@@ -5086,15 +5306,25 @@
     label.textContent = s.label;
   }
 
+  // Keep the mobile connection bar's labels short: a device name past ~13
+  // chars is trimmed with an ellipsis so three fit across a phone.
+  function connShort(name){
+    name = (name || '').trim();
+    return name.length > 13 ? name.slice(0, 12).trim() + '…' : name;
+  }
+
   function updateDeviceUI(){
     var t = deviceChipState(trainerState, 'Trainer');
     var h = deviceChipState(hrState, 'Heart rate');
     paintDeviceButton(els.trainerBtn, els.trainerDot, els.trainerLabel, t, 'Trainer');
     paintDeviceButton(els.hrBtn, els.hrDot, els.hrLabel, h, 'HR monitor');
     // The header connection indicator mirrors the trainer + HR dots (Strava's
-    // dot is painted by updateStravaUI), in every viewport.
+    // dot is painted by updateStravaUI), in every viewport. On the mobile bar
+    // the name follows the connected device (trimmed if it runs long).
     if(els.connTrainerDot) els.connTrainerDot.className = 'device-dot ' + t.dotClass;
     if(els.connHrDot) els.connHrDot.className = 'device-dot ' + h.dotClass;
+    if(els.connTrainerName) els.connTrainerName.textContent = connShort(t.label || 'Trainer');
+    if(els.connHrName) els.connHrName.textContent = connShort(h.label || 'Heart rate');
     if(els.connStatus){
       els.connStatus.title = 'Trainer ' + (trainerState.connected ? 'on' : 'off') +
         ', heart rate ' + (hrState.connected ? 'on' : 'off') + ' - open menu';
@@ -5257,8 +5487,13 @@
     els.stravaChip.style.display = on ? '' : 'none';
     els.stravaLabel.textContent = on ? ('Strava · ' + ((strava.athlete && strava.athlete.name) || 'connected').trim()) : 'Strava';
     els.summaryStravaBtn.style.display = on ? '' : 'none';
-    // Header connection indicator: light the Strava dot when logged in.
+    // Header connection indicator: light the Strava dot when logged in, and on
+    // the mobile bar show the athlete's first name in place of "Strava".
     if(els.connStravaDot) els.connStravaDot.className = 'device-dot' + (on ? ' strava' : '');
+    if(els.connStravaName){
+      var first = on ? (((strava.athlete && strava.athlete.name) || '').trim().split(/\s+/)[0]) : '';
+      els.connStravaName.textContent = first || 'Strava';
+    }
   }
 
   els.stravaBtn.addEventListener('click', stravaConnect);
