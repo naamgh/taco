@@ -794,71 +794,51 @@
   .start-card.compact b{font-size:12px;font-weight:650;color:var(--text-dim);}
   .start-card.compact .sc-go{font-size:14px;}
 
-  .wt-veil{
-    position:fixed;inset:0;background:rgba(4,6,10,0.74);z-index:200;
-    opacity:0;pointer-events:none;transition:opacity .22s ease;
+  /* ---- find a workout modal ---- */
+  .find-modal{position:fixed;inset:0;z-index:130;display:flex;}
+  .find-modal[hidden]{display:none;}
+  .find-scrim{position:absolute;inset:0;background:var(--scrim);opacity:0;transition:opacity .2s ease;}
+  .find-modal.open .find-scrim{opacity:1;}
+  .find-panel{
+    position:relative;margin:auto;width:400px;max-width:calc(100vw - 28px);max-height:calc(100dvh - 40px);
+    display:flex;flex-direction:column;
+    background:var(--bg-card);border:1px solid var(--border);border-radius:18px;
+    box-shadow:0 30px 70px -24px rgba(0,0,0,0.7);
+    transform:translateY(10px) scale(.985);opacity:0;transition:transform .2s ease,opacity .2s ease;
   }
-  :root[data-theme="light"] .wt-veil{background:rgba(20,24,36,0.52);}
-  body.wt-on .wt-veil{opacity:1;pointer-events:auto;}
-  /* The lit element is lifted above the veil and given its own ground, so it
-     stays readable rather than glowing through a scrim. */
-  .wt-lit{
-    position:relative;z-index:201;background:var(--bg);
-    border-radius:12px;padding:12px;margin:-12px;
-    box-shadow:0 0 0 2px var(--accent), 0 18px 50px -12px rgba(0,0,0,.8);
+  .find-modal.open .find-panel{transform:none;opacity:1;}
+  .find-head{display:flex;align-items:center;justify-content:space-between;padding:16px 18px 6px;}
+  .find-head h3{margin:0;font-size:18px;font-weight:700;color:var(--text-strong);}
+  .find-x{
+    width:32px;height:32px;border-radius:9px;border:1px solid var(--border);background:var(--bg-card);
+    color:var(--text-dim);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;flex:none;
   }
-  .wt-bubble{
-    position:fixed;z-index:202;width:280px;background:var(--bg-card);
-    border:1px solid var(--border);border-radius:14px;padding:15px 16px 13px;
-    box-shadow:0 26px 60px -22px rgba(0,0,0,0.85);
-    opacity:0;transform:translateY(4px);transition:opacity .18s ease, transform .18s ease;
-    pointer-events:none;
+  .find-x:hover{background:var(--bg-card-hover);color:var(--text);}
+  .find-body{overflow-y:auto;padding:8px 18px 4px;}
+  .find-sec{margin-bottom:16px;}
+  .find-q{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-faint);font-weight:650;margin-bottom:8px;}
+  .find-opts{display:flex;flex-wrap:wrap;gap:7px;}
+  .find-opt{
+    display:flex;align-items:center;justify-content:center;gap:6px;min-height:40px;padding:0 13px;
+    background:var(--bg-card);border:1px solid var(--border);border-radius:10px;
+    color:var(--text-dim);font:inherit;font-size:13px;font-weight:600;cursor:pointer;
+    transition:border-color .12s,background .12s,color .12s;
   }
-  body.wt-on .wt-bubble{opacity:1;transform:none;pointer-events:auto;}
-  .wt-bubble::before{
-    content:'';position:absolute;left:-7px;top:var(--arrow,28px);width:12px;height:12px;
-    background:var(--bg-card);border-left:1px solid var(--border);border-bottom:1px solid var(--border);
-    transform:rotate(45deg);
+  .find-opt i{font-style:normal;color:var(--text-faint);font-size:11px;margin-left:1px;}
+  .find-opt:hover{border-color:var(--accent);color:var(--text);}
+  .find-opt.on{border-color:var(--accent);background:var(--accent-soft);color:var(--text-strong);box-shadow:0 0 0 1px var(--accent);}
+  .find-opt.on i{color:var(--text-dim);}
+  .find-dot{width:9px;height:9px;border-radius:50%;flex:none;}
+  .find-spice{gap:3px;}
+  .find-spice .chilli{width:15px;height:15px;display:block;}
+  .find-spice i{color:var(--text-dim);font-size:12px;margin-left:0;}
+  .find-apply{
+    margin:8px 18px 18px;height:50px;border-radius:12px;flex:none;
+    background:var(--accent);color:var(--on-accent);border:1px solid var(--accent);
+    font:inherit;font-size:15px;font-weight:650;cursor:pointer;
   }
-  .wt-step{font-family:var(--mono);font-size:10px;color:var(--text-faint);letter-spacing:.06em;margin:0 0 6px;}
-  .wt-bubble h4{margin:0 0 6px;font-size:15.5px;font-weight:750;color:var(--text-strong);line-height:1.25;}
-  .wt-bubble p{margin:0 0 13px;font-size:12.5px;line-height:1.5;color:var(--text-dim);}
-  /* Pick heat here or on the slider — same state either way. "Spice 3" means
-     nothing cold; easy/medium/hard does. */
-  .wt-choices{display:flex;gap:6px;margin:0 0 13px;}
-  .wt-choices button{
-    flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
-    background:var(--bg-elev);border:1px solid var(--border);border-radius:10px;
-    padding:8px 4px 7px;cursor:pointer;font-family:inherit;
-    font-size:12px;font-weight:650;color:var(--text-dim);transition:all .12s;
-  }
-  .wt-choices button:hover{background:var(--bg-card-hover);color:var(--text);border-color:var(--accent);}
-  .wt-choices button.on{
-    background:var(--accent-soft);border-color:var(--accent);color:var(--text);
-    box-shadow:0 0 0 1px var(--accent);
-  }
-  .wt-choices .ch-heat{display:flex;gap:1px;}
-  .wt-choices .ch-heat svg{width:11px;height:11px;display:block;}
-  /* Live consequence of the current picks, so a dead end is visible before
-     the rider reaches the end and finds an empty list. */
-  .wt-count{
-    margin:0 0 13px !important;font-family:var(--mono);font-size:11.5px;
-    color:var(--text-faint);border-top:1px solid var(--border-soft);padding-top:9px;
-  }
-  .wt-count b{color:var(--text);font-weight:650;}
-  .wt-count.none,.wt-count.none b{color:var(--c-anaerobic);}
-  .wt-actions{display:flex;align-items:center;gap:8px;}
-  .wt-btn{
-    border:1px solid var(--border);background:var(--bg-elev);color:var(--text-dim);
-    border-radius:9px;padding:7px 12px;font-size:12.5px;font-weight:650;cursor:pointer;font-family:inherit;
-  }
-  .wt-btn:hover{background:var(--bg-card-hover);color:var(--text);border-color:var(--accent);}
-  .wt-btn.primary{
-    background:linear-gradient(135deg,var(--accent),var(--lav));border-color:transparent;color:#fff;
-    box-shadow:0 6px 18px -8px rgba(110,139,255,.9), inset 0 1px 0 rgba(255,255,255,.22);
-  }
-  .wt-btn.ghost{background:none;border-color:transparent;color:var(--text-faint);margin-left:auto;padding:7px 4px;}
-  .wt-btn.ghost:hover{color:var(--text-dim);border-color:transparent;background:none;text-decoration:underline;}
+  .find-apply:hover{background:var(--accent-hover);}
+  .find-apply:disabled{opacity:.55;cursor:default;background:var(--bg-card);color:var(--text-faint);border-color:var(--border);}
 
   .icon-btn{
     background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);
@@ -2547,6 +2527,36 @@
   </div>
 </div>
 
+<!-- Find a workout: a centred modal of big buttons. Pick duration / effort /
+     intensity (each optional), see the live match count, and Show workouts
+     applies them to the list. Rows are built from the library in JS. -->
+<div class="find-modal" id="findModal" hidden>
+  <div class="find-scrim" data-findclose></div>
+  <div class="find-panel" role="dialog" aria-modal="true" aria-labelledby="findTitle">
+    <div class="find-head">
+      <h3 id="findTitle">Find a workout</h3>
+      <button class="find-x" type="button" data-findclose aria-label="Close">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+    <div class="find-body">
+      <div class="find-sec">
+        <div class="find-q">How long?</div>
+        <div class="find-opts" id="findDur"></div>
+      </div>
+      <div class="find-sec">
+        <div class="find-q">What kind of effort?</div>
+        <div class="find-opts" id="findZone"></div>
+      </div>
+      <div class="find-sec">
+        <div class="find-q">How hard should it feel?</div>
+        <div class="find-opts" id="findSpice"></div>
+      </div>
+    </div>
+    <button class="find-apply" id="findApply" type="button">Show workouts</button>
+  </div>
+</div>
+
 <!-- Number keypad: opens when a "Your numbers" chip is tapped. A centred panel
      on desktop, a bottom sheet on mobile. Keys build the value, the nudge row
      steps it, Set commits through the field's setter (which clamps + syncs). -->
@@ -2612,17 +2622,6 @@
 
 <div class="ble-warning no-print" id="bleWarning" style="display:none;"></div>
 
-<!-- Guided start. Lives on <body> so the veil covers the whole shell and the
-     bubble can't be clipped by the sidebar's overflow; positioned in JS. -->
-<div class="wt-veil no-print" id="wtVeil"></div>
-<div class="wt-bubble no-print" id="wtBubble" role="dialog" aria-live="polite" aria-label="Guided workout finder">
-  <p class="wt-step" id="wtStep"></p>
-  <h4 id="wtTitle"></h4>
-  <p id="wtBody"></p>
-  <div class="wt-choices" id="wtChoices" style="display:none;"></div>
-  <p class="wt-count" id="wtCount"></p>
-  <div class="wt-actions" id="wtActions"></div>
-</div>
 
 <!-- Quick guide. Lives on <body> as position:fixed so it can never be clipped
      by the sidebar; positioned by JS next to the Guide button. -->
@@ -3067,6 +3066,11 @@
     maxHrInput: document.getElementById('maxHrInput'),
     weightInput: document.getElementById('weightInput'),
     menuRider: document.querySelector('.menu-rider'),
+    findModal: document.getElementById('findModal'),
+    findDur: document.getElementById('findDur'),
+    findZone: document.getElementById('findZone'),
+    findSpice: document.getElementById('findSpice'),
+    findApply: document.getElementById('findApply'),
     keypadOverlay: document.getElementById('keypadOverlay'),
     kpLabel: document.getElementById('kpLabel'),
     kpValue: document.getElementById('kpValue'),
@@ -3088,14 +3092,6 @@
     spiceFilter: document.getElementById('spiceFilter'),
     shapeFilter: document.getElementById('shapeFilter'),
     shapeAny: document.getElementById('shapeAny'),
-    wtVeil: document.getElementById('wtVeil'),
-    wtBubble: document.getElementById('wtBubble'),
-    wtStep: document.getElementById('wtStep'),
-    wtTitle: document.getElementById('wtTitle'),
-    wtBody: document.getElementById('wtBody'),
-    wtChoices: document.getElementById('wtChoices'),
-    wtCount: document.getElementById('wtCount'),
-    wtActions: document.getElementById('wtActions'),
     durVal: document.getElementById('durVal'),
     zoneVal: document.getElementById('zoneVal'),
     spiceVal: document.getElementById('spiceVal'),
@@ -3522,8 +3518,6 @@
       g.classList.toggle('filter-off', testsOnly);
       g.title = testsOnly ? 'Not applied while Fitness test is selected' : '';
     });
-
-    wtSync();   // no-op unless the guided start is open
   }
 
   // The readout is also the clear control: "Any" while nothing is picked, the
@@ -3613,6 +3607,96 @@
     filters[key] = (filters[key] === value) ? null : value;
     renderFilters();
     renderWorkoutCards();
+  }
+
+  // ---- find a workout (quick-pick modal) ----
+  // Big-button chooser for the three questions a rider can answer up front:
+  // duration, effort (zone) and intensity (spice). Each is optional; the count
+  // updates live and Show applies them to the list. Rows are data-driven from
+  // the library so they never drift from the sliders. (Replaced the guided
+  // walkthrough.)
+  var findSel = {duration:null, zone:null, spice:null};
+  function findVal(key, s){ return s === '' ? null : (key === 'zone' ? s : +s); }
+  function findProbe(){
+    return {duration:findSel.duration, zone:findSel.zone, spice:findSel.spice,
+            shape:null, search:'', starredOnly:false};
+  }
+  function findOptHtml(val, label, colorDot){
+    var dot = colorDot ? '<span class="find-dot" style="background:' + colorDot + '"></span>' : '';
+    return '<button type="button" class="find-opt" data-val="' + (val === null ? '' : val) + '">' + dot + label + '</button>';
+  }
+  function buildFindRows(){
+    if(!filterOpts || !els.findDur) return;
+    els.findDur.innerHTML = findOptHtml(null, 'Any') +
+      filterOpts.durations.map(function(d){ return findOptHtml(d, d + '<i>min</i>'); }).join('');
+    els.findZone.innerHTML = findOptHtml(null, 'Any') +
+      filterOpts.zones.filter(function(z){ return z !== 'test'; }).map(function(z){
+        return findOptHtml(z, ZONES[z].label, ZONES[z].hex);
+      }).join('');
+    var spice = findOptHtml(null, 'Any');
+    for(var n = 1; n <= 5; n++){
+      spice += '<button type="button" class="find-opt find-spice" data-val="' + n + '">' +
+               chilliSvg(CHILLI_HEAT[n - 1]) + '<i>' + n + '</i></button>';
+    }
+    els.findSpice.innerHTML = spice;
+    markFindRow(els.findDur, 'duration');
+    markFindRow(els.findZone, 'zone');
+    markFindRow(els.findSpice, 'spice');
+  }
+  function markFindRow(host, key){
+    [].forEach.call(host.querySelectorAll('.find-opt'), function(b){
+      b.classList.toggle('on', findVal(key, b.getAttribute('data-val')) === findSel[key]);
+    });
+  }
+  function updateFindCount(){
+    if(!els.findApply) return;
+    var n = countMatching(findProbe());
+    els.findApply.disabled = n === 0;
+    els.findApply.textContent = n === 0 ? 'No workouts match' : ('Show ' + n + ' workout' + (n === 1 ? '' : 's'));
+  }
+  function openFindModal(){
+    if(!els.findModal) return;
+    findSel.duration = filters.duration;
+    findSel.zone = filters.zone === 'test' ? null : filters.zone;   // tests aren't an "effort"
+    findSel.spice = filters.spice;
+    buildFindRows();
+    updateFindCount();
+    els.findModal.hidden = false;
+    void els.findModal.offsetHeight;   // reflow so the open transition runs
+    els.findModal.classList.add('open');
+  }
+  function closeFindModal(){
+    if(!els.findModal) return;
+    els.findModal.classList.remove('open');
+    var m = els.findModal;
+    setTimeout(function(){ if(!m.classList.contains('open')) m.hidden = true; }, 220);
+  }
+  function applyFind(){
+    // A fresh query: the three picks are the whole of it, so shape/search/star
+    // stand down (the sidebar sliders are still there to fine-tune afterwards).
+    filters.duration = findSel.duration;
+    filters.zone = findSel.zone;
+    filters.spice = findSel.spice;
+    filters.shape = null; filters.search = ''; filters.starredOnly = false;
+    if(els.searchBox) els.searchBox.value = '';
+    renderFilters(); renderWorkoutCards();
+    if(typeof updateStarFilterUI === 'function') updateStarFilterUI();
+    closeFindModal();
+    if(mqMobile.matches) setMobileTab('workouts');
+  }
+  if(els.findModal){
+    [[els.findDur, 'duration'], [els.findZone, 'zone'], [els.findSpice, 'spice']].forEach(function(pair){
+      pair[0].addEventListener('click', function(e){
+        var b = e.target.closest('.find-opt'); if(!b) return;
+        var val = findVal(pair[1], b.getAttribute('data-val'));
+        findSel[pair[1]] = (findSel[pair[1]] === val) ? null : val;   // re-tap deselects to Any
+        markFindRow(pair[0], pair[1]);
+        updateFindCount();
+      });
+    });
+    els.findApply.addEventListener('click', applyFind);
+    [].forEach.call(els.findModal.querySelectorAll('[data-findclose]'), function(x){ x.addEventListener('click', closeFindModal); });
+    document.addEventListener('keydown', function(e){ if(!els.findModal.hidden && e.key === 'Escape') closeFindModal(); });
   }
 
   // Asking for the tests is an explicit "show me the tests": there are only
@@ -4336,23 +4420,10 @@
   }
 
   // ============================================================
-  // GUIDED START
-  // Three questions a newcomer can actually answer, each lighting one filter
-  // while the rest of the page dims. Shape is deliberately not among them —
-  // it asks about interval structure, which is the last thing a beginner has a
-  // view on, and it's still there to fine-tune with afterwards.
+  // FIND A WORKOUT (entry card)
+  // The start card opens the quick-pick modal; openFindModal / buildFindRows
+  // live in the filtering module. The old guided walkthrough was retired.
   // ============================================================
-  var STEPS = [
-    {el:'gTime', key:'duration', title:'Workout Duration',
-     body:'Pick the slot that fits today.'},
-    {el:'gZone', key:'zone', title:'What kind of effort?',
-     body:'Lower numbers for an aerobic workout, higher for anaerobic. If unsure, you can never go wrong with a Z2 Endurance workout.'},
-    {el:'gSpice', key:'spice', title:'How hard should it feel?',
-     body:'Heat within that zone. Pick one here, or slide it yourself.',
-     // "Spice 3" means nothing cold; easy/medium/hard does.
-     choices:[['Easy',1],['Medium',2],['Hard',4]]}
-  ];
-  var wtIdx = -1;
 
   // The entry card sits first in the list. Once the rider has started
   // filtering they've answered the question it was asking, so it steps back to
@@ -4365,9 +4436,9 @@
     b.className = 'start-card' + (touched ? ' compact' : '');
     b.innerHTML = '<span class="sc-icon">🚴</span>' +
       '<span class="sc-txt"><b>' +
-      (touched ? 'Guide me instead' : 'Let’s find you a workout') +
+      (touched ? 'Find another workout' : 'Let’s find you a workout') +
       '</b></span><span class="sc-go">›</span>';
-    b.addEventListener('click', startWalkthrough);
+    b.addEventListener('click', openFindModal);
     return b;
   }
 
@@ -4382,127 +4453,6 @@
   }
   els.resetFilters.addEventListener('click', clearAllFilters);
 
-  // Starts from a clean slate: the guide walks through the choices, so leaving
-  // earlier picks in place would mean step 1 opens on an answer already given.
-  function startWalkthrough(){
-    clearAllFilters();
-    wtIdx = -1;
-    document.body.classList.add('wt-on');
-    wtNextStep();
-  }
-
-  function wtNextStep(){
-    if(wtIdx >= 0 && wtIdx < STEPS.length) wtUnlight(STEPS[wtIdx].el);
-    wtIdx++;
-    if(wtIdx >= STEPS.length){ wtFinish(); return; }
-    var s = STEPS[wtIdx];
-    wtLight(s.el);
-    wtShowBubble(s.el, (wtIdx + 1) + ' OF ' + STEPS.length, s.title, s.body,
-      '<button class="wt-btn primary" id="wtNext" type="button">Skip this</button>' +
-      '<button class="wt-btn ghost" id="wtQuit" type="button">Exit</button>', s.choices);
-    wtRefreshButton();
-    document.getElementById('wtNext').addEventListener('click', wtNextStep);
-    document.getElementById('wtQuit').addEventListener('click', endWalkthrough);
-  }
-
-  // A guided flow must never hand back an empty list. If the picks have boxed
-  // the rider in, drop the least important one until something matches and say
-  // plainly which was let go.
-  var WT_RELAX = [['shape','shape'],['spice','spice level'],['zone','zone']];
-  function wtRelaxIfEmpty(){
-    var dropped = [];
-    for(var i = 0; i < WT_RELAX.length && !anyMatch(filters); i++){
-      var k = WT_RELAX[i][0];
-      if(filters[k] === null) continue;
-      filters[k] = null;
-      dropped.push(WT_RELAX[i][1]);
-    }
-    if(dropped.length) render();
-    return dropped;
-  }
-
-  function wtFinish(){
-    var dropped = wtRelaxIfEmpty();
-    wtShowBubble('gSpice', 'DONE', 'That’s it',
-      dropped.length
-        ? 'Those picks left nothing, so I widened the ' + dropped.join(' and ') + '. Here’s what fits.'
-        : 'Your filters are set. Everything below matches what you asked for.',
-      '<button class="wt-btn primary" id="wtDone" type="button">Sweet, show me the workouts</button>');
-    document.getElementById('wtDone').addEventListener('click', endWalkthrough);
-  }
-
-  function wtUpdateCount(){
-    if(!document.body.classList.contains('wt-on')) return;
-    var n = countMatching(filters);
-    els.wtCount.classList.toggle('none', n === 0);
-    els.wtCount.innerHTML = n === 0
-      ? 'Nothing matches yet — that combination is empty'
-      : '<b>' + n + '</b> workout' + (n === 1 ? '' : 's') + ' match so far';
-  }
-
-  // Picking never advances on its own. A rider can mis-click, slide past the
-  // one they wanted, or change their mind — the step only moves when they say
-  // so. All a pick does is turn "Skip this" into "Next".
-  function wtRefreshButton(){
-    var b = document.getElementById('wtNext');
-    if(!b || wtIdx < 0 || wtIdx >= STEPS.length) return;
-    b.textContent = filters[STEPS[wtIdx].key] !== null ? 'Next' : 'Skip this';
-  }
-  function wtPaintChoices(){
-    [].forEach.call(els.wtChoices.querySelectorAll('button'), function(b){
-      b.classList.toggle('on', +b.getAttribute('data-v') === filters.spice);
-    });
-  }
-  // Called from renderFilters, so the card follows the slider and vice versa.
-  function wtSync(){
-    if(!document.body.classList.contains('wt-on')) return;
-    wtUpdateCount();
-    wtRefreshButton();
-    wtPaintChoices();
-  }
-
-  function wtLight(id){ document.getElementById(id).classList.add('wt-lit'); }
-  function wtUnlight(id){ document.getElementById(id).classList.remove('wt-lit'); }
-
-  function wtShowBubble(anchorId, step, title, body, actionsHtml, choices){
-    els.wtStep.textContent = step;
-    els.wtTitle.textContent = title;
-    els.wtBody.textContent = body;
-    if(choices){
-      els.wtChoices.innerHTML = choices.map(function(c){
-        var heat = '';
-        for(var i = 0; i < c[1]; i++) heat += chilliSvg(CHILLI_HEAT[c[1] - 1]);
-        return '<button type="button" data-v="' + c[1] + '">' + c[0] +
-               '<span class="ch-heat">' + heat + '</span></button>';
-      }).join('');
-      els.wtChoices.style.display = '';
-      [].forEach.call(els.wtChoices.querySelectorAll('button'), function(btn){
-        btn.addEventListener('click', function(){
-          filters.spice = +btn.getAttribute('data-v');
-          render();                 // sliders, labels, availability and the list
-        });
-      });
-      wtPaintChoices();
-    } else {
-      els.wtChoices.innerHTML = '';
-      els.wtChoices.style.display = 'none';
-    }
-    els.wtActions.innerHTML = actionsHtml;
-    wtUpdateCount();                // primed, so the bubble doesn't resize later
-    var r = document.getElementById(anchorId).getBoundingClientRect();
-    els.wtBubble.style.left = Math.round(r.right + 20) + 'px';
-    var top = Math.round(r.top - 6);
-    top = Math.max(12, Math.min(window.innerHeight - els.wtBubble.offsetHeight - 12, top));
-    els.wtBubble.style.top = top + 'px';
-    els.wtBubble.style.setProperty('--arrow', Math.max(14, Math.round(r.top + 18 - top)) + 'px');
-  }
-
-  function endWalkthrough(){
-    STEPS.forEach(function(s){ wtUnlight(s.el); });
-    document.body.classList.remove('wt-on');
-    wtIdx = -1;
-  }
-  els.wtVeil.addEventListener('click', endWalkthrough);
 
   // The reference table shows the standard Coggan seven, which is what Strava
   // reports against. The library's own categories differ in two deliberate
@@ -4885,13 +4835,6 @@
   document.addEventListener('keydown', function(e){
     if(liveState.active || typingInField()) return;
     if(e.metaKey || e.ctrlKey || e.altKey) return;
-
-    // The guided start owns the keyboard while it's up: Escape leaves it, and
-    // the list shortcuts would move things the veil is hiding.
-    if(document.body.classList.contains('wt-on')){
-      if(e.key === 'Escape'){ e.preventDefault(); endWalkthrough(); }
-      return;
-    }
 
     if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
       if(!visibleKeys.length) return;
