@@ -169,10 +169,9 @@
   .app-shell{
     --head-h:52px;
     display:grid;
-    grid-template-columns:var(--side-w, 272px) minmax(340px, 430px) 1fr;
+    grid-template-columns:272px minmax(340px, 430px) 1fr;
     height:100vh;overflow:hidden;
   }
-  .app-shell.rail{--side-w:58px;}
 
   /* One ground colour throughout; separation comes from a single hairline,
      not a hairline plus a background change. */
@@ -206,14 +205,20 @@
   .hamburger:hover,.hamburger[aria-expanded="true"]{filter:brightness(1.14);}
   .hamburger:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
   .hamburger:active{transform:scale(.94);}
-  /* Menu: theme, guide, zones and the rider numbers. Opens under the head. */
+  /* Menu: profile-forward. Three sections — Your numbers, Devices, About —
+     each with a small caption. Opens under the head as a card. */
   .side-menu{
-    flex:none;margin:0 12px 4px;padding:6px;background:var(--bg-elev);
-    border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;gap:2px;
+    flex:none;margin:0 12px 4px;padding:12px;background:var(--bg-elev);
+    border:1px solid var(--border);border-radius:12px;display:flex;flex-direction:column;gap:16px;
     box-shadow:0 18px 40px -20px rgba(0,0,0,0.7);
   }
   /* [hidden] alone can't beat the display:flex above, so hide it explicitly. */
   .side-menu[hidden]{display:none;}
+  .menu-sec{display:flex;flex-direction:column;gap:8px;min-width:0;}
+  .menu-sec-h{
+    margin:0;font-size:10px;color:var(--text-faint);text-transform:uppercase;
+    letter-spacing:0.09em;font-weight:650;padding:0 2px;
+  }
   .menu-item{
     display:flex;align-items:center;gap:10px;width:100%;padding:9px 10px;border-radius:8px;
     background:none;border:0;color:var(--text-dim);font-size:13px;font-weight:600;cursor:pointer;
@@ -225,9 +230,17 @@
   :root[data-theme="light"] #themeToggle .ico-sun{display:block;}
   :root[data-theme="light"] #themeToggle .ico-moon{display:none;}
   .menu-sep{height:1px;background:var(--border-soft);margin:5px 4px;}
+  /* About: theme, guide and zones demoted to a compact row of icon buttons,
+     set off from the sections above by a hairline. */
+  .menu-about{flex-direction:row;gap:4px;padding-top:12px;border-top:1px solid var(--border-soft);}
+  .menu-about .menu-item{
+    flex:1 1 0;flex-direction:column;gap:5px;padding:9px 4px;justify-content:center;
+    font-size:11px;color:var(--text-faint);letter-spacing:0.01em;
+  }
+  .menu-about .menu-item span{font-weight:600;}
   /* Rider numbers: FTP, Max HR and Weight side by side, each a column with its
      title above the input so all three fit the menu width. */
-  .menu-rider{display:flex;gap:8px;padding:4px 6px 2px;}
+  .menu-rider{display:flex;gap:8px;padding:0;}
   .menu-rider .ftp-chip{
     flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:4px;padding:0;
   }
@@ -253,17 +266,22 @@
     font-size:11px;color:var(--text-faint);text-transform:uppercase;
     letter-spacing:0.09em;font-weight:650;white-space:nowrap;
   }
-  .rail-toggle{
-    background:transparent;border:1px solid var(--border);color:var(--text-dim);
-    width:28px;height:28px;border-radius:8px;cursor:pointer;flex:none;
-    display:flex;align-items:center;justify-content:center;padding:0;
-  }
-  .rail-toggle:hover{background:var(--bg-card-hover);color:var(--text);}
-  .app-shell.rail .rail-toggle svg{transform:rotate(180deg);}
-
   .side-scroll{flex:1 1 auto;overflow-y:auto;padding:14px 16px 18px;display:flex;flex-direction:column;gap:16px;}
   .side-group{display:flex;flex-direction:column;gap:7px;min-width:0;}
-  .rail-dots{display:none;gap:9px;justify-content:center;padding:0 0 13px;}
+
+  /* Connection indicator in the sidebar head: a status dot beside each of
+     trainer, heart rate and Strava. Reuses the .device-dot states (grey off,
+     green on, orange Strava). Click opens the Menu. Relocates into the
+     workouts header on mobile. */
+  .conn-status{
+    display:flex;align-items:center;gap:8px;height:28px;padding:0 8px;flex:none;
+    background:var(--bg-card);border:1px solid var(--border);border-radius:8px;
+    color:var(--text-faint);cursor:pointer;
+  }
+  .conn-status:hover{background:var(--bg-card-hover);color:var(--text-dim);border-color:var(--accent);}
+  .conn-item{display:flex;align-items:center;gap:4px;}
+  .conn-item svg{display:block;}
+  .conn-status .device-dot{width:6px;height:6px;}
 
   /* Sidebar foot: the two views — Calendar and Charts. */
   .side-foot{flex:none;padding:10px 14px 12px;border-top:1px solid var(--border-soft);display:flex;gap:6px;}
@@ -273,11 +291,6 @@
     border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;
   }
   .foot-btn:hover,.foot-btn.on{background:var(--bg-card-hover);color:var(--text);border-color:var(--accent);}
-  .app-shell.rail .side-foot{padding:10px 0 12px;border-top:none;flex-direction:column;align-items:center;}
-  .app-shell.rail .foot-btn{flex:none;}
-  .app-shell.rail .side-menu{display:none;}
-  .app-shell.rail .foot-btn{width:32px;padding:0;}
-  .app-shell.rail .foot-label{display:none;}
 
   .guide-pop{
     position:fixed;z-index:70;width:min(600px, calc(100vw - 24px));max-height:calc(100vh - 24px);overflow-y:auto;
@@ -302,12 +315,6 @@
     font-family:var(--mono);font-size:11px;line-height:1.5;
   }
   @media (max-width:700px){ .guide-cols{grid-template-columns:1fr;} }
-
-  /* Collapsed: icons and connection dots only. */
-  .app-shell.rail .side-scroll,
-  .app-shell.rail .side-title{display:none;}
-  .app-shell.rail .rail-dots{display:flex;flex-direction:column;align-items:center;}
-  .app-shell.rail .side-head{justify-content:center;padding:13px 0 11px;}
 
   /* List and detail are columns of the same surface: head fixed, body scrolls. */
   .list-pane,.detail-pane{
@@ -378,8 +385,10 @@
   .plan-note{font-size:12.5px;color:var(--text-dim);margin:0 0 18px;}
   .detail-graph{margin-bottom:22px;}
 
+  /* Tablet band: keep the full sidebar (no collapse now) and narrow the list a
+     little so the workout detail column stays usable. */
   @media (max-width:1280px){
-    .app-shell{grid-template-columns:var(--side-w, 58px) minmax(300px, 380px) 1fr;}
+    .app-shell{grid-template-columns:272px minmax(280px, 340px) 1fr;}
   }
   /* Below this the third column stops being usable. Rather than stack all three
      (which buried the list under the workout detail), we lead with the sidebar's
@@ -407,10 +416,13 @@
        header / back-arrow stay pinned. */
     .list-pane,.detail-pane{overflow:hidden;}
 
-    /* Menu is a bottom sheet: the device group + #sideMenu relocate into it, and
-       #sideMenu is forced open here (its hamburger toggle isn't shown on mobile). */
+    /* Menu is a bottom sheet: the whole #sideMenu block relocates into it and
+       is forced open here (its hamburger toggle isn't shown on mobile). The
+       card chrome is dropped so the sections sit flat in the sheet. */
     #menuSheetBody{display:flex;flex-direction:column;gap:16px;}
-    #menuSheetBody #sideMenu,#menuSheetBody #sideMenu[hidden]{display:flex;}
+    #menuSheetBody #sideMenu,#menuSheetBody #sideMenu[hidden]{
+      display:flex;margin:0;padding:0;background:none;border:0;box-shadow:none;gap:20px;
+    }
 
     /* Workouts tab: the search/sort header sticks over the list; the filter
        sliders live in the bottom sheet, reached via the Filters button. */
@@ -754,6 +766,8 @@
 
   .list-actions{display:flex;align-items:center;gap:6px;margin-left:auto;flex:none;}
   .list-actions .icon-btn{width:30px;height:30px;border-radius:8px;}
+  /* On mobile the connection indicator relocates here, into the header. */
+  .list-actions .conn-status{height:30px;}
 
   /* Collapsed to nothing until the magnifier is pressed. */
   .search-box{
@@ -1128,9 +1142,9 @@
   .device-tile[disabled]{opacity:0.6;cursor:progress;}
   .device-tile.on{color:var(--text);border-color:var(--ok-line);}
   .device-icon{width:18px;height:18px;flex:none;display:block;}
-  /* Nothing attached: the glyph sits centred with the status dot beside it. */
-  .device-tile.idle{justify-content:center;}
-  .device-tile.idle .device-name{display:none;}
+  /* Nothing attached: the glyph and the device type ("Trainer" / "Heart rate")
+     so an unconnected tile reads as a labelled action, not a bare icon. */
+  .device-tile.idle .device-name{display:inline;color:var(--text-faint);}
   .device-tile .device-name,.device-tile .device-alt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .device-tile .device-alt{display:none;color:var(--warn);}
   .device-tile.on:hover .device-name{display:none;}
@@ -2040,6 +2054,11 @@
   .col-right .tr-card:not(.wk-card){flex:1 1 auto;display:flex;flex-direction:column;}
   .col-right .tr-card:not(.wk-card) .tr-canvas{flex:1;min-height:230px;}
   .wk-card .wk-canvas{width:100%;}
+  /* Left column: Fitness/Fatigue keeps its size; Form grows so its bottom lines
+     up with Power Records on the right. */
+  .col-left .tr-card:first-child{flex:none;}
+  .col-left .tr-card:last-child{flex:1 1 auto;display:flex;flex-direction:column;}
+  .col-left .tr-card:last-child .tr-canvas{flex:1;min-height:180px;}
   @media (max-width:620px){
     /* The charts window goes full-screen on a phone (was a centered card that
        overflowed the viewport, cutting off Close). */
@@ -2059,6 +2078,8 @@
     .trends-cols{flex-direction:column;}
     .col-right{width:auto;}
     .col-right .tr-card:not(.wk-card) .tr-canvas{height:300px;flex:none;}
+    /* Stacked on a phone, so Form takes a fixed height rather than growing. */
+    .col-left .tr-card:last-child .tr-canvas{height:260px;flex:none;min-height:0;}
   }
   .tr-card-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:10px;flex-wrap:wrap;}
   .tr-card-head h3{margin:0;font-size:14px;font-weight:700;color:var(--text-strong);}
@@ -2149,30 +2170,31 @@
           <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </button>
-      <button class="rail-toggle" id="railToggle" title="Collapse menu (left arrow)" aria-label="Collapse menu">
-        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
-          <path d="M14.5 5.5L8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+      <!-- Connections at a glance: a status dot beside each of trainer, heart
+           rate and Strava. Click opens the Menu to connect / manage. Relocates
+           into the workouts header on mobile (the sidebar is hidden there). -->
+      <button class="conn-status" id="connStatus" type="button" title="Connections" aria-label="Connections - open menu">
+        <span class="conn-item">
+          <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><circle cx="6" cy="16.5" r="3.1" fill="none" stroke="currentColor" stroke-width="1.7"/><circle cx="18" cy="16.5" r="3.1" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M6 16.5l3.6-7h5.2l3.2 7M12.2 16.5l2.6-7" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="device-dot" id="connTrainerDot"></span>
+        </span>
+        <span class="conn-item">
+          <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 20S3.6 15 3.6 9.3A4.3 4.3 0 0112 7.1a4.3 4.3 0 018.4 2.2C20.4 15 12 20 12 20z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+          <span class="device-dot" id="connHrDot"></span>
+        </span>
+        <span class="conn-item">
+          <svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M11 3l-5.4 10.4h3.1L11 8.9l2.3 4.5h3.1z" fill="currentColor"/><path d="M13.9 13.4l-1.4 2.7-1.4-2.7H8.4l4.1 7.6 4.1-7.6z" fill="currentColor" opacity=".55"/></svg>
+          <span class="device-dot" id="connStravaDot"></span>
+        </span>
       </button>
     </div>
 
-    <!-- Menu: theme, guide, zones, and the rider numbers — the set-and-forget
-         controls, tucked out of the way of the filters. -->
+    <!-- The menu: your numbers first (they drive every target), then the devices
+         you connect before a ride, then the App utilities. Relocates whole into
+         the Menu bottom sheet on mobile. -->
     <div class="side-menu" id="sideMenu" hidden>
-      <button class="menu-item" id="themeToggle" title="Switch theme" aria-label="Switch between dark and light mode">
-        <svg class="ico-moon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>
-        <svg class="ico-sun" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
-        <span class="ico-theme-label">Theme</span>
-      </button>
-      <button class="menu-item guide-btn" id="guideBtn" aria-label="Quick guide" aria-describedby="guidePop">
-        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2.9-1.2 1.7v.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="17" r="1.1" fill="currentColor"/></svg>
-        <span>Guide</span>
-      </button>
-      <button class="menu-item" id="ftpHelp" type="button" aria-label="Show power and heart-rate zone reference">
-        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="3.5" y="13" width="4.6" height="7.5" rx="1.3" fill="currentColor"/><rect x="9.7" y="8.5" width="4.6" height="12" rx="1.3" fill="currentColor"/><rect x="15.9" y="4" width="4.6" height="16.5" rx="1.3" fill="currentColor"/></svg>
-        <span>Zones</span>
-      </button>
-      <div class="menu-sep"></div>
+      <section class="menu-sec">
+        <h3 class="menu-sec-h">Your numbers</h3>
       <div class="menu-rider">
         <div class="ftp-chip">
           <label for="ftpInput">FTP</label>
@@ -2206,13 +2228,10 @@
         </div>
       </div>
       <div class="menu-wkg" id="menuWkg" hidden></div>
-    </div>
+      </section>
 
-    <div class="side-scroll">
-      <!-- Devices and FTP together: the things set once, before a ride. -->
-      <div class="side-group" id="deviceGroup">
-        <!-- One button per device: "Connect trainer" until attached, then the
-             device name (hover: Disconnect). -->
+      <section class="menu-sec">
+        <h3 class="menu-sec-h">Connections</h3>
         <div class="device-row">
           <button class="device-tile idle" id="trainerBtn" type="button" title="Connect trainer" aria-label="Connect trainer">
             <span class="device-dot" id="trainerDot"></span>
@@ -2221,7 +2240,7 @@
               <circle cx="18" cy="16.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
               <path d="M6 16.5l3.6-7h5.2l3.2 7M9.6 9.5h-2M12.2 16.5l2.6-7M13.4 6.3l1.6-.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span class="device-name" id="trainerLabel"></span>
+            <span class="device-name" id="trainerLabel">Trainer</span>
             <span class="device-alt">Disconnect</span>
           </button>
           <button class="device-tile idle" id="hrBtn" type="button" title="Connect HR monitor" aria-label="Connect HR monitor">
@@ -2230,15 +2249,13 @@
               <path d="M12 20.4S3.6 15.2 3.6 9.3A4.3 4.3 0 0112 7.1a4.3 4.3 0 018.4 2.2c0 5.9-8.4 11.1-8.4 11.1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
               <path d="M6.2 12.4h2.9l1.4-2.6 1.9 4.6 1.6-3.2 1 1.2h2.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <span class="device-name" id="hrLabel"></span>
+            <span class="device-name" id="hrLabel">Heart rate</span>
             <span class="device-alt">Disconnect</span>
           </button>
         </div>
-        <!-- Strava: the official Connect with Strava button until connected,
-             then a compact chip with the athlete's name. -->
         <button class="device-tile strava-tile" id="stravaBtn" type="button" title="Log in with Strava">
           <span class="device-dot strava-dot-off"></span>
-          <span class="device-name">Log in</span>
+          <span class="device-name">Log in with</span>
           <svg class="strava-wordmark" viewBox="135 15 87 17.5" role="img" aria-label="Strava"><path fill-rule="evenodd" clip-rule="evenodd" d="M180.749 31.8195L180.748 31.8188H185.357L188.188 26.1268L191.019 31.8188H196.618L188.187 15.5403L180.184 30.9945L177.111 26.5078C179.008 25.5928 180.191 24.0081 180.191 21.7318V21.687C180.191 20.0803 179.7 18.9197 178.763 17.9822C177.669 16.8887 175.906 16.1968 173.139 16.1968H165.506V31.8195H170.728V27.3558H171.844L174.79 31.8195H180.749ZM212.954 15.5403L204.524 31.8188H210.124L212.955 26.1268L215.786 31.8188H221.385L212.954 15.5403ZM200.576 32.4593L209.006 16.1808H203.406L200.575 21.8729L197.744 16.1808H192.144L200.576 32.4593ZM172.982 23.6287C174.232 23.6287 174.991 23.0708 174.991 22.1112V22.0663C174.991 21.0621 174.21 20.5711 173.005 20.5711H170.728V23.6287H172.982ZM154.337 20.6158H149.74V16.1968H164.157V20.6158H159.56V31.8195H154.337V20.6158ZM137.015 26.1507L134.225 29.4761C136.211 31.2172 139.068 32.1097 142.237 32.1097C146.433 32.1097 149.133 30.101 149.133 26.82V26.7756C149.133 23.6287 146.455 22.468 142.46 21.7318C140.808 21.419 140.384 21.1515 140.384 20.7273V20.6827C140.384 20.3033 140.742 20.0355 141.523 20.0355C142.973 20.0355 144.737 20.5042 146.209 21.5754L148.754 18.0493C146.946 16.6209 144.714 15.9065 141.701 15.9065C137.394 15.9065 135.073 18.2055 135.073 21.1737V21.2185C135.073 24.5214 138.153 25.526 141.656 26.2398C143.33 26.5747 143.821 26.82 143.821 27.2665V27.3113C143.821 27.7352 143.42 27.9805 142.482 27.9805C140.652 27.9805 138.711 27.4452 137.015 26.1507Z" fill="#FC4C02"/></svg>
         </button>
         <div class="device-chip strava-chip" id="stravaChip" style="display:none;">
@@ -2246,7 +2263,26 @@
           <span id="stravaLabel">Strava</span>
           <button class="device-btn" id="stravaDisconnectBtn" type="button">Disconnect</button>
         </div>
-      </div>
+      </section>
+
+      <section class="menu-sec menu-about">
+        <button class="menu-item" id="themeToggle" title="Switch theme" aria-label="Switch between dark and light mode">
+          <svg class="ico-moon" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/></svg>
+          <svg class="ico-sun" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M5.3 18.7l1.8-1.8M16.9 7.1l1.8-1.8" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+          <span class="ico-theme-label">Theme</span>
+        </button>
+        <button class="menu-item guide-btn" id="guideBtn" aria-label="Quick guide" aria-describedby="guidePop">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M9.6 9.4a2.5 2.5 0 1 1 3.6 2.2c-.8.4-1.2.9-1.2 1.7v.4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="17" r="1.1" fill="currentColor"/></svg>
+          <span>Guide</span>
+        </button>
+        <button class="menu-item" id="ftpHelp" type="button" aria-label="Show power and heart-rate zone reference">
+          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><rect x="3.5" y="13" width="4.6" height="7.5" rx="1.3" fill="currentColor"/><rect x="9.7" y="8.5" width="4.6" height="12" rx="1.3" fill="currentColor"/><rect x="15.9" y="4" width="4.6" height="16.5" rx="1.3" fill="currentColor"/></svg>
+          <span>Zones</span>
+        </button>
+      </section>
+    </div>
+
+    <div class="side-scroll">
 
       <!-- Mobile only: collapses the filter sliders so the workout list sits
            right under the devices instead of below a wall of controls. -->
@@ -2283,10 +2319,6 @@
       <button class="reset-btn" id="resetFilters" type="button">Reset Filters</button>
     </div>
 
-    <div class="rail-dots" id="railDots" aria-hidden="true">
-      <span class="device-dot" id="railTrainerDot" title="Trainer"></span>
-      <span class="device-dot" id="railHrDot" title="Heart rate"></span>
-    </div>
     <!-- The two views on your training: the calendar and the charts. -->
     <div class="side-foot">
       <button class="foot-btn" id="logBtn" type="button" aria-label="Open the ride log">
@@ -2490,7 +2522,6 @@
     <div>
       <h4>Keys</h4>
       <table class="guide-keys">
-        <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>collapse / open this panel</td></tr>
         <tr><td><kbd>↑</kbd> <kbd>↓</kbd></td><td>move through the list</td></tr>
         <tr><td><kbd>Enter</kbd></td><td>start the selected workout</td></tr>
         <tr><td><kbd>Space</kbd></td><td>pause · resume now</td></tr>
@@ -2939,7 +2970,6 @@
     filtersFab: document.getElementById('filtersFab'),
     filtersFabBadge: document.getElementById('filtersFabBadge'),
     sidebar: document.getElementById('sidebar'),
-    railToggle: document.getElementById('railToggle'),
     menuBtn: document.getElementById('menuBtn'),
     sideMenu: document.getElementById('sideMenu'),
     trendsBtn: document.getElementById('trendsBtn'),
@@ -2956,8 +2986,10 @@
     detailBack: document.getElementById('detailBack'),
     filtersToggle: document.getElementById('filtersToggle'),
     listFilters: document.getElementById('listFilters'),
-    railTrainerDot: document.getElementById('railTrainerDot'),
-    railHrDot: document.getElementById('railHrDot'),
+    connStatus: document.getElementById('connStatus'),
+    connTrainerDot: document.getElementById('connTrainerDot'),
+    connHrDot: document.getElementById('connHrDot'),
+    connStravaDot: document.getElementById('connStravaDot'),
     searchBtn: document.getElementById('searchBtn'),
     sortBtn: document.getElementById('sortBtn'),
     sortMenu: document.getElementById('sortMenu'),
@@ -3794,6 +3826,19 @@
   });
   if(els.filtersFab) els.filtersFab.addEventListener('click', function(){ openSheet(els.filterSheet); });
 
+  // The header connection indicator is a shortcut into the Menu: the menu sheet
+  // on mobile, the hamburger dropdown (via its button) on desktop.
+  if(els.connStatus) els.connStatus.addEventListener('click', function(e){
+    e.stopPropagation();
+    if(mqMobile.matches){
+      var open = document.querySelector('.sheet.open');
+      if(open) closeSheet(open);
+      if(!open || open !== els.menuSheet) openSheet(els.menuSheet);
+    } else if(els.menuBtn){
+      els.menuBtn.click();
+    }
+  });
+
   document.addEventListener('keydown', function(e){
     if(e.key !== 'Escape') return;
     var open = document.querySelector('.sheet.open');
@@ -3839,23 +3884,34 @@
   }
   syncFilterLocation();
 
-  // Same relocation for the Menu: the device group and the #sideMenu block move
-  // into the Menu sheet on mobile, and back to their sidebar homes on desktop.
-  var deviceGroupEl = document.getElementById('deviceGroup');
+  // Same relocation for the Menu: the whole #sideMenu block (Your numbers /
+  // Devices / About) moves into the Menu sheet on mobile, and back to its
+  // sidebar home on desktop.
   var sideMenuEl = els.sideMenu;
-  var deviceHome = deviceGroupEl ? {p: deviceGroupEl.parentNode, n: deviceGroupEl.nextElementSibling} : null;
   var sideMenuHome = sideMenuEl ? {p: sideMenuEl.parentNode, n: sideMenuEl.nextElementSibling} : null;
   function syncMenuLocation(){
-    if(!els.menuSheetBody || !deviceGroupEl || !sideMenuEl) return;
+    if(!els.menuSheetBody || !sideMenuEl) return;
     if(mqMobile.matches){
-      if(deviceGroupEl.parentNode !== els.menuSheetBody) els.menuSheetBody.appendChild(deviceGroupEl);
       if(sideMenuEl.parentNode !== els.menuSheetBody) els.menuSheetBody.appendChild(sideMenuEl);
     } else {
-      if(deviceHome && deviceGroupEl.parentNode !== deviceHome.p) deviceHome.p.insertBefore(deviceGroupEl, deviceHome.n);
       if(sideMenuHome && sideMenuEl.parentNode !== sideMenuHome.p) sideMenuHome.p.insertBefore(sideMenuEl, sideMenuHome.n);
     }
   }
   syncMenuLocation();
+
+  // The connection indicator lives in the sidebar head on desktop/tablet; on
+  // mobile the sidebar is hidden, so it relocates into the workouts header.
+  var connEl = els.connStatus;
+  var connHome = connEl ? {p: connEl.parentNode, n: connEl.nextElementSibling} : null;
+  function syncConnLocation(){
+    if(!connEl) return;
+    if(mqMobile.matches){
+      if(els.listActions && connEl.parentNode !== els.listActions) els.listActions.appendChild(connEl);
+    } else {
+      if(connHome && connEl.parentNode !== connHome.p) connHome.p.insertBefore(connEl, connHome.n);
+    }
+  }
+  syncConnLocation();
 
   // Returning to a wide viewport puts the filters back in the sidebar and drops
   // any open sheet, so desktop is clean.
@@ -3863,6 +3919,7 @@
     if(!e.matches){ closeDetailMobile(); var s = document.querySelector('.sheet.open'); if(s) closeSheet(s); }
     syncFilterLocation();
     syncMenuLocation();
+    syncConnLocation();
   };
   if(mqMobile.addEventListener) mqMobile.addEventListener('change', mqHandler);
   else if(mqMobile.addListener) mqMobile.addListener(mqHandler);
@@ -4179,7 +4236,6 @@
   // Starts from a clean slate: the guide walks through the choices, so leaving
   // earlier picks in place would mean step 1 opens on an answer already given.
   function startWalkthrough(){
-    if(railCollapsed()) setRail(false);   // nothing to light while it's a rail
     clearAllFilters();
     wtIdx = -1;
     document.body.classList.add('wt-on');
@@ -4472,16 +4528,6 @@
     }, 120);
   });
 
-  // ---- sidebar ----
-  var RAIL_KEY = 'ftpPlan_rail_v1';
-  function setRail(collapsed){
-    els.appShell.classList.toggle('rail', collapsed);
-    els.railToggle.title = collapsed ? 'Open menu (→)' : 'Collapse menu (←)';
-    try{ localStorage.setItem(RAIL_KEY, collapsed ? '1' : '0'); }catch(e){}
-  }
-  function railCollapsed(){ return els.appShell.classList.contains('rail'); }
-  els.railToggle.addEventListener('click', function(){ setRail(!railCollapsed()); });
-
   // ---- hamburger menu (theme / guide / zones / rider numbers) ----
   function setMenu(open){
     els.sideMenu.hidden = !open;
@@ -4556,12 +4602,17 @@
     pop.style.top = Math.round(top) + 'px';
   }
   function hideZonePop(){ els.zonePop.classList.remove('open'); }
-  els.ftpHelp.addEventListener('mouseenter', placeZonePop);
-  els.ftpHelp.addEventListener('focus', placeZonePop);
-  els.ftpHelp.addEventListener('mouseleave', hideZonePop);
-  els.ftpHelp.addEventListener('blur', hideZonePop);
-  els.zonePop.addEventListener('mouseenter', function(){ els.zonePop.classList.add('open'); });
-  els.zonePop.addEventListener('mouseleave', hideZonePop);
+  // Click to open / close (was hover). stopPropagation keeps the menu open
+  // behind it; an outside click or Escape dismisses.
+  els.ftpHelp.addEventListener('click', function(e){
+    e.stopPropagation();
+    if(els.zonePop.classList.contains('open')) hideZonePop(); else placeZonePop();
+  });
+  document.addEventListener('click', function(e){
+    if(els.zonePop.classList.contains('open') && !els.zonePop.contains(e.target) && !els.ftpHelp.contains(e.target)) hideZonePop();
+  });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') hideZonePop(); });
+  window.addEventListener('resize', function(){ if(els.zonePop.classList.contains('open')) placeZonePop(); });
 
   function renderSortMenu(){
     els.sortMenu.innerHTML = '';
@@ -4616,14 +4667,11 @@
     if(e.metaKey || e.ctrlKey || e.altKey) return;
 
     // The guided start owns the keyboard while it's up: Escape leaves it, and
-    // the list/rail shortcuts would move things the veil is hiding.
+    // the list shortcuts would move things the veil is hiding.
     if(document.body.classList.contains('wt-on')){
       if(e.key === 'Escape'){ e.preventDefault(); endWalkthrough(); }
       return;
     }
-
-    if(e.key === 'ArrowLeft'){ e.preventDefault(); setRail(true); return; }
-    if(e.key === 'ArrowRight'){ e.preventDefault(); setRail(false); return; }
 
     if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
       if(!visibleKeys.length) return;
@@ -5023,7 +5071,7 @@
     if(state.busy)         return {label:'Connecting…', dotClass:'retry', busy:true};
     if(state.reconnecting) return {label:'Reconnecting…', dotClass:'retry'};
     if(state.looking)      return {label:'Looking…', dotClass:'retry', looking:true};
-    return {label:'', dotClass:'', idle:true};   // the glyph says it; the tooltip spells it
+    return {label:fallback, dotClass:'', idle:true};   // the device type labels the tile
   }
 
   function paintDeviceButton(btn, dot, label, s, longName){
@@ -5040,15 +5088,17 @@
 
   function updateDeviceUI(){
     var t = deviceChipState(trainerState, 'Trainer');
-    var h = deviceChipState(hrState, 'HR');
+    var h = deviceChipState(hrState, 'Heart rate');
     paintDeviceButton(els.trainerBtn, els.trainerDot, els.trainerLabel, t, 'Trainer');
     paintDeviceButton(els.hrBtn, els.hrDot, els.hrLabel, h, 'HR monitor');
-    // Mirrored onto the collapsed rail so connection state is visible
-    // without opening the menu.
-    els.railTrainerDot.className = 'device-dot ' + t.dotClass;
-    els.railHrDot.className = 'device-dot ' + h.dotClass;
-    els.railTrainerDot.title = 'Trainer: ' + (trainerState.connected ? 'connected' : trainerState.reconnecting ? 'reconnecting' : 'not connected');
-    els.railHrDot.title = 'Heart rate: ' + (hrState.connected ? 'connected' : hrState.reconnecting ? 'reconnecting' : 'not connected');
+    // The header connection indicator mirrors the trainer + HR dots (Strava's
+    // dot is painted by updateStravaUI), in every viewport.
+    if(els.connTrainerDot) els.connTrainerDot.className = 'device-dot ' + t.dotClass;
+    if(els.connHrDot) els.connHrDot.className = 'device-dot ' + h.dotClass;
+    if(els.connStatus){
+      els.connStatus.title = 'Trainer ' + (trainerState.connected ? 'on' : 'off') +
+        ', heart rate ' + (hrState.connected ? 'on' : 'off') + ' - open menu';
+    }
     refreshWaitingOverlay();
   }
 
@@ -5207,6 +5257,8 @@
     els.stravaChip.style.display = on ? '' : 'none';
     els.stravaLabel.textContent = on ? ('Strava · ' + ((strava.athlete && strava.athlete.name) || 'connected').trim()) : 'Strava';
     els.summaryStravaBtn.style.display = on ? '' : 'none';
+    // Header connection indicator: light the Strava dot when logged in.
+    if(els.connStravaDot) els.connStravaDot.className = 'device-dot' + (on ? ' strava' : '');
   }
 
   els.stravaBtn.addEventListener('click', stravaConnect);
@@ -8491,7 +8543,7 @@
   // Form (TSB = Fitness − Fatigue) on its own zero-centred axis, coloured by
   // sign: green above the line (fresh), red below (fatigued).
   function drawForm(cv, series, rangeDays){
-    var W = cv.clientWidth || 720, H = 168, ctx = setupCanvas(cv, W, H);
+    var W = cv.clientWidth || 720, H = cv.clientHeight || 168, ctx = setupCanvas(cv, W, H);
     var padL = 34, padR = 62, padT = 12, padB = 24;
     var ok = cssVar('--ok') || '#5FE39A', danger = cssVar('--c-anaerobic') || '#FF5D75';
     var faint = cssVar('--text-faint') || '#7E869E', grid = gridColor();
@@ -9178,10 +9230,8 @@
   applyTheme(currentTheme());
 
   // ---- quick guide ----
-  // Hover shows it, click pins it (for touch and for reading at leisure),
-  // Esc or clicking elsewhere closes. Positioned beside the button and
-  // clamped to the viewport so it never opens off-screen.
-  var guidePinned = false, guideHideTimer = null;
+  // Click toggles it open (was hover); Esc or clicking elsewhere closes.
+  // Positioned beside the button and clamped so it never opens off-screen.
   function placeGuide(){
     var pop = els.guidePop, r = els.guideBtn.getBoundingClientRect();
     pop.style.display = 'block';
@@ -9196,27 +9246,20 @@
     pop.style.left = left + 'px';
     pop.style.top = top + 'px';
   }
-  function showGuide(){ clearTimeout(guideHideTimer); placeGuide(); els.guideBtn.classList.add('on'); }
-  function hideGuide(){ if(guidePinned) return; els.guidePop.style.display = 'none'; els.guideBtn.classList.remove('on'); }
-  function scheduleHide(){ clearTimeout(guideHideTimer); guideHideTimer = setTimeout(hideGuide, 160); }
-  els.guideBtn.addEventListener('mouseenter', showGuide);
-  els.guideBtn.addEventListener('mouseleave', scheduleHide);
-  els.guidePop.addEventListener('mouseenter', function(){ clearTimeout(guideHideTimer); });
-  els.guidePop.addEventListener('mouseleave', scheduleHide);
-  els.guideBtn.addEventListener('focus', showGuide);
-  els.guideBtn.addEventListener('blur', scheduleHide);
+  function guideOpen(){ return els.guidePop.style.display !== 'none' && els.guidePop.style.display !== ''; }
+  function showGuide(){ placeGuide(); els.guideBtn.classList.add('on'); }
+  function hideGuide(){ els.guidePop.style.display = 'none'; els.guideBtn.classList.remove('on'); }
   els.guideBtn.addEventListener('click', function(e){
     e.stopPropagation();
-    guidePinned = !guidePinned;
-    if(guidePinned) showGuide(); else hideGuide();
+    if(guideOpen()) hideGuide(); else showGuide();
   });
   document.addEventListener('click', function(e){
-    if(guidePinned && !els.guidePop.contains(e.target)){ guidePinned = false; hideGuide(); }
+    if(guideOpen() && !els.guidePop.contains(e.target) && !els.guideBtn.contains(e.target)) hideGuide();
   });
   document.addEventListener('keydown', function(e){
-    if(e.key === 'Escape' && els.guidePop.style.display !== 'none'){ guidePinned = false; hideGuide(); }
+    if(e.key === 'Escape' && guideOpen()) hideGuide();
   });
-  window.addEventListener('resize', function(){ if(els.guidePop.style.display !== 'none') placeGuide(); });
+  window.addEventListener('resize', function(){ if(guideOpen()) placeGuide(); });
 
   // Spacebar: pause while riding, "Resume now" while paused. Ignored when
   // typing in a field, and the default is swallowed so a focused button
@@ -9248,7 +9291,6 @@
   // Coming back from Strava's consent page (or reopening after a ride that
   // never got closed): finish the sign-in, then bring the parked ride back.
   stravaHandleCallback().then(function(){ restoreStashedRide(); });
-  try{ if(localStorage.getItem(RAIL_KEY) === '1') setRail(true); }catch(e){}
   renderSortMenu();
   updateStarFilterUI();
   els.ftpInput.value = hasFtp() ? ftp : '';
