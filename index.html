@@ -12,23 +12,24 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <style>
   :root{
-    /* Minimal-mono dark: warm near-black, ink is near-white, one flat accent
-       (the ink itself, so primary controls read as inverted pills). No glows. */
-    --bg:#141310;
-    --bg-elev:#242118;
-    --bg-card:#1E1C16;
-    --bg-card-hover:#26241C;
-    --border:#2D2A22;
-    --border-soft:#242019;
-    --text:#EDEBE3;
-    --text-dim:#B7B4A8;
-    --text-faint:#8B8879;
-    --accent:#EDEBE3;
-    --accent-soft:rgba(237,235,227,0.10);
-    --accent-hover:rgba(237,235,227,0.18);
+    /* Minimal-mono dark (Graphite): a neutral grey-black ground with no colour
+       cast; ink is near-white, one flat accent (the ink itself, so primary
+       controls read as inverted pills). No glows. */
+    --bg:#121213;
+    --bg-elev:#202022;
+    --bg-card:#1B1B1D;
+    --bg-card-hover:#26262A;
+    --border:#2C2C2F;
+    --border-soft:#232326;
+    --text:#ECECEA;
+    --text-dim:#A9A9A6;
+    --text-faint:#85857F;
+    --accent:#ECECEA;
+    --accent-soft:rgba(236,236,234,0.10);
+    --accent-hover:rgba(236,236,234,0.18);
     --lav:#B79CFF;
-    --text-strong:#F6F5F1;
-    --on-accent:#141310;
+    --text-strong:#F6F6F5;
+    --on-accent:#121213;
     --ok:#5CCDC1;
     --ok-soft:rgba(92,205,193,0.10);
     --ok-line:rgba(92,205,193,0.5);
@@ -36,15 +37,15 @@
     --warn-soft:rgba(231,184,78,0.10);
     --warn-line:rgba(231,184,78,0.35);
     --star:#E7B84E;
-    --ink-rgb:237,235,227;      /* overlay lines drawn over cards and charts */
+    --ink-rgb:236,236,234;      /* overlay lines drawn over cards and charts */
     /* Live chart traces: yellow power, grey cadence (red HR is inline). */
     --line-power:#F5C518;
-    --line-cadence:#C9C6BC;
-    --scrim:rgba(10,9,7,0.6);   /* behind the player and summary */
-    --divider:#2D2A22;
-    --chip-text:#141310;        /* text on a zone-coloured chip */
-    --bg-list:#181611;          /* workout list pane and its cards */
-    --bg-card-list:#1E1C16;
+    --line-cadence:#C6C6C0;
+    --scrim:rgba(8,8,9,0.6);    /* behind the player and summary */
+    --divider:#2C2C2F;
+    --chip-text:#121213;        /* text on a zone-coloured chip */
+    --bg-list:#161618;          /* workout list pane and its cards */
+    --bg-card-list:#1B1B1D;
     --glow-bg:rgba(0,0,0,0);    /* glows removed for the minimal look */
     --glow-bg2:rgba(0,0,0,0);
     --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas, monospace;
@@ -59,10 +60,11 @@
     --c-anaerobic:#FF5D75;
     --c-test:#FF5D75;
     /* Soft zone tints for block fills (profiles, chips) — quiet structure that
-       lets the saturated --c-* read as dots/accents on top. */
-    --zt-recovery:#3A3C40; --zt-endurance:#2B3A57; --zt-tempo:#224743;
-    --zt-sweetspot:#574524; --zt-threshold:#5B3323; --zt-vo2:#4D355D; --zt-anaerobic:#5F2B30;
-    --seg-any:#3A372C;          /* the neutral "Any" segment on the filter sliders */
+       lets the saturated --c-* read as dots/accents on top. Keyed to each zone
+       hue, so they hold on the neutral ground. */
+    --zt-recovery:#37393D; --zt-endurance:#2A3956; --zt-tempo:#214642;
+    --zt-sweetspot:#514226; --zt-threshold:#563222; --zt-vo2:#4A3459; --zt-anaerobic:#5B2A2F;
+    --seg-any:#38383C;          /* the neutral "Any" segment on the filter sliders */
     /* The glow that points the way off an unavailable segment. `rest` is only
        used by the reduced-motion fallback. */
     --lure-off:rgba(255,255,255,0); --lure-halo:rgba(255,255,255,0.55); --lure-rest:rgba(255,255,255,0.28);
@@ -378,8 +380,41 @@
   .list-pane,.detail-pane{
     display:flex;flex-direction:column;overflow:hidden;min-width:0;background:var(--bg);
   }
-  .list-pane{border-right:1px solid var(--border-soft);background:var(--bg-list);}
+  .list-pane{border-right:1px solid var(--border-soft);background:var(--bg-list);position:relative;}
   .list-pane .pane-head{background:var(--bg-list);}
+
+  /* Zero-state: a blurred veil over the whole list pane with one central call,
+     shown until the rider searches or filters. Same blur recipe as the modals. */
+  .list-zero{
+    position:absolute;inset:0;z-index:9;display:flex;align-items:center;justify-content:center;padding:24px;
+    background:color-mix(in srgb, var(--bg-list) 55%, transparent);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
+  }
+  .list-zero[hidden]{display:none;}
+  .list-pane.zero-on .filters-fab{display:none;}
+  .lz-card{display:flex;flex-direction:column;align-items:center;text-align:center;gap:13px;max-width:300px;}
+  .lz-icon{color:var(--text-dim);display:flex;}
+  .lz-sub{font-size:13px;color:var(--text-dim);line-height:1.5;margin-bottom:2px;}
+  .lz-sub b{color:var(--text-strong);font-weight:700;font-family:var(--mono);}
+  .lz-go{
+    background:var(--accent);color:var(--on-accent);border:1px solid var(--accent);
+    border-radius:13px;padding:14px 30px;font:inherit;font-size:15.5px;font-weight:650;cursor:pointer;
+    box-shadow:0 12px 32px -10px rgba(0,0,0,.45);transition:box-shadow .15s ease,transform .08s ease;
+  }
+  .lz-go:hover{box-shadow:0 16px 40px -8px rgba(0,0,0,.55);}
+  .lz-go:active{transform:scale(.98);}
+  .lz-browse{
+    background:none;border:0;color:var(--text-faint);font:inherit;font-size:13px;cursor:pointer;padding:4px 6px;
+    text-decoration:underline;text-underline-offset:2px;
+  }
+  .lz-browse:hover{color:var(--text-dim);}
+
+  /* Modal-flies-into-the-Filters-button close (mobile): kill the panel's own
+     transition so the JS animation drives it, and drop the scrim quickly. */
+  .find-modal.to-filters .find-scrim{opacity:0;transition:opacity .18s ease;}
+  .find-modal.to-filters .find-panel{transition:none;}
+  @keyframes fabLand{0%{transform:scale(1);}42%{transform:scale(1.16);}100%{transform:scale(1);}}
+  .filters-fab.fab-land{animation:fabLand .45s ease;}
+  @media (prefers-reduced-motion:reduce){ .filters-fab.fab-land{animation:none;} }
   /* Wraps the header (+ mobile filter host) as one block; only sticky on mobile. */
   .list-top{flex:none;min-width:0;}
   .list-body{flex:1 1 auto;overflow-y:auto;padding:12px 14px 60px;}
@@ -402,9 +437,7 @@
      desktop grid keeps its 3 columns and the sidebar footer Cal/Charts. */
   .mtabs{display:none;}
   .filters-fab{display:none;}
-  .conn-bar{display:none;}
-  /* Device names only show in the mobile connection bar; the sidebar-head
-     indicator stays icon + dot. */
+  /* The sidebar-head connection indicator stays icon + dot (no names). */
   .conn-name{display:none;}
   .training-hub{display:flex;flex-direction:column;gap:12px;padding:16px 14px;}
   .hub-btn{
@@ -462,38 +495,17 @@
      above a fixed tab bar, chosen by #appShell[data-tab]. */
   @media (max-width:900px){
     /* Tab-bar height lives on body so the sheets (outside .app-shell) can read it too. */
-    body{overflow-x:clip;--mtab-h:calc(56px + env(safe-area-inset-bottom));--connbar-h:38px;}
+    body{overflow-x:clip;--mtab-h:calc(56px + env(safe-area-inset-bottom));}
     .app-shell{
       display:block;grid-template-columns:none;
       height:100vh;height:100dvh;overflow:hidden;
     }
-    /* Panes stop above BOTH the connection bar and the tab bar. */
+    /* Panes stop above the tab bar. */
     .sidebar,.list-pane,.detail-pane{
-      position:fixed;left:0;right:0;top:0;bottom:calc(var(--mtab-h) + var(--connbar-h));z-index:5;
+      position:fixed;left:0;right:0;top:0;bottom:var(--mtab-h);z-index:5;
       display:none;overflow-y:auto;-webkit-overflow-scrolling:touch;
       background:var(--bg);border:none;min-width:0;
     }
-
-    /* Connection bar: a labeled strip pinned directly above the tab buttons,
-       visible on every tab. The whole strip is the #connStatus button, so a tap
-       anywhere opens the Menu. Each cell shows glyph + name + status dot. */
-    .conn-bar{
-      display:block;position:fixed;left:0;right:0;bottom:var(--mtab-h);z-index:44;
-      height:var(--connbar-h);background:var(--bg-list);border-top:1px solid var(--border-soft);
-    }
-    #connBar .conn-status{
-      width:100%;height:100%;background:none;border:0;border-radius:0;padding:0;gap:0;
-      display:flex;align-items:stretch;color:var(--text-dim);
-    }
-    #connBar .conn-status:hover{background:none;}
-    /* Each indicator claims exactly one third of the bar, centred in its cell. */
-    #connBar .conn-item{flex:1 1 0;min-width:0;gap:6px;padding:0 6px;justify-content:center;}
-    #connBar .conn-item svg{width:15px;height:15px;flex:none;}
-    #connBar .conn-name{
-      display:inline;min-width:0;font-size:11.5px;font-weight:600;letter-spacing:-0.01em;
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    }
-    #connBar .conn-status .device-dot{width:6px;height:6px;flex:none;}
     #appShell[data-tab="workouts"] .list-pane{display:flex;}
     #appShell[data-tab="view"] .detail-pane{display:flex;}
     /* These two scroll via their inner body, not the pane, so the sticky
@@ -521,7 +533,7 @@
     /* Filters button, pinned bottom-right of the Workouts tab above the bar. */
     .filters-fab{
       display:flex;align-items:center;gap:7px;position:fixed;right:14px;
-      bottom:calc(var(--mtab-h) + var(--connbar-h) + 12px);z-index:46;padding:11px 16px;border-radius:999px;
+      bottom:calc(var(--mtab-h) + 12px);z-index:46;padding:11px 16px;border-radius:999px;
       background:var(--accent);color:var(--on-accent);border:0;cursor:pointer;
       font:inherit;font-size:13.5px;font-weight:650;box-shadow:0 6px 20px rgba(0,0,0,.22);
     }
@@ -556,7 +568,8 @@
     #filterSheetBody{display:flex;flex-direction:column;gap:16px;}
     #filterSheetBody .side-group-first{border-top:none;padding-top:0;}
 
-    /* Back-arrow + Start Workout share one sticky row at the top of the View tab. */
+    /* The View-tab top row is now just the back-to-list arrow; Start moved to
+       the floating pills at the bottom (thumb zone). */
     .detail-topbar{
       display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:6;
       background:var(--bg);border-bottom:1px solid var(--border-soft);padding:8px 14px;
@@ -567,10 +580,17 @@
     }
     .detail-back:hover{color:var(--text);}
     .detail-topbar #detailHead{margin-left:auto;padding:0;flex:none;}
-    .detail-topbar .start-btn{padding:10px 18px;}
+    .detail-topbar .start-btn{display:none;}
+
+    /* Floating action pills: Prev / Start / Next, only on the View tab, riding
+       just above the tab bar so Start is always in the thumb zone. */
+    #appShell[data-tab="view"] .view-nav{
+      display:flex;gap:8px;position:fixed;left:0;right:0;z-index:44;padding:0 14px;
+      bottom:calc(var(--mtab-h) + 14px);
+    }
     /* Tighter body gutters on a phone; the stats pill stays on ONE line and
-       scrolls sideways if it must, instead of wrapping to two rows. */
-    .detail-body{padding:16px 15px 80px;}
+       scrolls sideways if it must. Extra bottom room clears the pills. */
+    .detail-body{padding:16px 15px 94px;}
     .plan-stats{
       display:flex;flex-wrap:nowrap;overflow-x:auto;max-width:100%;
       -webkit-overflow-scrolling:touch;scrollbar-width:none;
@@ -591,8 +611,21 @@
       font:inherit;font-size:10.5px;font-weight:600;letter-spacing:0.02em;padding:6px 2px;
     }
     .mtab svg{width:23px;height:23px;}
-    .mtab.on{color:var(--text-strong);}
-    .mtab:active{background:var(--bg-card-hover);}
+    .mtab.on{color:var(--text-strong);font-weight:700;}
+    .mtab:active .mtab-ic{transform:scale(.92);}
+    /* Active tab: a soft ink capsule behind the icon (plus the ink icon + bold
+       label) so "you are here" is obvious at a glance. */
+    .mtab-ic{
+      position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none;
+      width:48px;height:28px;border-radius:15px;transition:background .16s ease,transform .1s ease;
+    }
+    .mtab.on .mtab-ic{background:rgba(var(--ink-rgb),0.16);}
+    /* Menu tab carries a loud red dot when a ride device isn't paired. */
+    .mtab-badge{
+      position:absolute;top:0;right:7px;width:9px;height:9px;border-radius:50%;
+      background:var(--c-anaerobic);border:2px solid var(--bg);box-sizing:content-box;
+    }
+    .mtab-badge[hidden]{display:none;}
 
     /* Keypad becomes a bottom sheet: full width, seated at the bottom, sliding
        up. Bigger keys for thumbs. */
@@ -847,9 +880,9 @@
   .find-seg .find-opt{flex:1 1 0;min-width:0;border:0;border-right:1px solid var(--border);border-radius:0;}
   .find-seg .find-opt:last-child{border-right:0;}
   .find-seg .find-opt:hover{background:var(--bg-card-hover);}
-  .find-spice{gap:3px;}
-  .find-spice .chilli{width:15px;height:15px;display:block;}
-  .find-spice i{color:var(--text-dim);font-size:12px;margin-left:0;}
+  .find-spice{gap:5px;}
+  .find-spice .chilli{width:15px;height:15px;display:block;flex:none;}
+  .find-spice i{color:var(--text-dim);font-size:13px;margin-left:0;}
   .find-spice.on i{color:var(--on-accent);}
   .find-apply{
     margin:8px 18px 18px;height:50px;border-radius:12px;flex:none;
@@ -858,6 +891,29 @@
   }
   .find-apply:hover{background:var(--accent-hover);}
   .find-apply:disabled{opacity:.55;cursor:default;background:var(--bg-card);color:var(--text-faint);border-color:var(--border);}
+
+  /* Mobile View-tab action pills (shown only on that tab via the mobile block
+     below). Floating row: Prev / Start / Next. */
+  .view-nav{display:none;}
+  .vn-btn{
+    height:46px;border-radius:23px;border:1px solid var(--border);background:var(--bg-card);
+    color:var(--text);font:inherit;font-size:14px;font-weight:600;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:4px;
+    box-shadow:0 8px 24px -8px rgba(0,0,0,.35),0 2px 6px rgba(0,0,0,.16);
+  }
+  .vn-side{flex:0 0 auto;padding:0 15px;}
+  .vn-side svg{opacity:.8;}
+  .vn-side:hover{border-color:var(--accent);color:var(--text-strong);}
+  .vn-start{flex:1 1 auto;background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-size:15px;font-weight:650;}
+  .vn-start:hover{background:var(--accent-hover);}
+  .vn-btn:active{transform:scale(.97);}
+  /* Disabled reads as flat and receded, not just faded, so an enabled Prev is
+     never mistaken for a dead one. */
+  .vn-btn:disabled{
+    color:var(--text-faint);border-color:var(--border-soft);background:var(--bg-list);
+    box-shadow:none;pointer-events:none;
+  }
+  .vn-btn:disabled svg{opacity:.5;}
 
   .icon-btn{
     background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);
@@ -1230,55 +1286,51 @@
   footer{text-align:center;padding:40px 20px;color:var(--text-faint);font-size:12.5px;}
 
 
-  /* ---------- DEVICE BAR ---------- */
-  /* Two tiles side by side. Each is one button: just the device's glyph
-     until something is attached (the tooltip carries the words), then the
-     glyph and the device name; hovering a connected tile swaps the name for
-     "Disconnect". */
-  .device-row{display:flex;gap:6px;}
-  .device-tile{
-    flex:1 1 0;min-width:0;display:flex;align-items:center;gap:6px;position:relative;
-    background:var(--bg-card);border:1px solid var(--border);color:var(--text-dim);
-    border-radius:10px;padding:7px 7px;font-size:11px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;letter-spacing:-0.01em;
+  /* ---------- CONNECTIONS ---------- */
+  /* Three stacked rows: identity (icon + type, or the device / athlete name
+     once connected) on the left, status-or-action on the right. Scanning down
+     the column reads every connection at a glance. */
+  .conn-list{display:flex;flex-direction:column;gap:6px;}
+  .conn-row{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;
+    background:var(--bg-card);border:1px solid var(--border);border-radius:10px;
+    padding:9px 12px;cursor:pointer;font-family:inherit;text-align:left;
   }
-  .device-tile:hover{background:var(--bg-card-hover);border-color:var(--accent);color:var(--text);}
-  .device-tile[disabled]{opacity:0.6;cursor:progress;}
-  .device-tile.on{color:var(--text);border-color:var(--ok-line);}
-  .device-icon{width:18px;height:18px;flex:none;display:block;}
-  /* Nothing attached: the glyph and the device type ("Trainer" / "Heart rate")
-     so an unconnected tile reads as a labelled action, not a bare icon. */
-  .device-tile.idle .device-name{display:inline;color:var(--text-faint);}
-  .device-tile .device-name,.device-tile .device-alt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .device-tile .device-alt{display:none;color:var(--warn);}
-  .device-tile.on:hover .device-name{display:none;}
-  .device-tile.on:hover .device-alt{display:inline;}
-  .device-tile.on:hover{border-color:var(--warn-line);}
+  .conn-row:hover{background:var(--bg-card-hover);border-color:var(--accent);}
+  .conn-row[disabled]{cursor:progress;}
+  .cr-left{display:flex;align-items:center;gap:9px;min-width:0;}
+  .cr-icon{width:18px;height:18px;flex:none;display:block;color:var(--text-dim);}
+  .conn-row.on .cr-icon{color:var(--text);}
+  .cr-strava-mark{color:#FC4C02;}
+  .cr-name{
+    font-size:12.5px;font-weight:600;color:var(--text);min-width:0;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  }
+  .conn-row.idle .cr-name{color:var(--text-dim);}
+  .cr-action{
+    flex:none;font-size:12px;font-weight:600;color:var(--text-faint);
+    white-space:nowrap;letter-spacing:-0.01em;
+  }
+  /* Not connected shouts (red); connect / disconnect / log stay quiet. */
+  .conn-row.idle .cr-action{color:var(--c-anaerobic);font-weight:700;}
+  .conn-row.busy .cr-action{color:var(--warn);}
+  .conn-strava:not(.on) .cr-action{color:#FC4C02;font-weight:650;}   /* "Log In" is the action, not an error */
 
-  .device-chip{
-    display:flex;align-items:center;gap:9px;background:var(--bg-card);border:1px solid var(--border);
-    border-radius:10px;padding:8px 10px 8px 12px;font-size:12.5px;color:var(--text-dim);
-  }
+  /* Status dots — used by the desktop sidebar-head indicator (#connStatus). */
   .device-dot{width:8px;height:8px;border-radius:50%;background:var(--text-faint);flex:none;}
   .device-dot.on{background:var(--ok);box-shadow:0 0 8px rgba(95,227,154,0.7);}
   @keyframes dotRetry{0%,100%{opacity:1;}50%{opacity:0.25;}}
   .device-dot.retry{background:var(--warn);box-shadow:0 0 8px rgba(242,184,74,0.6);animation:dotRetry 1s ease-in-out infinite;}
-  .device-btn{
-    background:var(--accent-soft);border:1px solid transparent;color:var(--accent);
-    padding:5px 10px;border-radius:7px;font-size:12px;cursor:pointer;font-weight:600;
-    margin-left:auto;flex:none;   /* right-aligned within the chip */
+  /* Not connected reads loud: a red X, not a mute grey dot. */
+  .device-dot.off{width:12px;height:12px;background:none;box-shadow:none;position:relative;}
+  .device-dot.off::before,.device-dot.off::after{
+    content:"";position:absolute;left:50%;top:50%;width:12px;height:2px;border-radius:1px;background:var(--c-anaerobic);
   }
-  .device-btn:hover{background:var(--accent-hover);}
-  .device-btn[disabled]{opacity:0.5;cursor:not-allowed;}
-
-  /* Strava: the official "Connect with Strava" button (brand asset, 48 px
-     tall at 1x) until connected, then a compact chip with the athlete's name. */
-  .strava-tile{width:100%;flex:none;}
-  .strava-tile .device-name{flex:none;}
-  .strava-wordmark{height:11px;width:auto;display:block;flex:none;margin-top:1px;}
-  .strava-tile:hover{border-color:#FC4C02;}
+  .device-dot.off::before{transform:translate(-50%,-50%) rotate(45deg);}
+  .device-dot.off::after{transform:translate(-50%,-50%) rotate(-45deg);}
   .device-dot.strava{background:#FC4C02;box-shadow:0 0 8px rgba(252,76,2,0.6);}
-  .strava-chip{color:var(--text);}
-  .strava-chip span:not(.device-dot){white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+  .strava-wordmark{height:11px;width:auto;display:block;flex:none;margin-top:1px;}
   .action-btn.strava-sync{background:#FC4C02;border-color:#FC4C02;color:#fff;justify-content:center;font-size:14px;padding:11px 14px;gap:8px;}
   .action-btn.strava-sync:hover{background:#e14400;}
   .action-btn.strava-sync[disabled]{opacity:0.6;cursor:progress;}
@@ -2323,36 +2375,38 @@
 
       <section class="menu-sec">
         <h3 class="menu-sec-h">Connections</h3>
-        <div class="device-row">
-          <button class="device-tile idle" id="trainerBtn" type="button" title="Connect trainer" aria-label="Connect trainer">
-            <span class="device-dot" id="trainerDot"></span>
-            <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="6" cy="16.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
-              <circle cx="18" cy="16.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
-              <path d="M6 16.5l3.6-7h5.2l3.2 7M9.6 9.5h-2M12.2 16.5l2.6-7M13.4 6.3l1.6-.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span class="device-name" id="trainerLabel">Trainer</span>
-            <span class="device-alt">Disconnect</span>
+        <!-- Three stacked rows: identity on the left (icon + type, or the device
+             name / athlete once connected), status-or-action on the right, so a
+             glance down the column reads every connection at once. -->
+        <div class="conn-list">
+          <button class="conn-row" id="trainerBtn" type="button">
+            <span class="cr-left">
+              <svg class="cr-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="6" cy="16.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                <circle cx="18" cy="16.5" r="3.6" fill="none" stroke="currentColor" stroke-width="1.7"/>
+                <path d="M6 16.5l3.6-7h5.2l3.2 7M9.6 9.5h-2M12.2 16.5l2.6-7M13.4 6.3l1.6-.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="cr-name" id="trainerLabel">Trainer</span>
+            </span>
+            <span class="cr-action" id="trainerAction">Not Connected</span>
           </button>
-          <button class="device-tile idle" id="hrBtn" type="button" title="Connect HR monitor" aria-label="Connect HR monitor">
-            <span class="device-dot" id="hrDot"></span>
-            <svg class="device-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M12 20.4S3.6 15.2 3.6 9.3A4.3 4.3 0 0112 7.1a4.3 4.3 0 018.4 2.2c0 5.9-8.4 11.1-8.4 11.1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
-              <path d="M6.2 12.4h2.9l1.4-2.6 1.9 4.6 1.6-3.2 1 1.2h2.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span class="device-name" id="hrLabel">Heart rate</span>
-            <span class="device-alt">Disconnect</span>
+          <button class="conn-row" id="hrBtn" type="button">
+            <span class="cr-left">
+              <svg class="cr-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 20.4S3.6 15.2 3.6 9.3A4.3 4.3 0 0112 7.1a4.3 4.3 0 018.4 2.2c0 5.9-8.4 11.1-8.4 11.1z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/>
+                <path d="M6.2 12.4h2.9l1.4-2.6 1.9 4.6 1.6-3.2 1 1.2h2.8" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              <span class="cr-name" id="hrLabel">Heart Rate</span>
+            </span>
+            <span class="cr-action" id="hrAction">Not Connected</span>
           </button>
-        </div>
-        <button class="device-tile strava-tile" id="stravaBtn" type="button" title="Log in with Strava">
-          <span class="device-dot strava-dot-off"></span>
-          <span class="device-name">Log in with</span>
-          <svg class="strava-wordmark" viewBox="135 15 87 17.5" role="img" aria-label="Strava"><path fill-rule="evenodd" clip-rule="evenodd" d="M180.749 31.8195L180.748 31.8188H185.357L188.188 26.1268L191.019 31.8188H196.618L188.187 15.5403L180.184 30.9945L177.111 26.5078C179.008 25.5928 180.191 24.0081 180.191 21.7318V21.687C180.191 20.0803 179.7 18.9197 178.763 17.9822C177.669 16.8887 175.906 16.1968 173.139 16.1968H165.506V31.8195H170.728V27.3558H171.844L174.79 31.8195H180.749ZM212.954 15.5403L204.524 31.8188H210.124L212.955 26.1268L215.786 31.8188H221.385L212.954 15.5403ZM200.576 32.4593L209.006 16.1808H203.406L200.575 21.8729L197.744 16.1808H192.144L200.576 32.4593ZM172.982 23.6287C174.232 23.6287 174.991 23.0708 174.991 22.1112V22.0663C174.991 21.0621 174.21 20.5711 173.005 20.5711H170.728V23.6287H172.982ZM154.337 20.6158H149.74V16.1968H164.157V20.6158H159.56V31.8195H154.337V20.6158ZM137.015 26.1507L134.225 29.4761C136.211 31.2172 139.068 32.1097 142.237 32.1097C146.433 32.1097 149.133 30.101 149.133 26.82V26.7756C149.133 23.6287 146.455 22.468 142.46 21.7318C140.808 21.419 140.384 21.1515 140.384 20.7273V20.6827C140.384 20.3033 140.742 20.0355 141.523 20.0355C142.973 20.0355 144.737 20.5042 146.209 21.5754L148.754 18.0493C146.946 16.6209 144.714 15.9065 141.701 15.9065C137.394 15.9065 135.073 18.2055 135.073 21.1737V21.2185C135.073 24.5214 138.153 25.526 141.656 26.2398C143.33 26.5747 143.821 26.82 143.821 27.2665V27.3113C143.821 27.7352 143.42 27.9805 142.482 27.9805C140.652 27.9805 138.711 27.4452 137.015 26.1507Z" fill="#FC4C02"/></svg>
-        </button>
-        <div class="device-chip strava-chip" id="stravaChip" style="display:none;">
-          <span class="device-dot strava" id="stravaDot"></span>
-          <span id="stravaLabel">Strava</span>
-          <button class="device-btn" id="stravaDisconnectBtn" type="button">Disconnect</button>
+          <button class="conn-row conn-strava" id="stravaBtn" type="button">
+            <span class="cr-left">
+              <svg class="cr-icon cr-strava-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" fill="#FC4C02"/></svg>
+              <span class="cr-name" id="stravaLabel">Strava</span>
+            </span>
+            <span class="cr-action" id="stravaAction">Log In</span>
+          </button>
         </div>
       </section>
 
@@ -2471,6 +2525,15 @@
       <span>Filters</span>
       <span class="fab-badge" id="filtersFabBadge" hidden></span>
     </button>
+    <!-- Zero-state: until the rider searches or filters, the full list sits
+         blurred behind a single call, so the library isn't a wall on open.
+         "Browse all" waves it off; Reset brings it back. -->
+    <div class="list-zero" id="listZero" hidden>
+      <div class="lz-card">
+        <button class="lz-go" id="listZeroGo" type="button">Quick Pick</button>
+        <button class="lz-browse" id="listZeroBrowse" type="button">or browse all</button>
+      </div>
+    </div>
   </main>
 
   <section class="detail-pane" id="detailPane" aria-live="polite">
@@ -2484,28 +2547,43 @@
       <div class="pane-head" id="detailHead"></div>
     </div>
     <div class="detail-body" id="detailBody"></div>
+    <!-- Mobile-only: floating action pills above the connection bar, so Start
+         is always in the thumb zone and you can flick prev/next through the
+         list without going back to it. Hidden on desktop. -->
+    <div class="view-nav" id="viewNav">
+      <button class="vn-btn vn-side" id="viewPrev" type="button" aria-label="Previous workout">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M14.5 5.5L8 12l6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Prev</span>
+      </button>
+      <button class="vn-btn vn-start" id="viewStart" type="button">&#9654; Start Workout</button>
+      <button class="vn-btn vn-side" id="viewNext" type="button" aria-label="Next workout">
+        <span>Next</span>
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M9.5 5.5L16 12l-6.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
   </section>
 
-  <!-- Mobile-only: a narrow connection-status bar above the tab buttons. The
-       #connStatus button relocates in here on mobile (from the sidebar head). -->
-  <div class="conn-bar" id="connBar" aria-hidden="false"></div>
-
-  <!-- Mobile-only bottom tab bar. Desktop keeps the 3-column layout. -->
+  <!-- Mobile-only bottom tab bar. Desktop keeps the 3-column layout.
+       (Connection status lives in the Menu's Connections section on mobile,
+       with a red dot on the Menu tab when a ride device isn't paired.) -->
   <nav class="mtabs" id="mTabs" aria-label="Sections">
     <button class="mtab" type="button" data-tab="workouts" aria-selected="true">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+      <span class="mtab-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></span>
       <span>Workouts</span>
     </button>
     <button class="mtab" type="button" data-tab="view">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18.5L8 8h2v5h4V8h2l5 10.5Z" fill="currentColor"/></svg>
+      <span class="mtab-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 18.5L8 8h2v5h4V8h2l5 10.5Z" fill="currentColor"/></svg></span>
       <span>View</span>
     </button>
     <button class="mtab" type="button" data-tab="training">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V11M9.3 19V6M14.7 19v-5M20 19V9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+      <span class="mtab-ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V11M9.3 19V6M14.7 19v-5M20 19V9" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg></span>
       <span>Training</span>
     </button>
     <button class="mtab" type="button" data-tab="menu">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span class="mtab-ic">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.3" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M5.5 20a6.5 6.5 0 0 1 13 0" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span class="mtab-badge" id="menuTabBadge" title="A device isn't connected" hidden></span>
+      </span>
       <span>Menu</span>
     </button>
   </nav>
@@ -3143,14 +3221,22 @@
     formPop: document.getElementById('formPop'),
     planPop: document.getElementById('planPop'),
     listPane: document.getElementById('listPane'),
+    listZero: document.getElementById('listZero'),
+    listZeroGo: document.getElementById('listZeroGo'),
+    listZeroBrowse: document.getElementById('listZeroBrowse'),
+    lzCount: document.getElementById('lzCount'),
     detailPane: document.getElementById('detailPane'),
     detailHead: document.getElementById('detailHead'),
     detailBody: document.getElementById('detailBody'),
     detailBack: document.getElementById('detailBack'),
+    viewNav: document.getElementById('viewNav'),
+    viewPrev: document.getElementById('viewPrev'),
+    viewStart: document.getElementById('viewStart'),
+    viewNext: document.getElementById('viewNext'),
+    menuTabBadge: document.getElementById('menuTabBadge'),
     filtersToggle: document.getElementById('filtersToggle'),
     listFilters: document.getElementById('listFilters'),
     connStatus: document.getElementById('connStatus'),
-    connBar: document.getElementById('connBar'),
     connTrainerDot: document.getElementById('connTrainerDot'),
     connHrDot: document.getElementById('connHrDot'),
     connStravaDot: document.getElementById('connStravaDot'),
@@ -3169,12 +3255,12 @@
     resultCount: document.getElementById('resultCount'),
     noResults: document.getElementById('noResults'),
     trainerBtn: document.getElementById('trainerBtn'),
+    trainerAction: document.getElementById('trainerAction'),
+    hrAction: document.getElementById('hrAction'),
     themeToggle: document.getElementById('themeToggle'),
-    stravaDot: document.getElementById('stravaDot'),
     stravaLabel: document.getElementById('stravaLabel'),
+    stravaAction: document.getElementById('stravaAction'),
     stravaBtn: document.getElementById('stravaBtn'),
-    stravaChip: document.getElementById('stravaChip'),
-    stravaDisconnectBtn: document.getElementById('stravaDisconnectBtn'),
     summaryStravaBtn: document.getElementById('summaryStravaBtn'),
     summaryStravaLink: document.getElementById('summaryStravaLink'),
     summaryStravaStatus: document.getElementById('summaryStravaStatus'),
@@ -3186,10 +3272,8 @@
     wdTrainerBtn: document.getElementById('wdTrainerBtn'),
     wdHrText: document.getElementById('wdHrText'),
     wdHrBtn: document.getElementById('wdHrBtn'),
-    trainerDot: document.getElementById('trainerDot'),
     trainerLabel: document.getElementById('trainerLabel'),
     hrBtn: document.getElementById('hrBtn'),
-    hrDot: document.getElementById('hrDot'),
     hrLabel: document.getElementById('hrLabel'),
     bleWarning: document.getElementById('bleWarning'),
     livePlayer: document.getElementById('livePlayer'),
@@ -3334,6 +3418,15 @@
     return out + '</span>';
   }
 
+  // "How hard should it feel" filters on three groups, not the exact 1-5 chilli
+  // rating (picking a 3 vs a 4 just reads as false precision). Cards still show
+  // the exact rating; only the filter groups. Easy = 1-2, Medium = 3-4, Hard = 5.
+  var SPICE_ORDER = ['easy', 'medium', 'hard'];
+  var SPICE_GROUPS = {easy:[1,2], medium:[3,4], hard:[5]};
+  var SPICE_LABEL = {easy:'Easy', medium:'Medium', hard:'Hard'};
+  var SPICE_HEAT = {easy:CHILLI_HEAT[0], medium:CHILLI_HEAT[2], hard:CHILLI_HEAT[4]};
+  function spiceGroupOf(n){ return n <= 2 ? 'easy' : (n <= 4 ? 'medium' : 'hard'); }
+
 
   // ---- filter sliders ----
   // A segmented single-pick slider. `segs` are the track colours (index 0 is
@@ -3476,10 +3569,10 @@
       return ZONE_SEG_LABEL[z] || '?';
     })));
 
-    // Spice — the app's own per-rating chilli heat ramp.
-    segSlider(els.spiceFilter, ['var(--seg-any)'].concat(CHILLI_HEAT),
-      function(v){ setFilter('spice', v === 0 ? null : v); });
-    segLabels(els.spiceSegLabels, ['Any', '1', '2', '3', '4', '5']);
+    // Spice — grouped Easy / Medium / Hard, each a heat swatch from the ramp.
+    segSlider(els.spiceFilter, ['var(--seg-any)', SPICE_HEAT.easy, SPICE_HEAT.medium, SPICE_HEAT.hard],
+      function(v){ setFilter('spice', v === 0 ? null : SPICE_ORDER[v - 1]); });
+    segLabels(els.spiceSegLabels, ['Any', 'Easy', 'Medium', 'Hard']);
 
     els.shapeFilter.innerHTML = shapes.map(function(k){
       return '<button type="button" class="shape-tile" data-shape="' + k + '">' +
@@ -3513,11 +3606,11 @@
     markSegLabel(els.zoneSegLabels, zi);
     setFilterVal(els.zoneVal, zi === 0 ? 'Any' : ZONES[o.zones[zi - 1]].label, zi === 0);
 
-    var si = filters.spice === null ? 0 : filters.spice;
+    var si = filters.spice === null ? 0 : (SPICE_ORDER.indexOf(filters.spice) + 1);
     els.spiceFilter.__sync(si);
     markSegLabel(els.spiceSegLabels, si);
-    setFilterVal(els.spiceVal, si === 0 ? 'Any' : chillies(si), si === 0);
-    els.spiceLabel.classList.toggle('hot', si === 5);
+    setFilterVal(els.spiceVal, si === 0 ? 'Any' : SPICE_LABEL[filters.spice], si === 0);
+    els.spiceLabel.classList.toggle('hot', filters.spice === 'hard');
 
     [].forEach.call(els.shapeFilter.querySelectorAll('[data-shape]'), function(b){
       b.classList.toggle('on', filters.shape === b.getAttribute('data-shape'));
@@ -3528,7 +3621,7 @@
     // reached rather than after.
     paintAvail(els.durFilter,   els.durSegLabels,   'duration', o.durations, di);
     paintAvail(els.zoneFilter,  els.zoneSegLabels,  'zone',     o.zones,     zi);
-    paintAvail(els.spiceFilter, els.spiceSegLabels, 'spice',    [1,2,3,4,5], si);
+    paintAvail(els.spiceFilter, els.spiceSegLabels, 'spice',    SPICE_ORDER, si);
     paintShapeAvail();
 
     // Time, Spice and Shape don't apply while the tests are selected (see
@@ -3639,7 +3732,7 @@
   // the library so they never drift from the sliders. (Replaced the guided
   // walkthrough.)
   var findSel = {duration:null, zone:null, spice:null};
-  function findVal(key, s){ return s === '' ? null : (key === 'zone' ? s : +s); }
+  function findVal(key, s){ return s === '' ? null : ((key === 'zone' || key === 'spice') ? s : +s); }
   function findProbe(){
     return {duration:findSel.duration, zone:findSel.zone, spice:findSel.spice,
             shape:null, search:'', starredOnly:false};
@@ -3656,12 +3749,10 @@
     els.findZone.innerHTML = filterOpts.zones.filter(function(z){ return z !== 'test'; }).map(function(z){
       return findOptHtml(z, ZONES[z].label, ZONES[z].hex);
     }).join('');
-    var spice = '';
-    for(var n = 1; n <= 5; n++){
-      spice += '<button type="button" class="find-opt find-spice" data-val="' + n + '">' +
-               chilliSvg(CHILLI_HEAT[n - 1]) + '<i>' + n + '</i></button>';
-    }
-    els.findSpice.innerHTML = spice;
+    els.findSpice.innerHTML = SPICE_ORDER.map(function(g){
+      return '<button type="button" class="find-opt find-spice" data-val="' + g + '">' +
+             chilliSvg(SPICE_HEAT[g]) + '<i>' + SPICE_LABEL[g] + '</i></button>';
+    }).join('');
     markFindRow(els.findDur, 'duration');
     markFindRow(els.findZone, 'zone');
     markFindRow(els.findSpice, 'spice');
@@ -3708,10 +3799,37 @@
     filters.spice = findSel.spice;
     filters.shape = null; filters.search = ''; filters.starredOnly = false;
     if(els.searchBox) els.searchBox.value = '';
-    renderFilters(); renderWorkoutCards();
-    if(typeof updateStarFilterUI === 'function') updateStarFilterUI();
-    closeFindModal();
+    browseAll = true;                        // engaged — the zero-state stands down
     if(mqMobile.matches) setMobileTab('workouts');
+    renderFilters(); renderWorkoutCards();   // reveals the (filtered) list + Filters FAB
+    if(typeof updateStarFilterUI === 'function') updateStarFilterUI();
+    animateFindClose();
+  }
+  // On mobile the modal flies into the Filters button, teaching where to refine;
+  // on desktop (no Filters button) it just fades closed. Falls back cleanly.
+  function animateFindClose(){
+    var panel = els.findModal && els.findModal.querySelector('.find-panel');
+    var reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    if(mqMobile.matches && els.filtersFab && panel && !reduce && panel.animate){
+      var fr = els.filtersFab.getBoundingClientRect();
+      if(fr.width){
+        var pr = panel.getBoundingClientRect();
+        var dx = (fr.left + fr.width / 2) - (pr.left + pr.width / 2);
+        var dy = (fr.top + fr.height / 2) - (pr.top + pr.height / 2);
+        els.findModal.classList.add('to-filters');
+        var anim = panel.animate(
+          [{transform:'none', opacity:1},
+           {transform:'translate(' + Math.round(dx) + 'px,' + Math.round(dy) + 'px) scale(0.1)', opacity:0}],
+          {duration:340, easing:'cubic-bezier(.4,0,.2,1)'});
+        anim.onfinish = anim.oncancel = function(){
+          els.findModal.classList.remove('open', 'to-filters');
+          els.findModal.hidden = true;
+          if(els.filtersFab){ els.filtersFab.classList.add('fab-land'); setTimeout(function(){ els.filtersFab.classList.remove('fab-land'); }, 480); }
+        };
+        return;
+      }
+    }
+    closeFindModal();
   }
   if(els.findModal){
     [[els.findDur, 'duration'], [els.findZone, 'zone'], [els.findSpice, 'spice']].forEach(function(pair){
@@ -3735,6 +3853,25 @@
     document.addEventListener('keydown', function(e){ if(!els.findModal.hidden && e.key === 'Escape') closeFindModal(); });
   }
 
+  // ---- list zero-state ----
+  // Until the rider searches or filters, the whole list sits blurred behind a
+  // single "Find a workout" call, so the library isn't a wall on open. Engaging
+  // (a pick, or "browse all") clears it for the session; Reset brings it back.
+  var browseAll = false;
+  function isZeroQuery(){
+    return filters.duration === null && filters.zone === null && filters.spice === null &&
+           filters.shape === null && !filters.starredOnly && !(filters.search && filters.search.trim());
+  }
+  function updateListZero(){
+    if(!els.listZero || !els.listPane) return;
+    var show = isZeroQuery() && !browseAll && WORKOUTS.length > 0;
+    els.listPane.classList.toggle('zero-on', show);
+    els.listZero.hidden = !show;
+    if(show && els.lzCount) els.lzCount.textContent = WORKOUTS.length;
+  }
+  if(els.listZeroGo) els.listZeroGo.addEventListener('click', openFindModal);
+  if(els.listZeroBrowse) els.listZeroBrowse.addEventListener('click', function(){ browseAll = true; updateListZero(); });
+
   // Asking for the tests is an explicit "show me the tests": there are only
   // two of them and they have fixed durations and structures, so leaving a
   // stale time/shape/spice filter in place would strand the rider on an empty
@@ -3746,7 +3883,7 @@
     if(!testsOnly){
       if(f.duration !== null && w.durationMin !== f.duration) return false;
       if(f.shape !== null && w.shape !== f.shape) return false;
-      if(f.spice !== null && w.spice !== f.spice) return false;
+      if(f.spice !== null && (!SPICE_GROUPS[f.spice] || SPICE_GROUPS[f.spice].indexOf(w.spice) < 0)) return false;
     }
     var q = (f.search || '').trim().toLowerCase();
     if(q && (w.name + ' ' + w.short).toLowerCase().indexOf(q) < 0) return false;
@@ -3757,6 +3894,11 @@
     var out = WORKOUTS.filter(function(w){ return passesFilters(w, filters); });
     var s = filters.sort;
     out.sort(function(a, b){
+      // Fitness tests are an all-out special case, not a workout for "today" —
+      // they always sink to the bottom, whatever the sort (unless the rider has
+      // asked for the test zone, where everything is a test so this is a no-op).
+      var ta = a.zone === 'test' ? 1 : 0, tb = b.zone === 'test' ? 1 : 0;
+      if(ta !== tb) return ta - tb;
       // Recommended rides carry their gold badge but sort in naturally with
       // everything else, so the badge stands out against plain neighbours
       // rather than forming a wall at the top of the list.
@@ -4053,27 +4195,64 @@
   // the detail back-arrow (and Esc) returns to Workouts. Training and Filters
   // are animated bottom sheets that pop up over the tabs instead of being panes.
   var MOBILE_TABS = {workouts:1, view:1};
-  function setMobileTab(name){
-    if(!MOBILE_TABS[name]) name = 'workouts';
-    els.appShell.setAttribute('data-tab', name);
-    if(els.mTabs) Array.prototype.forEach.call(els.mTabs.querySelectorAll('.mtab'), function(b){
+  function markActiveTab(name){
+    if(!els.mTabs) return;
+    Array.prototype.forEach.call(els.mTabs.querySelectorAll('.mtab'), function(b){
       var on = b.getAttribute('data-tab') === name;
       b.classList.toggle('on', on);
       b.setAttribute('aria-selected', on ? 'true' : 'false');
     });
   }
+  // The pill highlights whatever the rider is looking at: an open Training or
+  // Menu sheet, else the current pane (Workouts / View). A Filters sheet leaves
+  // the underlying pane highlighted.
+  function syncMTabHighlight(){
+    var open = document.querySelector('.sheet.open');
+    var name = open === els.trainingSheet ? 'training'
+             : open === els.menuSheet ? 'menu'
+             : (els.appShell.getAttribute('data-tab') || 'workouts');
+    markActiveTab(name);
+  }
+  function setMobileTab(name){
+    if(!MOBILE_TABS[name]) name = 'workouts';
+    els.appShell.setAttribute('data-tab', name);
+    markActiveTab(name);
+  }
   function openDetailMobile(){ if(mqMobile.matches) setMobileTab('view'); }
   function closeDetailMobile(){ if(mqMobile.matches) setMobileTab('workouts'); }
   if(els.detailBack) els.detailBack.addEventListener('click', closeDetailMobile);
 
+  // Mobile View-tab action pills: flick prev/next through the visible list
+  // (staying on the detail) and start the current workout. Reuses the same
+  // visibleKeys/selectWorkout path as the desktop arrow keys.
+  function viewNavGo(dir){
+    if(!visibleKeys.length) return;
+    var i = visibleKeys.indexOf(selectedKey);
+    i = i < 0 ? 0 : Math.max(0, Math.min(visibleKeys.length - 1, i + dir));
+    selectWorkout(visibleKeys[i], {scrollIntoView:true});
+  }
+  function updateViewNav(){
+    if(!els.viewPrev) return;
+    var i = visibleKeys.indexOf(selectedKey);
+    els.viewPrev.disabled = i <= 0;
+    els.viewNext.disabled = i < 0 || i >= visibleKeys.length - 1;
+    if(els.viewStart) els.viewStart.disabled = !selectedKey;
+  }
+  if(els.viewPrev) els.viewPrev.addEventListener('click', function(){ viewNavGo(-1); });
+  if(els.viewNext) els.viewNext.addEventListener('click', function(){ viewNavGo(1); });
+  if(els.viewStart) els.viewStart.addEventListener('click', function(){
+    if(selectedKey && typeof startWorkout === 'function') startWorkout(selectedKey);
+  });
+
   // ---- bottom sheets (Filters, Training) ----
-  function openSheet(sheet){ if(!sheet) return; sheet.hidden = false; void sheet.offsetHeight; sheet.classList.add('open'); }
+  function openSheet(sheet){ if(!sheet) return; sheet.hidden = false; void sheet.offsetHeight; sheet.classList.add('open'); syncMTabHighlight(); }
   function closeSheet(sheet){
     if(!sheet || !sheet.classList.contains('open')) return;
     sheet.classList.remove('open');
     var done = function(){ sheet.hidden = true; sheet.removeEventListener('transitionend', done); clearTimeout(t); };
     var t = setTimeout(done, 360);
     sheet.addEventListener('transitionend', done);
+    syncMTabHighlight();   // highlight reverts to the underlying pane as it closes
   }
   [els.filterSheet, els.trainingSheet, els.menuSheet].forEach(function(sheet){
     if(sheet) sheet.addEventListener('click', function(e){ if(e.target.closest('[data-close]')) closeSheet(sheet); });
@@ -4167,20 +4346,9 @@
   }
   syncMenuLocation();
 
-  // The connection indicator lives in the sidebar head on desktop/tablet; on
-  // mobile the sidebar is hidden, so it relocates into the narrow status bar
-  // that sits above the tab buttons (#connBar).
-  var connEl = els.connStatus;
-  var connHome = connEl ? {p: connEl.parentNode, n: connEl.nextElementSibling} : null;
-  function syncConnLocation(){
-    if(!connEl) return;
-    if(mqMobile.matches){
-      if(els.connBar && connEl.parentNode !== els.connBar) els.connBar.appendChild(connEl);
-    } else {
-      if(connHome && connEl.parentNode !== connHome.p) connHome.p.insertBefore(connEl, connHome.n);
-    }
-  }
-  syncConnLocation();
+  // The connection indicator lives in the sidebar head on desktop/tablet only;
+  // on mobile the sidebar is hidden, so it simply doesn't show — mobile reads
+  // device state from the Menu's Connections section + the Menu-tab red dot.
 
   // Returning to a wide viewport puts the filters back in the sidebar and drops
   // any open sheet, so desktop is clean.
@@ -4188,7 +4356,6 @@
     if(!e.matches){ closeDetailMobile(); var s = document.querySelector('.sheet.open'); if(s) closeSheet(s); }
     syncFilterLocation();
     syncMenuLocation();
-    syncConnLocation();
   };
   if(mqMobile.addEventListener) mqMobile.addEventListener('change', mqHandler);
   else if(mqMobile.addListener) mqMobile.addListener(mqHandler);
@@ -4297,6 +4464,7 @@
   function renderDetail(){
     segFocusRi = false;   // the DOM below is about to be replaced
     var wo = selectedKey ? byKey(selectedKey) : null;
+    updateViewNav();      // keep the mobile prev/next/start pills in sync
     if(!wo){
       els.detailHead.innerHTML = '<span class="pane-label">Workout</span>';
       els.detailBody.innerHTML = '<p class="detail-empty">Pick a workout from the list.</p>';
@@ -4398,7 +4566,7 @@
     if(f.shape !== null) adj.push(shapeLabel(f.shape));
     if(f.zone !== null && ZONES[f.zone]) adj.push(ZONES[f.zone].label);
     if(f.duration !== null) tail.push('at ' + f.duration + ' min');
-    if(f.spice !== null) tail.push('spice ' + f.spice);
+    if(f.spice !== null) tail.push((SPICE_LABEL[f.spice] || f.spice).toLowerCase() + ' intensity');
     var q = f.search.trim();
     if(q) tail.push('matching “' + q + '”');
     var sentence = 'No ' + (f.starredOnly ? 'starred ' : '') + (adj.length ? adj.join(' ') + ' ' : '') + 'workouts' +
@@ -4437,12 +4605,11 @@
       ? WORKOUTS.length + ' workouts'
       : list.length + ' of ' + WORKOUTS.length + ' workouts';
 
-    els.workoutCards.appendChild(buildStartCard());
-
     list.forEach(function(wo){
       els.workoutCards.appendChild(renderWorkoutCard(wo));
     });
     wireWorkoutButtons(els.workoutCards);
+    updateListZero();   // blur-and-prompt when nothing's been searched yet
 
     // Always show something in the detail pane: keep the current selection if
     // it survived the filter, otherwise fall back to the first result.
@@ -4456,33 +4623,18 @@
   }
 
   // ============================================================
-  // FIND A WORKOUT (entry card)
-  // The start card opens the quick-pick modal; openFindModal / buildFindRows
-  // live in the filtering module. The old guided walkthrough was retired.
+  // FIND A WORKOUT
+  // The workout list opens on a blurred zero-state ("Find a workout") that
+  // opens the quick-pick modal; openFindModal / the zero-state live in the
+  // filtering module. The old leading start-card + guided walkthrough are gone.
   // ============================================================
-
-  // The entry card sits first in the list. Once the rider has started
-  // filtering they've answered the question it was asking, so it steps back to
-  // a single quiet line rather than vanishing — they may still want it.
-  function buildStartCard(){
-    var touched = filters.duration !== null || filters.zone !== null ||
-                  filters.spice !== null || filters.shape !== null;
-    var b = document.createElement('button');
-    b.type = 'button';
-    b.className = 'start-card' + (touched ? ' compact' : '');
-    b.innerHTML = '<span class="sc-icon">🚴</span>' +
-      '<span class="sc-txt"><b>' +
-      (touched ? 'Find another workout' : 'Let’s find you a workout') +
-      '</b></span><span class="sc-go">›</span>';
-    b.addEventListener('click', openFindModal);
-    return b;
-  }
 
   function clearAllFilters(){
     filters.duration = null; filters.zone = null; filters.shape = null; filters.spice = null;
     filters.search = ''; filters.starredOnly = false;   // sort is a preference; it survives a reset
     els.searchBox.value = '';
     els.sortMenu.style.display = 'none';
+    browseAll = false;   // Reset returns to the guided zero-state
     renderSortMenu();
     updateStarFilterUI();
     render();   // recommendations on/off is a preference, not a filter — it stays
@@ -5263,26 +5415,29 @@
       ' — check the device is awake, not paired to another app, and in range.';
   }
 
-  // {label, dotClass, on, busy} for one device button.
+  // One device row: `name` is the left identity (device name once paired, else
+  // the type), `action` is the right status/action, `dotClass` still feeds the
+  // desktop head indicator.
   function deviceChipState(state, fallback){
     var name = (state.device && state.device.name) || fallback;
-    if(state.connected)    return {label:name, dotClass:'on', on:true};
-    if(state.busy)         return {label:'Connecting…', dotClass:'retry', busy:true};
-    if(state.reconnecting) return {label:'Reconnecting…', dotClass:'retry'};
-    if(state.looking)      return {label:'Looking…', dotClass:'retry', looking:true};
-    return {label:fallback, dotClass:'', idle:true};   // the device type labels the tile
+    if(state.connected)    return {name:name,     action:'Disconnect',    dotClass:'on', on:true};
+    if(state.busy)         return {name:fallback, action:'Connecting…',   dotClass:'retry', busy:true};
+    if(state.reconnecting) return {name:fallback, action:'Reconnecting…', dotClass:'retry', reconnecting:true};
+    if(state.looking)      return {name:fallback, action:'Looking…',      dotClass:'retry', looking:true};
+    return {name:fallback, action:'Not Connected', dotClass:'off', idle:true};
   }
 
-  function paintDeviceButton(btn, dot, label, s, longName){
+  function paintDeviceButton(btn, nameEl, actionEl, s, longName){
     btn.classList.toggle('on', !!s.on);
     btn.classList.toggle('idle', !!s.idle);
+    btn.classList.toggle('busy', !!s.busy || !!s.reconnecting || !!s.looking);
     btn.disabled = !!s.busy;
-    btn.title = s.on ? (longName + ' connected — click to disconnect')
-              : s.looking ? ('Listening for your ' + (longName === 'Trainer' ? 'trainer' : longName) + ' — click to pick a different one')
+    btn.title = s.on ? (longName + ' connected — tap to disconnect')
+              : s.looking ? ('Listening for your ' + (longName === 'Trainer' ? 'trainer' : longName) + ' — tap to pick a different one')
               : ('Connect ' + (longName === 'Trainer' ? 'trainer' : longName));
     btn.setAttribute('aria-label', btn.title);
-    dot.className = 'device-dot ' + s.dotClass;
-    label.textContent = s.label;
+    nameEl.textContent = s.name;
+    actionEl.textContent = s.action;
   }
 
   // Keep the mobile connection bar's labels short: a device name past ~13
@@ -5294,20 +5449,22 @@
 
   function updateDeviceUI(){
     var t = deviceChipState(trainerState, 'Trainer');
-    var h = deviceChipState(hrState, 'Heart rate');
-    paintDeviceButton(els.trainerBtn, els.trainerDot, els.trainerLabel, t, 'Trainer');
-    paintDeviceButton(els.hrBtn, els.hrDot, els.hrLabel, h, 'HR monitor');
-    // The header connection indicator mirrors the trainer + HR dots (Strava's
-    // dot is painted by updateStravaUI), in every viewport. On the mobile bar
-    // the name follows the connected device (trimmed if it runs long).
+    var h = deviceChipState(hrState, 'Heart Rate');
+    paintDeviceButton(els.trainerBtn, els.trainerLabel, els.trainerAction, t, 'Trainer');
+    paintDeviceButton(els.hrBtn, els.hrLabel, els.hrAction, h, 'HR monitor');
+    // The desktop head connection indicator mirrors the trainer + HR dots
+    // (Strava's dot is painted by updateStravaUI).
     if(els.connTrainerDot) els.connTrainerDot.className = 'device-dot ' + t.dotClass;
     if(els.connHrDot) els.connHrDot.className = 'device-dot ' + h.dotClass;
-    if(els.connTrainerName) els.connTrainerName.textContent = connShort(t.label || 'Trainer');
-    if(els.connHrName) els.connHrName.textContent = connShort(h.label || 'Heart rate');
+    if(els.connTrainerName) els.connTrainerName.textContent = connShort(t.name || 'Trainer');
+    if(els.connHrName) els.connHrName.textContent = connShort(h.name || 'Heart rate');
     if(els.connStatus){
       els.connStatus.title = 'Trainer ' + (trainerState.connected ? 'on' : 'off') +
         ', heart rate ' + (hrState.connected ? 'on' : 'off') + ' - open menu';
     }
+    // Mobile: the Menu tab wears a red dot when a ride device (trainer or HR)
+    // isn't paired, so "not connected" is loud without a status bar.
+    if(els.menuTabBadge) els.menuTabBadge.hidden = trainerState.connected && hrState.connected;
     refreshWaitingOverlay();
   }
 
@@ -5462,21 +5619,22 @@
 
   function updateStravaUI(){
     var on = stravaConnected();
-    els.stravaBtn.style.display = on ? 'none' : '';
-    els.stravaChip.style.display = on ? '' : 'none';
-    els.stravaLabel.textContent = on ? ('Strava · ' + ((strava.athlete && strava.athlete.name) || 'connected').trim()) : 'Strava';
+    var first = on ? (((strava.athlete && strava.athlete.name) || '').trim().split(/\s+/)[0]) : '';
+    // The Strava row: athlete's first name + "Log Out" when connected, else
+    // "Strava" + "Log In".
+    els.stravaLabel.textContent = on ? (first || 'Strava') : 'Strava';
+    if(els.stravaAction) els.stravaAction.textContent = on ? 'Log Out' : 'Log In';
+    els.stravaBtn.classList.toggle('on', on);
+    els.stravaBtn.title = on ? 'Logged in to Strava — tap to log out' : 'Log in with Strava';
     els.summaryStravaBtn.style.display = on ? '' : 'none';
-    // Header connection indicator: light the Strava dot when logged in, and on
-    // the mobile bar show the athlete's first name in place of "Strava".
     if(els.connStravaDot) els.connStravaDot.className = 'device-dot' + (on ? ' strava' : '');
-    if(els.connStravaName){
-      var first = on ? (((strava.athlete && strava.athlete.name) || '').trim().split(/\s+/)[0]) : '';
-      els.connStravaName.textContent = first || 'Strava';
-    }
+    if(els.connStravaName) els.connStravaName.textContent = first || 'Strava';
   }
 
-  els.stravaBtn.addEventListener('click', stravaConnect);
-  els.stravaDisconnectBtn.addEventListener('click', stravaDisconnect);
+  // One row now: tap to log in when out, to log out when in.
+  els.stravaBtn.addEventListener('click', function(){
+    if(stravaConnected()) stravaDisconnect(); else stravaConnect();
+  });
 
   // Upload the ride just finished. Strava processes uploads asynchronously,
   // so poll until it hands back an activity id (or an error, e.g. duplicate).
@@ -8159,7 +8317,7 @@
     WORKOUTS.forEach(function(w){
       if(w.zone === 'test') return;
       if(base.zone !== null && w.zone !== base.zone) return;
-      if(base.spice !== null && w.spice !== base.spice) return;
+      if(base.spice !== null && SPICE_GROUPS[spiceGroupOf(base.spice)].indexOf(w.spice) < 0) return;
       set[w.durationMin] = true;
     });
     return Object.keys(set).map(Number).sort(function(a, b){ return a - b; });
@@ -8176,7 +8334,7 @@
   // Apply the filter and jump back to the library; clears the rest so the list
   // isn't accidentally empty.
   function browsePlanZone(base, duration){
-    filters.zone = base.zone; filters.spice = base.spice; filters.duration = duration || null; filters.shape = null;
+    filters.zone = base.zone; filters.spice = base.spice != null ? spiceGroupOf(base.spice) : null; filters.duration = duration || null; filters.shape = null;
     filters.search = ''; filters.starredOnly = false;
     if(els.searchBox) els.searchBox.value = '';
     renderFilters(); renderWorkoutCards();
