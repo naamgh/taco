@@ -1770,6 +1770,19 @@
   .summary-actions{display:flex;flex-direction:column;gap:10px;}
   .summary-row{display:flex;gap:8px;}
   .summary-row .action-btn{flex:1 1 0;justify-content:center;}
+  /* Share-image block: a style picker over a live preview, then the download. */
+  .summary-share{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--border-soft);border-radius:14px;background:var(--bg-card-list);}
+  .share-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+  .share-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-faint);}
+  .share-styles{display:flex;gap:4px;background:var(--bg-list);border:1px solid var(--border);border-radius:9px;padding:3px;}
+  .share-style{border:none;background:transparent;color:var(--text-dim);cursor:pointer;font-family:var(--mono);
+    font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:6px;transition:background .12s,color .12s;}
+  .share-style:hover{color:var(--text);}
+  .share-style.on{background:var(--accent);color:var(--on-accent);}
+  .share-preview{display:block;width:100%;border-radius:8px;background:#0C0D10;}
+  .fit-link{align-self:center;background:transparent;border:none;color:var(--text-faint);font-size:12px;font-weight:600;
+    padding:4px 8px;min-height:0;margin-top:2px;}
+  .fit-link:hover{color:var(--text-dim);background:transparent;}
   /* ---------- RIDE LOG ---------- */
   .log-inner{max-width:1180px;padding:18px 22px 18px;}
   .log-head{display:flex;align-items:center;gap:8px;flex:none;padding-bottom:12px;border-bottom:1px solid var(--border-soft);}
@@ -2051,6 +2064,9 @@
   .dock-card.planned .dock-cname{font-style:italic;color:var(--text-dim);}
   .dock-pl-dot{width:12px;height:12px;border-radius:50%;flex:none;border:2px solid var(--c);box-sizing:border-box;}
   .dock-sub{font-family:var(--mono);font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .dock-addmore{width:100%;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--text-dim);cursor:pointer;
+    border:1px dashed var(--border);background:transparent;border-radius:12px;padding:11px;}
+  .dock-addmore:active{background:var(--bg-card-hover);}
   .dock-plan{background:var(--bg-card);border:1px dashed var(--border);border-radius:14px;padding:16px 14px;text-align:center;}
   .dock-plan-lead{margin:0 0 12px;color:var(--text-dim);font-size:13px;}
   .dock-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
@@ -3042,16 +3058,23 @@
       </button>
       <a class="action-btn strava-link" id="summaryStravaLink" href="#" target="_blank" rel="noopener" style="display:none;">View on Strava &#8599;</a>
       <p class="strava-status" id="summaryStravaStatus" style="display:none;"></p>
-      <div class="summary-row">
-        <button class="action-btn" id="summaryFitBtn">
-          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 3.5v11M12 14.5l-4.2-4.2M12 14.5l4.2-4.2M4.5 16.5v2.2a1.8 1.8 0 001.8 1.8h11.4a1.8 1.8 0 001.8-1.8v-2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Download .fit
-        </button>
+      <div class="summary-share">
+        <div class="share-head">
+          <span class="share-label">Share image</span>
+          <div class="share-styles" id="shareStyles" role="group" aria-label="Image style">
+            <button type="button" class="share-style" data-style="bars">Bars</button>
+            <button type="button" class="share-style" data-style="blocks">Blocks</button>
+            <button type="button" class="share-style" data-style="skyline">Skyline</button>
+            <button type="button" class="share-style" data-style="matrix">Matrix</button>
+          </div>
+        </div>
+        <canvas class="share-preview" id="sharePreview" aria-label="Share image preview"></canvas>
         <button class="action-btn" id="summaryImageBtn">
           <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 3.5v11M12 14.5l-4.2-4.2M12 14.5l4.2-4.2M4.5 16.5v2.2a1.8 1.8 0 001.8 1.8h11.4a1.8 1.8 0 001.8-1.8v-2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Download Timeline Image
         </button>
       </div>
+      <button class="action-btn fit-link" id="summaryFitBtn">Download .fit file</button>
       <div class="summary-row">
         <button class="action-btn danger" id="summaryDeleteBtn" style="display:none;">Delete ride</button>
         <button class="action-btn primary" id="summaryCloseBtn">Close</button>
@@ -3388,6 +3411,8 @@
     summaryGrid: document.getElementById('summaryGrid'),
     ftpEstimate: document.getElementById('ftpEstimate'),
     summaryFitBtn: document.getElementById('summaryFitBtn'),
+    sharePreview: document.getElementById('sharePreview'),
+    shareStyles: document.getElementById('shareStyles'),
     summaryImageBtn: document.getElementById('summaryImageBtn'),
     summaryCloseBtn: document.getElementById('summaryCloseBtn'),
     summaryDeleteBtn: document.getElementById('summaryDeleteBtn'),
@@ -7113,6 +7138,7 @@
     els.summaryCloseBtn.textContent = opts.fromLog ? 'Close' : 'Save & close';
     liveState.summaryFromLog = !!opts.fromLog;
     els.summaryModal.style.display = 'flex';
+    renderSharePreview();
     if(!opts.fromLog) saveCurrentRide();
   }
 
@@ -7617,73 +7643,124 @@
     }
   }
 
-  function buildSummaryImage(){
-    var c = document.createElement('canvas');
-    c.width = IMG_W; c.height = IMG_H;
+  // ---- share image (the "Monolith" poster): chunky title, one effort plot,
+  // big AVG/MAX HR + ride stats. The plot style is the rider's choice. ----
+  var IMG_STYLE_KEY = 'ftpPlan_imgStyle_v1';
+  var IMG_STYLES = ['bars', 'blocks', 'skyline', 'matrix'];
+  function imgStyle(){ try{ var v = localStorage.getItem(IMG_STYLE_KEY); return IMG_STYLES.indexOf(v) >= 0 ? v : 'blocks'; }catch(e){ return 'blocks'; } }
+  function setImgStyle(s){ if(IMG_STYLES.indexOf(s) < 0) return; try{ localStorage.setItem(IMG_STYLE_KEY, s); }catch(e){} }
+
+  // Downsample the ride to N columns of normalised power (0..1 against an FTP
+  // ceiling) and HR (0..1 against its own min/max). `work` flags the hard bins.
+  function imgBins(samples, N, f){
+    var n = samples.length, i, k, peak = 100;
+    for(i = 0; i < n; i++){ if(samples[i].power != null) peak = Math.max(peak, samples[i].power / f * 100); }
+    var pmax = Math.max(125, Math.ceil((peak + 8) / 5) * 5);
+    var hrs = []; for(i = 0; i < n; i++){ if(samples[i].hr != null) hrs.push(samples[i].hr); }
+    var hlo = hrs.length ? Math.min.apply(null, hrs) - 4 : 0, hhi = hrs.length ? Math.max.apply(null, hrs) + 4 : 1;
+    var bins = [];
+    for(i = 0; i < N; i++){
+      var a = Math.floor(i / N * n), b = Math.max(a + 1, Math.floor((i + 1) / N * n)), ps = 0, pc = 0, hs = 0, hc = 0;
+      for(k = a; k < b; k++){ var s = samples[k]; if(s){ if(s.power != null){ ps += s.power; pc++; } if(s.hr != null){ hs += s.hr; hc++; } } }
+      var pctF = pc ? (ps / pc) / f * 100 : 0;
+      bins.push({ p: Math.max(0, Math.min(1, (pctF - 18) / (pmax - 18))), hr: hc ? (hs / hc - hlo) / (hhi - hlo) : null, work: pctF >= 74 });
+    }
+    return bins;
+  }
+
+  function imgPlot(ctx, style, px, py, pw, ph, bins, accent){
+    var N = bins.length, base = py + ph, A = accent, LINE = '#EFEDE6', DIM = '#2A2D36', i, k, c, r;
+    function baseline(){ ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(px, base); ctx.lineTo(px + pw, base); ctx.stroke(); }
+    function hrLine(){
+      var any = false; for(i = 0; i < N; i++) if(bins[i].hr != null){ any = true; break; }
+      if(!any) return;
+      ctx.beginPath(); var started = false;
+      for(i = 0; i < N; i++){ if(bins[i].hr == null) continue; var x = px + (i + 0.5) / N * pw, y = base - bins[i].hr * (ph - 26) - 14; if(!started){ ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y); }
+      ctx.strokeStyle = LINE; ctx.lineWidth = 8; ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.stroke();
+    }
+    if(style === 'bars'){
+      var bw = pw / N;
+      for(i = 0; i < N; i++){ var bh = bins[i].p * ph; ctx.fillStyle = bins[i].work ? A : DIM; ctx.fillRect(px + i * bw, base - bh, Math.max(1, bw - 2), bh); }
+      baseline(); hrLine();
+    } else if(style === 'blocks'){
+      ctx.fillStyle = '#15171F'; ctx.fillRect(px, base - ph * 0.5, pw, ph * 0.5);
+      i = 0;
+      while(i < N){ var j = i; while(j < N && bins[j].work === bins[i].work) j++; if(bins[i].work){ var mx = 0; for(k = i; k < j; k++) mx = Math.max(mx, bins[k].p); var bx = px + i / N * pw, bwn = (j - i) / N * pw, bhn = mx * ph; roundRect(ctx, bx + 6, base - bhn, Math.max(4, bwn - 12), bhn, 12); ctx.fillStyle = A; ctx.fill(); } i = j; }
+      baseline(); hrLine();
+    } else if(style === 'skyline'){
+      ctx.beginPath(); ctx.moveTo(px, base);
+      for(i = 0; i < N; i++) ctx.lineTo(px + i / (N - 1) * pw, base - bins[i].p * ph);
+      ctx.lineTo(px + pw, base); ctx.closePath(); ctx.globalAlpha = 0.92; ctx.fillStyle = A; ctx.fill(); ctx.globalAlpha = 1;
+      baseline(); hrLine();
+    } else {   // matrix — an LED meter, HR as a bright dotted trace
+      var cols = 58, rows = 15, cw = pw / cols, rh = ph / rows, rad = Math.min(cw, rh) * 0.3;
+      for(c = 0; c < cols; c++){
+        var bn = bins[Math.min(N - 1, Math.floor(c / cols * N))], fill = Math.round(bn.p * rows);
+        for(r = 0; r < rows; r++){ var cy = base - rh * (r + 0.5), cx = px + cw * (c + 0.5); ctx.beginPath(); ctx.arc(cx, cy, rad, 0, 6.2832); ctx.fillStyle = r < fill ? (bn.work ? A : '#3A3F55') : '#181A22'; ctx.fill(); }
+        if(bn.hr != null){ var hy = base - bn.hr * (ph - 26) - 14; ctx.beginPath(); ctx.arc(px + cw * (c + 0.5), hy, 9, 0, 6.2832); ctx.fillStyle = LINE; ctx.fill(); }
+      }
+    }
+  }
+
+  function buildSummaryImage(style){
+    style = IMG_STYLES.indexOf(style) >= 0 ? style : imgStyle();
+    var c = document.createElement('canvas'); c.width = IMG_W; c.height = IMG_H;
     var ctx = c.getContext('2d');
     var pad = 110, W = IMG_W - pad * 2;
-    var samples = liveState.samples, wo = liveState.workout;
+    var samples = liveState.samples, wo = liveState.workout, f = rideFtp() || 250;
+    var S = computeSummary(samples);
+    var zone = (wo && wo.zone) || liveState.zone;
+    var accent = (zone && !(wo && wo.test) && ZONES[zone] && ZONES[zone].hex) || IMG_ACCENT;
 
-    ctx.fillStyle = '#0A0C11';
-    ctx.fillRect(0, 0, IMG_W, IMG_H);
-    // A soft brand-blue haze behind the plot, gone by the pies: tonal rather
-    // than textured, so it survives the feed's shrink where a pattern wouldn't.
-    var haze = ctx.createRadialGradient(IMG_W / 2, 480, 80, IMG_W / 2, 480, 1100);
-    haze.addColorStop(0, 'rgba(110,139,255,0.16)');
-    haze.addColorStop(0.5, 'rgba(110,139,255,0.05)');
-    haze.addColorStop(1, 'rgba(110,139,255,0)');
-    ctx.fillStyle = haze;
-    ctx.fillRect(0, 0, IMG_W, IMG_H);
+    ctx.fillStyle = '#0C0D10'; ctx.fillRect(0, 0, IMG_W, IMG_H);
 
-    // Zone seconds.
-    var pSecs = POWER_PIE_ZONES.map(function(){ return 0; });
-    var hSecs = HR_ZONES.map(function(){ return 0; });
-    samples.forEach(function(s){
-      var pi = powerZoneIndex(s.power); if(pi >= 0) pSecs[pi]++;
-      var hi = hrZoneIndex(s.hr);       if(hi >= 0) hSecs[hi]++;
-    });
-    var pTotal = pSecs.reduce(function(a, b){ return a + b; }, 0);
-    var hTotal = hSecs.reduce(function(a, b){ return a + b; }, 0);
-    var hasHr = hTotal >= 60 && rideMaxHr();
+    // Title — the ride's name, chunky; shrinks to fit the frame.
+    ctx.fillStyle = '#F2F1EC'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    var name = (wo ? wo.name : 'Indoor ride').toUpperCase();
+    var ts = 196; ctx.font = '900 ' + ts + 'px "Arial Black", ' + IMG_SANS;
+    while(ts > 92 && ctx.measureText(name).width > W){ ts -= 6; ctx.font = '900 ' + ts + 'px "Arial Black", ' + IMG_SANS; }
+    ctx.fillText(fitText(ctx, name, W), pad, 332);
 
-    var pFocus = focusZoneIndex(wo, pSecs);
-    if(pFocus < 0 || !pSecs[pFocus]) pFocus = pSecs.indexOf(Math.max.apply(null, pSecs));
-    var hFocus = hSecs.indexOf(Math.max.apply(null, hSecs));
+    // Effort plot (the rider's chosen style) with the HR line over it.
+    imgPlot(ctx, style, pad, 452, W, 560, imgBins(samples, 150, f), accent);
 
-    // ---- headline: the structure, in watts, quiet grey ----
-    // No name — Strava shows it on the post, and doubling up wastes the space.
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
-    ctx.fillStyle = '#A9B0C4';
-    ctx.font = '800 70px ' + IMG_SANS;
-    ctx.fillText(fitText(ctx, structureHeadline(wo) || 'Ride', W), IMG_W / 2, 130);
+    ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(pad, 1116); ctx.lineTo(IMG_W - pad, 1116); ctx.stroke();
 
-    // ---- effort plot ----
-    drawRibbon(ctx, pad + 40, 235, W - 40, 490, pFocus);
+    // Big AVG / MAX heart rate.
+    ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+    var avgT = S.avgHr != null ? '' + S.avgHr : '—', maxT = S.maxHr != null ? '' + S.maxHr : '—';
+    ctx.font = '900 184px "Arial Black", ' + IMG_SANS;
+    ctx.fillStyle = accent; ctx.fillText(avgT, pad, 1322);
+    var aw = ctx.measureText(avgT).width;
+    ctx.fillStyle = '#F2F1EC'; ctx.fillText(maxT, pad + aw + 100, 1322);
+    ctx.font = '700 32px ' + IMG_MONO; ctx.fillStyle = '#6B7180';
+    ctx.fillText('AVG BPM', pad + 8, 1376);
+    ctx.fillText('MAX BPM', pad + aw + 108, 1376);
 
-    // ---- time in zone, as chunky pies: the focus slice in the block blue, the rest slate ----
-    function sliceColor(i, focus){ return focus ? IMG_ACCENT : imgMix('#1E2740', '#4A5578', Math.min(1, i / 5)); }
-    var pSlices = POWER_PIE_ZONES.map(function(z, i){
-      return {z:z.z, label:z.label, sec:pSecs[i], color:sliceColor(i, i === pFocus)};
-    });
-    var hSlices = HR_ZONES.map(function(z, i){
-      return {z:z.z, label:z.label, sec:hSecs[i], color:sliceColor(i, i === hFocus)};
-    });
-    // The power caption is the ride's own name for the effort; a test, or a
-    // ride whose focus zone got no time, falls back to the Coggan name.
-    var zdef = wo && !wo.test && ZONES[wo.zone];
-    var pCaption = (zdef && focusZoneIndex(wo, pSecs) === pFocus) ? zdef.label : null;
-
-    var cy = 1050, rx = 235, ry = 130, depth = 44;
-    var pieOpts = {gloss:0.14, tint:0.92, whiteLabels:true};
-    if(hasHr){
-      drawPieBlock(ctx, IMG_W * 0.27, cy, rx, ry, depth, 'POWER', pSlices, pTotal, pFocus, pieOpts, pCaption);
-      drawPieBlock(ctx, IMG_W * 0.73, cy, rx, ry, depth, 'HEART RATE', hSlices, hTotal, hFocus, pieOpts, null);
-    } else {
-      drawPieBlock(ctx, IMG_W / 2, cy, rx * 1.12, ry * 1.12, depth + 6, 'POWER', pSlices, pTotal, pFocus, pieOpts, pCaption);
-    }
+    // Ride stats, right.
+    ctx.textAlign = 'right'; ctx.font = '800 52px ' + IMG_MONO; ctx.fillStyle = '#F2F1EC';
+    ctx.fillText(mmss(S.duration) + '  ·  ' + (S.np != null ? S.np : '—') + 'W  ·  TSS ' + (S.tss != null ? S.tss : '—'), IMG_W - pad, 1300);
     return c;
   }
+
+  // Live preview on the summary screen, and the active-style highlight.
+  function renderSharePreview(){
+    if(!els.sharePreview) return;
+    var cv = els.sharePreview;
+    try{
+      var img = buildSummaryImage(imgStyle());
+      var cw = cv.clientWidth || 360, ch = Math.round(cw * IMG_H / IMG_W), dpr = Math.min(2, window.devicePixelRatio || 1);
+      cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr); cv.style.height = ch + 'px';
+      var p = cv.getContext('2d'); p.setTransform(dpr, 0, 0, dpr, 0, 0);
+      p.clearRect(0, 0, cw, ch); p.drawImage(img, 0, 0, cw, ch);
+    }catch(e){ console.log('Preview failed:', e && e.message); }
+    if(els.shareStyles) [].forEach.call(els.shareStyles.querySelectorAll('[data-style]'), function(b){ b.classList.toggle('on', b.getAttribute('data-style') === imgStyle()); });
+  }
+  if(els.shareStyles) els.shareStyles.addEventListener('click', function(e){
+    var b = e.target.closest('[data-style]'); if(!b) return;
+    setImgStyle(b.getAttribute('data-style')); renderSharePreview();
+  });
 
   els.summaryImageBtn.addEventListener('click', function(){
     var btn = this;
@@ -7862,6 +7939,7 @@
       liveState.maxHr = r.maxHr || null;
       liveState.savedId = r.id;
       liveState.rpe = r.rpe || null;
+      liveState.zone = r.zone || (wo && wo.zone) || null;   // share-image accent fallback when the workout's gone
       liveState.stravaActivityId = r.stravaActivityId || null;
       liveState.intensity = 1;
       liveState.chartMaxPct = Math.max(105, Math.ceil((peak + 8) / 5) * 5);
@@ -8134,7 +8212,7 @@
   // grid (phones only; desktop keeps the side panel). 720px matches the
   // calendar's existing mobile CSS so the two layouts never half-apply.
   var mqCal = window.matchMedia('(max-width:720px)');
-  var dockDay = null, logByDay = {}, logTodayKey = '';
+  var dockDay = null, logByDay = {}, logTodayKey = '', dockAdding = false;
   function monthKey(y, m){ return y + '-' + (m < 9 ? '0' : '') + (m + 1); }
   function defaultDockDay(y, m, todayKey){
     return todayKey.slice(0, 7) === monthKey(y, m) ? todayKey : monthKey(y, m) + '-01';
@@ -8217,7 +8295,7 @@
       el.classList.toggle('sel', el.getAttribute('data-day') === dockDay);
     });
   }
-  function selectDockDay(k){ dockDay = k; markDockSel(); renderDock(k); }
+  function selectDockDay(k){ dockDay = k; dockAdding = false; markDockSel(); renderDock(k); }
   function zoneLabel(r){
     if(r.type === 'indoor') return (r.zone && ZONES[r.zone]) ? ZONES[r.zone].label : 'Indoor';
     return typeSpec(r.type).label;
@@ -8253,22 +8331,29 @@
         '<span class="dock-cmeta"><span class="dock-sub">Planned &middot; ' + zoneLabel(r) + '</span></span>' +
       '</span></button>';
   }
-  function dockPlanPrompt(){
-    return '<div class="dock-plan"><p class="dock-plan-lead">Nothing planned.</p>' +
+  function dockPlanPrompt(another){
+    return '<div class="dock-plan"><p class="dock-plan-lead">' + (another ? 'Add another &mdash; pick a type' : 'Nothing planned.') + '</p>' +
       '<div class="dock-chips">' + PLAN_CATS.map(function(c){
         return '<button type="button" class="dock-chip" data-dock-cat="' + c.key + '"><i style="background:' + entryColor({type:c.type}) + '"></i>' + c.label + '</button>';
       }).join('') + '</div></div>';
   }
+  // When a day already has entries, offer to stack another plan onto it.
+  function dockAddMore(){ return '<button type="button" class="dock-addmore" data-dock-add>&#43; Add another workout</button>'; }
   function dockHead(k, tag){ return '<div class="dock-date"><b>' + prettyDate(k) + '</b><span>' + tag + '</span></div>'; }
   function renderDock(k){
     if(!els.logDock) return;
     var all = logByDay[k] || [], done = all.filter(function(r){ return !r.planned; }),
         planned = all.filter(function(r){ return r.planned; }), future = k >= logTodayKey;
     var body;
-    if(done.length) body = done.map(dockDoneCard).join('');
-    else if(planned.length) body = planned.map(dockPlannedCard).join('');
-    else if(future) body = dockPlanPrompt();
-    else body = '<div class="dock-rest"><b>Rest day</b><span>Nothing logged.</span></div>';
+    if(done.length || planned.length){
+      body = done.map(dockDoneCard).join('') + planned.map(dockPlannedCard).join('');
+      // A day with entries can still take more while it's today or ahead.
+      if(future) body += dockAdding ? dockPlanPrompt(true) : dockAddMore();
+    } else if(future){
+      body = dockPlanPrompt();
+    } else {
+      body = '<div class="dock-rest"><b>Rest day</b><span>Nothing logged.</span></div>';
+    }
     els.logDock.innerHTML = dockHead(k, k === logTodayKey ? 'Today' : (future ? 'Upcoming' : 'Done')) + body;
   }
   // Chip → that type's targets, in the dock; target → create the plan.
@@ -8283,8 +8368,10 @@
   els.logDock.addEventListener('click', function(e){
     var card = e.target.closest('.dock-card');
     if(card){ var id = +card.getAttribute('data-id'); rideGet(id).then(function(r){ if(r) showDetail(r); }); return; }
+    if(e.target.closest('[data-dock-add]')){ dockAdding = true; renderDock(dockDay); return; }
     var tgt = e.target.closest('[data-dock-cat][data-dock-t]');
     if(tgt){
+      dockAdding = false;                 // created — fall back to cards + "Add another"
       planDay = dockDay;
       createPlan(PLAN_CATS.filter(function(x){ return x.key === tgt.getAttribute('data-dock-cat'); })[0], tgt.getAttribute('data-dock-t'));
       return;
