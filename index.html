@@ -2049,7 +2049,7 @@
   .dock-cstruct{font-family:var(--mono);font-size:11.5px;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .dock-card.planned{border-style:dashed;}
   .dock-card.planned .dock-cname{font-style:italic;color:var(--text-dim);}
-  .dock-pl-dot{width:12px;height:12px;border-radius:50%;flex:none;border:1.7px dashed var(--c);box-sizing:border-box;}
+  .dock-pl-dot{width:12px;height:12px;border-radius:50%;flex:none;border:2px solid var(--c);box-sizing:border-box;}
   .dock-sub{font-family:var(--mono);font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;}
   .dock-plan{background:var(--bg-card);border:1px dashed var(--border);border-radius:14px;padding:16px 14px;text-align:center;}
   .dock-plan-lead{margin:0 0 12px;color:var(--text-dim);font-size:13px;}
@@ -2094,7 +2094,7 @@
     .log-day.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--bg-card);}
     .log-dots{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;min-height:9px;}
     .log-dot{width:8px;height:8px;border-radius:50%;background:var(--c);}
-    .log-dot.ring{background:transparent;border:1.7px dashed var(--c);box-sizing:border-box;}
+    .log-dot.ring{background:transparent;border:2px solid var(--c);box-sizing:border-box;}
     .log-dot-more{font-family:var(--mono);font-size:8.5px;color:var(--text-faint);line-height:8px;}
 
     /* Detail / form / import panel: a full overlay over the calendar, sliding up. */
@@ -5745,6 +5745,42 @@
     if(stravaConnected()) stravaDisconnect(); else stravaConnect();
   });
 
+  // One plain-English line of heart-rate drift for the activity description.
+  // Method (shape-agnostic): keep the WORKING samples only — a step that isn't a
+  // warm-up/cool-down ramp or a recovery (below `CUT`% FTP), so steady bodies,
+  // interval on-legs and over/unders stay, warmups/cooldowns/rests drop. Split
+  // that into first vs second half by work-time and compare power:HR (aerobic
+  // decoupling). Samples carry their plan-second as `p`, so skipped segments map
+  // correctly. Returns '' (no line) when it can't be read cleanly: no HR, too
+  // little work, or the two halves sit at different powers (a ladder/ramp, where
+  // HR simply follows the prescribed step-up rather than drifting).
+  function hrDriftLine(samples, flat){
+    if(!samples || !flat || !flat.length || samples.length < 600) return '';
+    var CUT = 60, mask = [], i, s;
+    for(i = 0; i < flat.length; i++){
+      var st = flat[i];
+      var ramp = (typeof isRamp === 'function') && isRamp(st);
+      var work = !st.prep && !ramp && st.pct != null && st.pct >= CUT;
+      var sec = Math.round((st.min || 0) * 60);
+      for(s = 0; s < sec; s++) mask.push(work);
+    }
+    var work = [];
+    for(i = 0; i < samples.length; i++){
+      var sm = samples[i], idx = (sm.p || i + 1) - 1;
+      if(mask[idx] && sm.hr != null && sm.power != null) work.push(sm);
+    }
+    if(work.length < 300) return '';                 // under ~5 min of usable work
+    var half = Math.floor(work.length / 2);
+    function avg(arr, key){ var t = 0; for(var k = 0; k < arr.length; k++) t += arr[k][key]; return t / arr.length; }
+    var a = work.slice(0, half), b = work.slice(half);
+    var p1 = avg(a, 'power'), h1 = avg(a, 'hr'), p2 = avg(b, 'power'), h2 = avg(b, 'hr');
+    if(!h1 || !h2 || !p1) return '';
+    if(Math.abs(p2 - p1) / p1 > 0.05) return '';     // ramping effort — drift is prescribed, skip
+    var dec = Math.round(((p1 / h1) - (p2 / h2)) / (p1 / h1) * 100);
+    var word = dec <= 5 ? 'Held Strong' : (dec <= 8 ? 'Faded a Little' : 'Faded Hard');
+    return 'HR drift ' + Math.round(h1) + ' → ' + Math.round(h2) + ' bpm (' + word + ': ' + (dec >= 0 ? '+' : '−') + Math.abs(dec) + '%)';
+  }
+
   // Upload the ride just finished. Strava processes uploads asynchronously,
   // so poll until it hands back an activity id (or an error, e.g. duplicate).
   async function stravaUpload(){
@@ -5767,6 +5803,10 @@
         var desc = wo.test
           ? zl + ' · ' + wo.durationMin + ' min'
           : zl + ' · ' + wo.workMin + ' min in zone · TSS ' + wo.tss + ' · Normalised ' + planPower(wo).np + ' W';
+        // Heart-rate drift of the working sets on its own line (plain-English
+        // verdict + the numbers). Omitted for tests, ramps/ladders, and rides
+        // without enough clean HR.
+        if(!wo.test){ var drift = hrDriftLine(liveState.samples, liveState.flat); if(drift) desc += '\n' + drift; }
         fd.append('description', desc);
       }
       fd.append('trainer', '1');
@@ -8525,8 +8565,11 @@
     }
     var hr = hrSeriesFor(rec);
     if(hr && hr.length){ paint(hr); return; }
-    // Strava imports can fetch their streams once, then cache.
-    if(rec.imported && rec.stravaActivityId && typeof stravaCanRead === 'function' && stravaCanRead()){
+    // No local samples to read HR from — but any ride linked to Strava (an
+    // import, OR a local indoor ride we kept over its Strava twin / that synced
+    // from another device without its heavy samples) can fetch the streams once
+    // and cache them. The recording device still reads its own samples above.
+    if(rec.stravaActivityId && typeof stravaCanRead === 'function' && stravaCanRead()){
       box.innerHTML = '<p class="dv-nodata">Loading heart rate from Strava…</p>';
       stravaFetchStreams(rec.stravaActivityId).then(function(sr){
         if(sr){ rec.streams = sr; ridePatch(rec.id, {streams:sr}); }
