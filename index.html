@@ -2024,6 +2024,50 @@
     background:var(--bg-elev);border-top:1px solid var(--border-soft);
   }
   .log-form-actions .action-btn{margin-top:0;flex:1;}
+
+  /* ---- Mobile day dock: tap a day, its detail fills the space below the grid.
+          Hidden on desktop (JS sets [hidden]); only rendered on phones. ---- */
+  .log-dock{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);
+    display:flex;flex-direction:column;gap:10px;}
+  .dock-date{display:flex;align-items:baseline;gap:8px;padding:0 2px;}
+  .dock-date b{font-size:15px;font-weight:700;letter-spacing:-0.01em;color:var(--text-strong);}
+  .dock-date span{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);}
+  .dock-card{display:flex;gap:12px;align-items:center;width:100%;text-align:left;cursor:pointer;font-family:inherit;
+    background:var(--bg-card);border:1px solid var(--border-soft);border-radius:14px;padding:12px 13px;}
+  .dock-card:active{background:var(--bg-card-hover);}
+  .dock-thumb{width:62px;height:42px;flex:none;border-radius:8px;overflow:hidden;border:1px solid var(--border-soft);background:var(--bg-list);}
+  .dock-thumb svg{display:block;width:100%;height:100%;}
+  .dock-cbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;}
+  .dock-crow{display:flex;align-items:center;gap:8px;}
+  .dock-cname{flex:1;min-width:0;font-size:14.5px;font-weight:650;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .dock-chev{color:var(--text-faint);font-size:17px;flex:none;}
+  .dock-cmeta{display:flex;align-items:center;gap:7px;flex-wrap:wrap;}
+  .dock-ztag{display:inline-flex;align-items:center;font-family:var(--mono);font-size:11px;font-weight:600;
+    padding:3px 9px;border-radius:20px;color:var(--text);background:color-mix(in srgb, var(--c) 20%, var(--bg-card));}
+  .dock-stat{font-family:var(--mono);font-size:11.5px;color:var(--text-dim);}
+  .dock-sep{color:var(--text-faint);opacity:.5;}
+  .dock-cstruct{font-family:var(--mono);font-size:11.5px;color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .dock-card.planned{border-style:dashed;}
+  .dock-card.planned .dock-cname{font-style:italic;color:var(--text-dim);}
+  .dock-pl-dot{width:12px;height:12px;border-radius:50%;flex:none;border:1.7px dashed var(--c);box-sizing:border-box;}
+  .dock-sub{font-family:var(--mono);font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;}
+  .dock-plan{background:var(--bg-card);border:1px dashed var(--border);border-radius:14px;padding:16px 14px;text-align:center;}
+  .dock-plan-lead{margin:0 0 12px;color:var(--text-dim);font-size:13px;}
+  .dock-chips{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;}
+  .dock-chip{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--text-dim);font-family:inherit;
+    border:1px solid var(--border);background:var(--bg-list);border-radius:20px;padding:8px 14px;cursor:pointer;}
+  .dock-chip:active{background:var(--bg-card-hover);}
+  .dock-chip i{width:8px;height:8px;border-radius:50%;}
+  .dock-targets{display:flex;flex-wrap:wrap;gap:8px;}
+  .dock-target{flex:1 1 42%;font-size:13px;font-weight:600;color:var(--text);font-family:inherit;cursor:pointer;
+    border:1px solid var(--border);background:var(--bg-card);border-radius:10px;padding:11px 14px;}
+  .dock-target:active{background:var(--bg-card-hover);}
+  .dock-back{align-self:flex-start;background:none;border:none;color:var(--text-faint);font-size:12.5px;font-weight:600;
+    cursor:pointer;font-family:inherit;padding:4px 2px;}
+  .dock-rest{display:flex;flex-direction:column;align-items:center;gap:3px;padding:26px 14px;color:var(--text-faint);text-align:center;}
+  .dock-rest b{font-size:13.5px;font-weight:600;color:var(--text-dim);}
+  .dock-rest span{font-size:12.5px;}
+
   /* ---- Calendar on a phone: full-screen, two-row header, compact month grid,
           and the detail/form as an overlay instead of a stacked column. ---- */
   @media (max-width:720px){
@@ -2044,15 +2088,14 @@
     .log-dow-week,.log-week{display:none;}
     .log-dow span{font-size:9px;padding:0 1px;text-align:center;}
     .log-row{margin-bottom:4px;}
-    .log-day{min-height:58px;padding:4px 3px;border-radius:8px;gap:3px;}
-    .log-date{font-size:10.5px;padding:0 1px;}
-    .log-entry{padding:2px 3px;border-radius:5px;gap:3px;justify-content:center;min-height:16px;}
-    .log-entry i{width:8px;height:8px;}
-    .log-entry span{display:none;}   /* the name never fit at this width */
-    .log-entry b{font-size:9px;}
-    .log-entry .rpe-flag{font-size:7px;padding:0 2px;}
-    /* Touch has no hover, so the plan-+ is always shown (quietly). */
-    .log-day-add{opacity:.5;}
+    /* Cells are dots-only now — the day's detail lives in the dock below. */
+    .log-day{min-height:50px;padding:6px 3px;border-radius:9px;gap:5px;align-items:center;}
+    .log-date{font-size:11px;padding:0;}
+    .log-day.sel{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent);background:var(--bg-card);}
+    .log-dots{display:flex;align-items:center;justify-content:center;gap:4px;flex-wrap:wrap;min-height:9px;}
+    .log-dot{width:8px;height:8px;border-radius:50%;background:var(--c);}
+    .log-dot.ring{background:transparent;border:1.7px dashed var(--c);box-sizing:border-box;}
+    .log-dot-more{font-family:var(--mono);font-size:8.5px;color:var(--text-faint);line-height:8px;}
 
     /* Detail / form / import panel: a full overlay over the calendar, sliding up. */
     .log-body{flex-direction:column;min-height:0;}
@@ -2093,6 +2136,17 @@
   .dv-name{font-size:17px;font-weight:750;color:var(--text-strong);overflow:hidden;text-overflow:ellipsis;}
   .dv-sub{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--text-dim);}
   .dv-sub i{width:8px;height:8px;border-radius:50%;flex:none;}
+  /* Link out to the ride on Strava — brand mark keeps its orange, the rest is
+     quiet ink until hover. Sits under the date as its own small pill. */
+  .dv-strava{
+    display:inline-flex;align-items:center;gap:7px;align-self:flex-start;margin-top:4px;
+    font-family:inherit;font-size:12px;font-weight:600;color:var(--text-dim);text-decoration:none;cursor:pointer;
+    padding:5px 10px;border-radius:8px;border:1px solid var(--border);background:var(--bg-card);
+    transition:border-color .12s ease,color .12s ease,background .12s ease;
+  }
+  .dv-strava:hover{border-color:#FC4C02;color:var(--text-strong);background:var(--bg-card-hover);}
+  .dv-strava svg{display:block;flex:none;}
+  .dv-strava span{line-height:1;}
   /* Clean text readouts: two-column key / value rows, no pills. */
   .dv-stats{display:grid;grid-template-columns:1fr 1fr;gap:2px 24px;}
   .dv-row{
@@ -2180,9 +2234,10 @@
   }
   .tr-range-btn:hover{color:var(--text);}
   .tr-range-btn.on{background:var(--accent);color:var(--on-accent);}
-  /* Flex column so the chart row below the tiles fills exactly the space left
-     in the modal — no growing past it, so the window never needs scrolling. */
-  .trends-scroll{overflow-y:auto;padding-top:16px;flex:1;display:flex;flex-direction:column;}
+  /* Scrollable region. Charts have compact fixed heights (below) so the modal
+     fits without scrolling in the normal case, but it still scrolls as a safety
+     net when a ride stacks up several new-PR pills — content is never clipped. */
+  .trends-scroll{overflow-y:auto;padding-top:16px;flex:1;}
 
   /* One instrument strip: cells joined by hairlines (1px grid gap over a border
      ground), not five floating cards. */
@@ -2206,21 +2261,20 @@
     background:var(--bg-card-list);border:1px solid var(--border);border-radius:16px;
     padding:16px 18px 14px;margin-bottom:16px;
   }
-  /* Fitness/Form stacked on the left; the 12-week trend over the tall power curve on the right. */
-  .trends-cols{display:flex;gap:16px;align-items:stretch;flex:1 1 auto;min-height:0;}
+  /* Fitness/Form on the left; the 12-week trend over the power curve on the
+     right. Columns size to their own content (align-items:flex-start) — the
+     Power Records card grows naturally when it carries new-PR pills, and the
+     modal scrolls rather than the chart overflowing its card. */
+  .trends-cols{display:flex;gap:16px;align-items:flex-start;}
   .trends-cols .tr-card{margin-bottom:0;}
-  .col-left{flex:1 1 0;min-width:0;min-height:0;display:flex;flex-direction:column;gap:16px;}
-  .col-right{flex:none;width:300px;min-height:0;display:flex;flex-direction:column;gap:16px;}
+  .col-left{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:16px;}
+  .col-right{flex:none;width:300px;display:flex;flex-direction:column;gap:16px;}
   .col-right .wk-card{flex:none;display:flex;flex-direction:column;}
-  .col-right .tr-card:not(.wk-card){flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
-  .col-right .tr-card:not(.wk-card) .tr-canvas{flex:1;min-height:124px;}
-  .wk-card .wk-canvas{width:100%;}
-  /* Left column: Fitness/Fatigue keeps its size; Form grows so its bottom lines
-     up with Power Records on the right. Both charts share the leftover height,
-     so the whole modal fits the viewport without scrolling. */
-  .col-left .tr-card:first-child{flex:none;}
-  .col-left .tr-card:last-child{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
-  .col-left .tr-card:last-child .tr-canvas{flex:1;min-height:108px;}
+  .col-right .tr-card:not(.wk-card){display:flex;flex-direction:column;}
+  /* Compact fixed chart heights: predictable, deterministic canvas sizing, and
+     small enough that the common case fits the window without scrolling. */
+  .col-right .tr-card:not(.wk-card) .tr-canvas{height:200px;}
+  .col-left .tr-card:last-child .tr-canvas{height:182px;}
   @media (max-width:620px){
     /* The charts window goes full-screen on a phone (was a centered card that
        overflowed the viewport, cutting off Close). */
@@ -3040,7 +3094,7 @@
     <!-- Calendar scrolls on the left; the form / import panel is a full-height
          column on the right, so its buttons never fall below the fold. -->
     <div class="log-body">
-      <div class="log-gridwrap"><div class="log-grid" id="logGrid"></div></div>
+      <div class="log-gridwrap"><div class="log-grid" id="logGrid"></div><div class="log-dock" id="logDock" hidden></div></div>
       <div class="log-side" id="logAdd" style="display:none;"></div>
     </div>
   </div>
@@ -3343,6 +3397,7 @@
     logModal: document.getElementById('logModal'),
     logMonth: document.getElementById('logMonth'),
     logGrid: document.getElementById('logGrid'),
+    logDock: document.getElementById('logDock'),
     logAdd: document.getElementById('logAdd'),
     logPrev: document.getElementById('logPrev'),
     logNext: document.getElementById('logNext'),
@@ -5538,7 +5593,7 @@
     var route = params.grant_type === 'refresh_token' ? '/refresh' : '/exchange';
     var res = await fetch(STRAVA_PROXY + route, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(params)});
     var json = await res.json().catch(function(){ return {}; });
-    if(!res.ok) throw new Error(json.message || ('HTTP ' + res.status));
+    if(!res.ok){ var err = new Error(json.message || ('HTTP ' + res.status)); err.status = res.status; throw err; }
     strava.accessToken = json.access_token;
     strava.refreshToken = json.refresh_token;
     strava.expiresAt = json.expires_at;             // unix seconds
@@ -5599,9 +5654,34 @@
   async function stravaAccessToken(){
     if(!stravaConnected()) throw new Error('Strava is not connected');
     if(!strava.accessToken || !strava.expiresAt || strava.expiresAt - Date.now() / 1000 < 60){
-      await stravaTokenRequest({grant_type:'refresh_token', refresh_token:strava.refreshToken});
+      try{
+        await stravaTokenRequest({grant_type:'refresh_token', refresh_token:strava.refreshToken});
+      }catch(e){
+        // Only a token Strava *rejects* (400/401) is dead — drop the stale
+        // "connected" state so the UI stops lying and the rider is asked to
+        // reconnect, instead of every sync failing silently against a ghost
+        // session. A network blip or 5xx is transient: keep the session.
+        if(e && (e.status === 400 || e.status === 401)){
+          stravaForget();
+          throw new Error('Strava session expired — please reconnect.');
+        }
+        throw e;
+      }
     }
     return strava.accessToken;
+  }
+  // Checked on every load: if a remembered session's token is due (or missing),
+  // refresh it now to confirm it's really live. If the refresh token has been
+  // revoked or expired, drop the connection — so the app never shows a
+  // signed-out athlete as "connected", the exact stale state that was silently
+  // breaking indoor-ride sync.
+  async function stravaValidateSession(){
+    if(!stravaConnected()) return;
+    var due = !strava.accessToken || !strava.expiresAt || (strava.expiresAt - Date.now() / 1000 < 300);
+    if(!due) return;
+    try{ await stravaTokenRequest({grant_type:'refresh_token', refresh_token:strava.refreshToken}); }
+    catch(e){ if(e && (e.status === 400 || e.status === 401)) stravaForget(); }   // only drop a token Strava rejects, not a network blip
+    updateStravaUI();
   }
 
   function stravaConnect(){
@@ -5640,10 +5720,11 @@
     // Best effort: tell Strava to revoke, then forget the tokens.
     var tok = strava.accessToken;
     if(tok) fetch('https://www.strava.com/oauth/deauthorize', {method:'POST', body:new URLSearchParams({access_token:tok})}).catch(function(){});
-    strava = {};
-    saveStrava();
-    updateStravaUI();
+    stravaForget();
   }
+  // Forget a dead session without the network deauthorize call (the token is
+  // already invalid). Shared by stravaDisconnect and the self-heal paths.
+  function stravaForget(){ strava = {}; saveStrava(); updateStravaUI(); }
 
   function updateStravaUI(){
     var on = stravaConnected();
@@ -7846,13 +7927,20 @@
   function closeLog(){ els.logModal.style.display = 'none'; }
 
   // ---- de-duplicating indoor rides against their Strava twin ----
-  // A trainer ride saved here and the same ride synced from Strava end up as two
-  // calendar entries (different ids, and the local one carries no Strava link).
-  // We keep the Strava copy — it has the name, route and shareable link — and
-  // drop the local indoor twin. A "same session" is a still-unlinked indoor ride
-  // whose start (within 15 min) and duration (within 10 min or 40%) line up with
-  // an imported Strava ride. Only 'ride' activities are considered, so a run or
-  // gym session at a nearby time is never mistaken for the trainer ride.
+  // A trainer ride saved here and the same ride on Strava (synced in, or posted
+  // by a head unit / Zwift as a second activity) end up as two calendar entries.
+  // The LOCAL indoor copy is the richer one — it holds the power samples and can
+  // regenerate its .fit and timeline image — so we keep it and drop the imported
+  // Strava summary, copying the Strava link (and any route) onto the local ride
+  // so it stays shareable. The imported activity's id is recorded on the kept
+  // ride (as its own stravaActivityId, or in stravaTwinIds when it already has
+  // one) so a later sync won't re-import the twin we just removed. A "same
+  // session" is an imported 'ride' whose start (within 15 min) and duration
+  // (within 10 min or 40%) line up with a local indoor ride. Only 'ride'
+  // activities are considered, so a run or gym session nearby is never mistaken
+  // for the trainer ride. This also catches the case where the indoor ride
+  // already carries its own Strava id (posted from here) but a *second* Strava
+  // activity for the same ride got imported as a twin.
   function sameSession(indoor, strava){
     if(Math.abs((indoor.startDateMs || 0) - (strava.startDateMs || 0)) > 15 * 60 * 1000) return false;
     var a = indoor.durationSec || 0, b = strava.durationSec || 0;
@@ -7860,21 +7948,53 @@
     var lo = Math.min(a, b), hi = Math.max(a, b);
     return (hi - lo) <= Math.max(600, hi * 0.4);
   }
-  function indoorTwinIds(rides){
-    var strava = rides.filter(function(r){ return r.imported && r.stravaActivityId && r.type === 'ride'; });
-    var kill = [];
-    rides.forEach(function(r){
-      if(r.type !== 'indoor' || r.stravaActivityId) return;
-      if(strava.some(function(s){ return sameSession(r, s); })) kill.push(r.id);
+  function indoorTwinActions(rides){
+    var imports = rides.filter(function(r){ return r.imported && r.stravaActivityId && r.type === 'ride'; });
+    var indoors = rides.filter(function(r){ return r.type === 'indoor'; });
+    var claimed = {}, actions = [];
+    imports.forEach(function(s){
+      var match = null;
+      for(var i = 0; i < indoors.length; i++){
+        var r = indoors[i];
+        if(!claimed[r.id] && sameSession(r, s)){ match = r; break; }
+      }
+      if(!match) return;
+      claimed[match.id] = true;
+      actions.push({
+        deleteId: s.id,
+        keepId: match.id,
+        importSid: s.stravaActivityId,
+        setLink: !match.stravaActivityId,                 // adopt the link if it has none
+        route: (!match.route && s.route) ? s.route : null
+      });
     });
-    return kill;
+    return actions;
   }
   function dedupeIndoorTwins(){
     return rideAll().then(function(all){
-      var kill = indoorTwinIds(all);
-      return kill.reduce(function(p, id){ return p.then(function(){ return rideDelete(id); }); }, Promise.resolve())
-        .then(function(){ return kill.length; });
+      var actions = indoorTwinActions(all);
+      return actions.reduce(function(p, a){
+        return p.then(function(){
+          return rideGet(a.keepId).then(function(rec){
+            if(!rec) return;
+            if(a.setLink){ rec.stravaActivityId = a.importSid; }
+            else {
+              rec.stravaTwinIds = rec.stravaTwinIds || [];
+              if(rec.stravaTwinIds.indexOf(a.importSid) < 0) rec.stravaTwinIds.push(a.importSid);
+            }
+            if(a.route) rec.route = a.route;
+            return rideSave(rec);   // persist the link merge + sync it
+          }).then(function(){ return rideDelete(a.deleteId); });
+        });
+      }, Promise.resolve()).then(function(){ return actions.length; });
     }).catch(function(e){ console.log('Indoor/Strava de-dupe skipped:', e && e.message); return 0; });
+  }
+  // Every Strava id a record already accounts for — its own, plus any twin ids
+  // absorbed by the indoor/Strava de-dupe — so a sync never re-imports a removed
+  // twin.
+  function markStravaHave(have, r){
+    if(r.stravaActivityId) have[r.stravaActivityId] = true;
+    if(r.stravaTwinIds) r.stravaTwinIds.forEach(function(id){ have[id] = true; });
   }
 
   // ---- auto-sync from Strava on calendar open ----
@@ -7899,7 +8019,7 @@
     syncNote('Syncing Strava…');
     Promise.all([stravaFetchActivities(since), rideAll()]).then(function(res){
       var acts = res[0] || [], have = {};
-      res[1].forEach(function(r){ if(r.stravaActivityId) have[r.stravaActivityId] = true; });
+      res[1].forEach(function(r){ markStravaHave(have, r); });
       var newest = since;
       acts.forEach(function(a){ var t = Date.parse(a.start_date); if(t > newest) newest = t; });
       if(newest > since) lsSet(AUTOSYNC_SINCE, String(newest + 1000));
@@ -7970,11 +8090,30 @@
   var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   var DOW = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
+  // Mobile calendar: tapping a day docks its detail into the space below the
+  // grid (phones only; desktop keeps the side panel). 720px matches the
+  // calendar's existing mobile CSS so the two layouts never half-apply.
+  var mqCal = window.matchMedia('(max-width:720px)');
+  var dockDay = null, logByDay = {}, logTodayKey = '';
+  function monthKey(y, m){ return y + '-' + (m < 9 ? '0' : '') + (m + 1); }
+  function defaultDockDay(y, m, todayKey){
+    return todayKey.slice(0, 7) === monthKey(y, m) ? todayKey : monthKey(y, m) + '-01';
+  }
+  function dotsFor(list){
+    if(!list.length) return '';
+    var max = 3, out = list.slice(0, max).map(function(r){
+      return '<span class="log-dot' + (r.planned ? ' ring' : '') + '" style="--c:' + entryColor(r) + '"></span>';
+    }).join('');
+    if(list.length > max) out += '<span class="log-dot-more">+' + (list.length - max) + '</span>';
+    return out;
+  }
+
   function renderLog(){
     rideAll().then(function(all){
       var byDay = {};
       all.forEach(function(r){ (byDay[r.day] = byDay[r.day] || []).push(r); });
 
+      var mobile = mqCal.matches;
       var y = logMonth.y, m = logMonth.m;
       els.logMonth.textContent = MONTHS[m] + ' ' + y;
       var first = new Date(y, m, 1);
@@ -7995,8 +8134,11 @@
           // Planned workouts don't count toward the week's done totals.
           list.forEach(function(r){ if(r.planned) return; wkTss += r.tss || 0; wkSec += r.durationSec || 0; wkN++; });
           var future = k >= todayKey;   // today and later get the plan +
-          cells += '<div class="log-day' + (out ? ' out' : '') + (i >= 5 ? ' weekend' : '') + (k === todayKey ? ' today' : '') + '" data-day="' + k + '">' +
+          var sel = mobile && k === dockDay;
+          cells += '<div class="log-day' + (out ? ' out' : '') + (i >= 5 ? ' weekend' : '') + (k === todayKey ? ' today' : '') + (sel ? ' sel' : '') + '" data-day="' + k + '">' +
             '<span class="log-date">' + d.getDate() + '</span>' +
+            // Mobile: just colour dots — the day's detail lives in the dock below.
+            (mobile ? '<span class="log-dots">' + dotsFor(list) + '</span>' :
             list.map(function(r){
               var det = entryDetail(r);
               // An activity feeds Fitness/Fatigue/Form only through TSS, or failing
@@ -8007,7 +8149,7 @@
                 '<i></i><span>' + entryName(r) + '</span>' + (r.tss ? '<b>' + r.tss + '</b>' : needsRpe ? '<em class="rpe-flag">RPE</em>' : '') +
                 (r.planned ? '<span class="plan-del" data-del="' + r.id + '" title="Delete plan" aria-label="Delete plan">×</span>' : '') + '</button>';
             }).join('') +
-            (future ? '<button type="button" class="log-day-add" data-plan="' + k + '" title="Plan a workout on this day" aria-label="Plan a workout">+</button>' : '') +
+            (future ? '<button type="button" class="log-day-add" data-plan="' + k + '" title="Plan a workout on this day" aria-label="Plan a workout">+</button>' : '')) +
           '</div>';
         }
         html += '<div class="log-row">' + cells +
@@ -8015,11 +8157,111 @@
         '</div>';
       }
       els.logGrid.innerHTML = html;
+      logByDay = byDay; logTodayKey = todayKey;
+      if(mobile){
+        els.logDock.hidden = false;
+        if(!dockDay || dockDay.slice(0, 7) !== monthKey(y, m)) dockDay = defaultDockDay(y, m, todayKey);
+        markDockSel();
+        renderDock(dockDay);
+      } else if(els.logDock){
+        els.logDock.hidden = true;
+      }
     }).catch(function(e){
       els.logGrid.innerHTML = '<p class="log-error">The log couldn’t be opened: ' + (e && e.message) + '</p>';
     });
   }
+
+  // ---- mobile day dock ----
+  function markDockSel(){
+    [].forEach.call(els.logGrid.querySelectorAll('.log-day'), function(el){
+      el.classList.toggle('sel', el.getAttribute('data-day') === dockDay);
+    });
+  }
+  function selectDockDay(k){ dockDay = k; markDockSel(); renderDock(k); }
+  function zoneLabel(r){
+    if(r.type === 'indoor') return (r.zone && ZONES[r.zone]) ? ZONES[r.zone].label : 'Indoor';
+    return typeSpec(r.type).label;
+  }
+  function dockThumb(r){
+    if(r.type === 'indoor' && r.key && typeof byKey === 'function'){ var wo = byKey(r.key); if(wo && typeof thumbSvg === 'function') return thumbSvg(wo); }
+    if(r.route && typeof routeSvg === 'function') return routeSvg(decodePolyline(r.route), 64, 42);
+    return '';
+  }
+  function dockDoneCard(r){
+    var thumb = dockThumb(r);
+    var bits = [];
+    if(r.durationSec) bits.push('<span class="dock-stat">' + Math.round(r.durationSec / 60) + ' min</span>');
+    if(r.tss) bits.push('<span class="dock-stat">TSS ' + r.tss + '</span>');
+    else if(r.rpe) bits.push('<span class="dock-stat">RPE ' + r.rpe + '</span>');
+    var struct = r.type === 'indoor'
+      ? (r.key && typeof byKey === 'function' && byKey(r.key) && typeof shortLabel === 'function' ? shortLabel(byKey(r.key)) : '')
+      : entryDetail(r);
+    return '<button type="button" class="dock-card" data-id="' + r.id + '">' +
+      (thumb ? '<span class="dock-thumb">' + thumb + '</span>' : '') +
+      '<span class="dock-cbody">' +
+        '<span class="dock-crow"><span class="dock-cname">' + entryName(r) + '</span><span class="dock-chev">&#8250;</span></span>' +
+        '<span class="dock-cmeta"><span class="dock-ztag" style="--c:' + entryColor(r) + '">' + zoneLabel(r) + '</span>' +
+          bits.map(function(b){ return '<span class="dock-sep">&middot;</span>' + b; }).join('') + '</span>' +
+        (struct ? '<span class="dock-cstruct">' + struct + '</span>' : '') +
+      '</span></button>';
+  }
+  function dockPlannedCard(r){
+    return '<button type="button" class="dock-card planned" data-id="' + r.id + '">' +
+      '<span class="dock-pl-dot" style="--c:' + entryColor(r) + '"></span>' +
+      '<span class="dock-cbody">' +
+        '<span class="dock-crow"><span class="dock-cname">' + entryName(r) + '</span><span class="dock-chev">&#8250;</span></span>' +
+        '<span class="dock-cmeta"><span class="dock-sub">Planned &middot; ' + zoneLabel(r) + '</span></span>' +
+      '</span></button>';
+  }
+  function dockPlanPrompt(){
+    return '<div class="dock-plan"><p class="dock-plan-lead">Nothing planned.</p>' +
+      '<div class="dock-chips">' + PLAN_CATS.map(function(c){
+        return '<button type="button" class="dock-chip" data-dock-cat="' + c.key + '"><i style="background:' + entryColor({type:c.type}) + '"></i>' + c.label + '</button>';
+      }).join('') + '</div></div>';
+  }
+  function dockHead(k, tag){ return '<div class="dock-date"><b>' + prettyDate(k) + '</b><span>' + tag + '</span></div>'; }
+  function renderDock(k){
+    if(!els.logDock) return;
+    var all = logByDay[k] || [], done = all.filter(function(r){ return !r.planned; }),
+        planned = all.filter(function(r){ return r.planned; }), future = k >= logTodayKey;
+    var body;
+    if(done.length) body = done.map(dockDoneCard).join('');
+    else if(planned.length) body = planned.map(dockPlannedCard).join('');
+    else if(future) body = dockPlanPrompt();
+    else body = '<div class="dock-rest"><b>Rest day</b><span>Nothing logged.</span></div>';
+    els.logDock.innerHTML = dockHead(k, k === logTodayKey ? 'Today' : (future ? 'Upcoming' : 'Done')) + body;
+  }
+  // Chip → that type's targets, in the dock; target → create the plan.
+  function dockPlanStep2(catKey){
+    var c = PLAN_CATS.filter(function(x){ return x.key === catKey; })[0];
+    els.logDock.innerHTML = dockHead(dockDay, 'Plan &middot; ' + c.label) +
+      '<div class="dock-targets">' + c.targets.map(function(t){
+        return '<button type="button" class="dock-target" data-dock-cat="' + catKey + '" data-dock-t="' + t[0] + '">' + t[1] + '</button>';
+      }).join('') + '</div>' +
+      '<button type="button" class="dock-back" data-dock-back>&#8249; Types</button>';
+  }
+  els.logDock.addEventListener('click', function(e){
+    var card = e.target.closest('.dock-card');
+    if(card){ var id = +card.getAttribute('data-id'); rideGet(id).then(function(r){ if(r) showDetail(r); }); return; }
+    var tgt = e.target.closest('[data-dock-cat][data-dock-t]');
+    if(tgt){
+      planDay = dockDay;
+      createPlan(PLAN_CATS.filter(function(x){ return x.key === tgt.getAttribute('data-dock-cat'); })[0], tgt.getAttribute('data-dock-t'));
+      return;
+    }
+    var chip = e.target.closest('[data-dock-cat]');
+    if(chip){ dockPlanStep2(chip.getAttribute('data-dock-cat')); return; }
+    if(e.target.closest('[data-dock-back]')){ renderDock(dockDay); }
+  });
+  // Re-render when crossing the mobile breakpoint so the right layout shows.
+  mqCal.addEventListener('change', function(){ if(els.logModal.style.display !== 'none') renderLog(); });
+
   els.logGrid.addEventListener('click', function(e){
+    // Mobile: a tap anywhere on a day docks that day's detail below.
+    if(mqCal.matches){
+      var dayEl = e.target.closest('.log-day');
+      if(dayEl){ selectDockDay(dayEl.getAttribute('data-day')); return; }
+    }
     // Quick-delete a plan from its chip — no confirm; a plan is 3 clicks to remake.
     var del = e.target.closest('[data-del]');
     if(del){
@@ -8119,6 +8361,10 @@
   var CLOSE_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>';
   var EXPAND_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M14 5h5v5M19 5l-6 6M10 19H5v-5M5 19l6-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   var BACK_SVG = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  // Strava brand mark (orange, keeps its own colour) + an open-in-new-window glyph.
+  var STRAVA_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066M12.825 10.2l1.46 2.874h-2.92l1.46-2.874" fill="#FC4C02"/></svg>';
+  var EXTLINK_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M14 4h6v6M20 4l-8 8M18 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  var UPLOAD_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M5 19h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
   function prettyDate(day){
     var p = String(day).split('-').map(Number), d = new Date(p[0], p[1]-1, p[2]);
@@ -8383,13 +8629,28 @@
           [1,2,3,4,5,6,7,8,9,10].map(function(n){ return '<button type="button" data-rpe="' + n + '">' + n + '</button>'; }).join('') +
         '</span></div>';
     var noteHtml = rec.note ? '<p class="dv-note">' + esc(rec.note) + '</p>' : '';
+    // When the ride is on Strava, a link straight to it (brand mark keeps its
+    // orange, open-in-new-window glyph so it reads as external). When it's a
+    // local indoor ride not yet on Strava, the same spot offers to Sync it.
+    var stravaLink = rec.stravaActivityId
+      ? '<a class="dv-strava" href="https://www.strava.com/activities/' + rec.stravaActivityId + '" ' +
+          'target="_blank" rel="noopener noreferrer" title="Open this activity on Strava">' +
+          STRAVA_SVG + '<span>View on Strava</span>' + EXTLINK_SVG +
+        '</a>'
+      : (rec.type === 'indoor' && rec.samples && rec.samples.length
+          ? '<button type="button" class="dv-strava dv-strava-sync" id="dvStravaSync" title="Open this ride and sync it to Strava">' +
+              STRAVA_SVG + '<span>Sync to Strava</span>' + UPLOAD_SVG +
+            '</button>'
+          : '');
     var titleBlock =
       '<div class="dv-title">' +
         '<span class="dv-name">' + esc(entryName(rec)) + '</span>' +
         '<span class="dv-sub"><i style="background:' + entryColor(rec) + '"></i>' + typeLabel + ' · ' + prettyDate(rec.day) + '</span>' +
+        stravaLink +
       '</div>';
+    // Delete now lives inside the edit flow (edit → form → trash), so the detail
+    // header is just edit + close.
     var btns = '<div class="lf-head-btns">' + editBtn +
-      '<button type="button" class="lf-hbtn del" id="dvDelete" title="Delete" aria-label="Delete">' + TRASH_SVG + '</button>' +
       '<button type="button" class="lf-hbtn cancel" id="dvClose" title="Close" aria-label="Close">' + CLOSE_SVG + '</button>' +
       '</div>';
     // With a route, the title / type / date sit on one line beside the map,
@@ -8411,6 +8672,9 @@
     renderDetailGraph(rec);
     var full = els.logAdd.querySelector('#dvFull'); if(full) full.addEventListener('click', function(){ openSavedRide(rec.id); });
     var edit = els.logAdd.querySelector('#dvEdit'); if(edit) edit.addEventListener('click', function(){ showLogForm(rec); });
+    // Sync to Strava opens the ride's full view, where the upload (and the
+    // connect-first flow when signed out) already lives.
+    var sync = els.logAdd.querySelector('#dvStravaSync'); if(sync) sync.addEventListener('click', function(){ openSavedRide(rec.id); });
     // One-click RPE: set, auto-save, and re-render as "RPE X/10". To change it
     // later, use the normal edit flow.
     var rpeBox = els.logAdd.querySelector('#dvRpe');
@@ -8421,10 +8685,6 @@
       ridePatch(rec.id, {rpe:rec.rpe}).then(function(){ renderLog(); refreshDoneMarks(); });
     });
     els.logAdd.querySelector('#dvClose').addEventListener('click', hideSide);
-    els.logAdd.querySelector('#dvDelete').addEventListener('click', function(){
-      if(!confirm('Delete this activity?')) return;
-      rideDelete(rec.id).then(function(){ hideSide(); renderLog(); refreshDoneMarks(); });
-    });
   }
   function hideSide(){ els.logAdd.style.display = 'none'; selectedId = null; markSelected(); }
 
@@ -8688,7 +8948,7 @@
     var days = 90;
     Promise.all([stravaFetchActivities(Date.now() - days * 86400000), rideAll()]).then(function(res){
       var acts = res[0], have = {};
-      res[1].forEach(function(r){ if(r.stravaActivityId) have[r.stravaActivityId] = true; });
+      res[1].forEach(function(r){ markStravaHave(have, r); });
       var rows = acts.map(function(a){ return {a:a, rec:stravaToRecord(a), inLog: !!have[a.id]}; })
                      .sort(function(x, y){ return y.rec.startDateMs - x.rec.startDateMs; });
       renderImportRows(rows, days);
@@ -9692,6 +9952,9 @@
   checkBleSupport();
   updateDeviceUI();   // shows "Reconnect" if a device is remembered
   updateStravaUI();
+  // Verify a remembered Strava session is still live (token due → refresh now;
+  // revoked/expired → sign out), so "connected" always reflects reality.
+  if(typeof stravaValidateSession === 'function') stravaValidateSession();
   // Coming back from Strava's consent page (or reopening after a ride that
   // never got closed): finish the sign-in, then bring the parked ride back.
   stravaHandleCallback().then(function(){ restoreStashedRide(); });
