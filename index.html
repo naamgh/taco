@@ -39,8 +39,8 @@
     --warn-line:rgba(231,184,78,0.35);
     --star:#E7B84E;
     --ink-rgb:236,236,234;      /* overlay lines drawn over cards and charts */
-    /* Live chart traces: yellow power, grey cadence (red HR is inline). */
-    --line-power:#F5C518;
+    /* Live chart traces: bright yellow power, light-grey cadence (red HR is inline). */
+    --line-power:#FFD60A;
     --line-cadence:#C6C6C0;
     --scrim:rgba(8,8,9,0.6);    /* behind the player and summary */
     --divider:#2C2C2F;
@@ -100,8 +100,8 @@
     --warn-line:rgba(138,100,16,0.3);
     --star:#D99A00;
     --ink-rgb:20,20,15;
-    --line-power:#E0A400;
-    --line-cadence:#55554E;
+    --line-power:#FFC400;
+    --line-cadence:#9C9C94;
     --scrim:rgba(20,20,15,0.35);
     --divider:#E7E5DD;
     --chip-text:#14140F;
@@ -1596,10 +1596,22 @@
   .live-chart-legend span{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--text-dim);}
   .leg-dot{width:9px;height:9px;border-radius:50%;display:inline-block;}
 
-  /* The 'next up' line and the intensity trim share a row above the rail, well
-     clear of Skip/Pause so a mid-effort tap can't land on them by mistake. */
-  .live-cue-row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin:0 0 16px;flex:none;}
-  .live-next{margin:0;font-size:14.5px;color:var(--text-dim);text-align:left;flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* The intensity trims and the ride-so-far averages share a row above the
+     rail, well clear of Skip/Pause so a mid-effort tap can't land on them. */
+  .live-cue-row{display:flex;align-items:center;justify-content:space-between;gap:12px 18px;margin:0 0 16px;flex:none;flex-wrap:wrap;}
+  .live-steppers{display:flex;align-items:center;gap:10px;flex:none;}
+  .live-steppers .live-rest{padding-left:12px;border-left:1px solid var(--border);}
+  .li-rlabel{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);}
+
+  /* 'Next block' now sits under the Interval title; keep it to one line so a
+     small (non-hero) Interval chip truncates instead of wrapping to two. */
+  .tr-next{font-family:var(--sans);font-size:12.5px;font-weight:500;color:var(--text-dim);text-transform:none;letter-spacing:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+
+  /* Ride-so-far averages — plain text, no chips, hugging the right edge. */
+  .live-avgs{display:flex;align-items:baseline;gap:16px;margin-left:auto;font-family:var(--sans);font-size:13px;color:var(--text-dim);min-width:0;flex-wrap:wrap;}
+  .live-avgs .la-cap{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-faint);}
+  .live-avgs .la-l{color:var(--text-dim);}
+  .live-avgs .la-v{font-family:var(--mono);font-weight:700;color:var(--text-strong);}
 
   /* Intensity trim stepper — a compact touch control for the ERG multiplier.
      A power bolt labels the readout; +/- nudge it 1% at a time. */
@@ -1747,13 +1759,14 @@
     border-top:1px solid var(--border-soft);
   }
   .summary-title{font-size:22px;font-weight:700;margin:0 0 4px;}
+  /* The ride's numbers are the headline of this screen — big and bold. */
   .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0;}
   .summary-chip{
-    background:var(--bg-elev);border:1px solid var(--border-soft);border-radius:12px;
-    padding:14px 10px;text-align:center;
+    background:var(--bg-elev);border:1px solid var(--border-soft);border-radius:14px;
+    padding:18px 12px;text-align:center;
   }
-  .summary-chip span{display:block;font-size:11px;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px;}
-  .summary-chip b{display:block;font-family:var(--mono);font-size:20px;color:var(--text);}
+  .summary-chip span{display:block;font-size:11px;font-weight:600;color:var(--text-faint);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;}
+  .summary-chip b{display:block;font-family:var(--mono);font-size:28px;font-weight:700;color:var(--text-strong);letter-spacing:-0.01em;line-height:1.05;}
   /* RPE 1-10. A row of small squares; the chosen one lights in the accent. */
   .rpe-row{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin:6px 0 4px;}
   .rpe-label{font-size:13px;color:var(--text-dim);font-weight:600;}
@@ -1768,8 +1781,21 @@
   .rpe-btns button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
 
   .summary-actions{display:flex;flex-direction:column;gap:10px;}
-  .summary-row{display:flex;gap:8px;}
-  .summary-row .action-btn{flex:1 1 0;justify-content:center;}
+  .summary-row{display:flex;gap:8px;align-items:stretch;}
+  /* margin:0 so the danger button's default top margin can't make it shorter
+     than Save & close in the shared row (needs the extra class to beat the
+     global .action-btn.danger{margin-top} rule later in the file). */
+  .summary-row .action-btn{flex:1 1 0;justify-content:center;margin:0;}
+  .summary-row .action-btn.danger{margin-top:0;}
+  /* "Create share image": a quiet full-width button that opens the share screen. */
+  .open-share-btn{justify-content:flex-start;gap:9px;padding:12px 14px;}
+  .open-share-btn .open-share-chev{margin-left:auto;color:var(--text-faint);font-size:18px;line-height:1;}
+  /* Share screen (overlays the summary): style picker, a big preview, downloads. */
+  .share-inner{max-width:560px;display:flex;flex-direction:column;gap:14px;text-align:left;}
+  .share-top{display:flex;align-items:center;gap:12px;}
+  .share-screen-title{margin:0;font-size:19px;font-weight:750;color:var(--text-strong);}
+  .share-inner .share-styles{align-self:center;}
+  .share-actions{display:flex;flex-direction:column;gap:10px;margin-top:2px;}
   /* Share-image block: a style picker over a live preview, then the download. */
   .summary-share{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--border-soft);border-radius:14px;background:var(--bg-card-list);}
   .share-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
@@ -2924,8 +2950,8 @@
         <div class="tr-bar-track"><div class="tr-bar-fill" id="trPowerBar"></div></div>
       </div>
       <div class="tr-cell hero" data-m="interval">
-        <span class="tr-label">Interval Time</span>
-        <span class="tr-sub" id="liveSegmentIndex"></span>
+        <span class="tr-label">Interval</span>
+        <span class="tr-sub tr-next" id="liveNext"></span>
         <span class="tr-val" id="trIntervalTime">00:00</span>
       </div>
       <div class="tr-cell" data-m="hr">
@@ -2937,7 +2963,7 @@
         <span class="tr-val" id="trTarget">—</span>
       </div>
       <div class="tr-cell" data-m="total">
-        <span class="tr-label">Total Time</span>
+        <span class="tr-label">Elapsed</span>
         <span class="tr-val" id="trTotalTime">00:00</span>
       </div>
       <div class="tr-cell hero" data-m="cadence">
@@ -2959,17 +2985,34 @@
       <span><i class="leg-dot" style="background:var(--line-cadence)"></i>Cadence</span>
     </div>
 
+    <!-- Intensity trim: ERG holds the plan, these scale it up or down. Overall
+         scales the whole ride; Rest adds a separate trim to the recovery legs
+         between work sets. Averages for the ridden metrics sit on the right.
+         Clear of Skip/Pause so a mid-effort tap can't land on them. -->
     <div class="live-cue-row">
-      <p class="live-next" id="liveNext"></p>
-      <!-- Intensity trim: ERG holds the plan, these scale it up or down.
-           Sits by the 'next' line, clear of Skip/Pause to avoid mid-effort mis-taps. -->
-      <div class="live-intensity" id="liveIntensity">
-        <button class="li-btn" id="intMinus" type="button" aria-label="Decrease intensity">&#8722;</button>
-        <span class="li-readout">
-          <svg class="li-icon" viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M13.5 2 5 13.2h5l-1.6 8.8L18.5 10h-5z"/></svg>
-          <span class="li-val" id="trIntensity">100%</span>
-        </span>
-        <button class="li-btn" id="intPlus" type="button" aria-label="Increase intensity">+</button>
+      <div class="live-steppers">
+        <div class="live-intensity" id="liveIntensity">
+          <button class="li-btn" id="intMinus" type="button" aria-label="Decrease overall intensity">&#8722;</button>
+          <span class="li-readout">
+            <svg class="li-icon" viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M13.5 2 5 13.2h5l-1.6 8.8L18.5 10h-5z"/></svg>
+            <span class="li-val" id="trIntensity">100%</span>
+          </span>
+          <button class="li-btn" id="intPlus" type="button" aria-label="Increase overall intensity">+</button>
+        </div>
+        <div class="live-intensity live-rest" id="liveRest">
+          <button class="li-btn" id="restMinus" type="button" aria-label="Decrease recovery intensity">&#8722;</button>
+          <span class="li-readout">
+            <span class="li-rlabel">Rest</span>
+            <span class="li-val" id="trRest">100%</span>
+          </span>
+          <button class="li-btn" id="restPlus" type="button" aria-label="Increase recovery intensity">+</button>
+        </div>
+      </div>
+      <div class="live-avgs" id="liveAvgRow">
+        <span class="la-cap">Avg</span>
+        <span class="la-m"><span class="la-l">Power</span> <span class="la-v" id="avgPower">&#8212;</span></span>
+        <span class="la-m"><span class="la-l">HR</span> <span class="la-v" id="avgHr">&#8212;</span></span>
+        <span class="la-m"><span class="la-l">Cadence</span> <span class="la-v" id="avgCad">&#8212;</span></span>
       </div>
     </div>
 
@@ -3058,27 +3101,39 @@
       </button>
       <a class="action-btn strava-link" id="summaryStravaLink" href="#" target="_blank" rel="noopener" style="display:none;">View on Strava &#8599;</a>
       <p class="strava-status" id="summaryStravaStatus" style="display:none;"></p>
-      <div class="summary-share">
-        <div class="share-head">
-          <span class="share-label">Share image</span>
-          <div class="share-styles" id="shareStyles" role="group" aria-label="Image style">
-            <button type="button" class="share-style" data-style="bars">Bars</button>
-            <button type="button" class="share-style" data-style="blocks">Blocks</button>
-            <button type="button" class="share-style" data-style="skyline">Skyline</button>
-            <button type="button" class="share-style" data-style="matrix">Matrix</button>
-          </div>
-        </div>
-        <canvas class="share-preview" id="sharePreview" aria-label="Share image preview"></canvas>
-        <button class="action-btn" id="summaryImageBtn">
-          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 3.5v11M12 14.5l-4.2-4.2M12 14.5l4.2-4.2M4.5 16.5v2.2a1.8 1.8 0 001.8 1.8h11.4a1.8 1.8 0 001.8-1.8v-2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Download Timeline Image
-        </button>
-      </div>
-      <button class="action-btn fit-link" id="summaryFitBtn">Download .fit file</button>
+      <button class="action-btn open-share-btn" id="openShareBtn" type="button">
+        <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16M12 4v11M8.5 7.5 12 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Create share image</span>
+        <span class="open-share-chev" aria-hidden="true">&#8250;</span>
+      </button>
       <div class="summary-row">
         <button class="action-btn danger" id="summaryDeleteBtn" style="display:none;">Delete ride</button>
         <button class="action-btn primary" id="summaryCloseBtn">Close</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Share image: pick a plot style, preview it, download the PNG or the .fit. -->
+<div id="shareModal" class="live-player no-print" style="display:none;" role="dialog" aria-modal="true" aria-label="Share image">
+  <div class="live-inner share-inner">
+    <div class="share-top">
+      <button class="icon-btn" id="shareBack" type="button" title="Back" aria-label="Back to summary">&#8249;</button>
+      <h2 class="share-screen-title">Share image</h2>
+    </div>
+    <div class="share-styles" id="shareStyles" role="group" aria-label="Image style">
+      <button type="button" class="share-style" data-style="bars">Bars</button>
+      <button type="button" class="share-style" data-style="blocks">Blocks</button>
+      <button type="button" class="share-style" data-style="skyline">Skyline</button>
+      <button type="button" class="share-style" data-style="matrix">Matrix</button>
+    </div>
+    <canvas class="share-preview" id="sharePreview" aria-label="Share image preview"></canvas>
+    <div class="share-actions">
+      <button class="action-btn primary" id="summaryImageBtn">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 3.5v11M12 14.5l-4.2-4.2M12 14.5l4.2-4.2M4.5 16.5v2.2a1.8 1.8 0 001.8 1.8h11.4a1.8 1.8 0 001.8-1.8v-2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Download Timeline Image
+      </button>
+      <button class="action-btn fit-link" id="summaryFitBtn">Download .fit file</button>
     </div>
   </div>
 </div>
@@ -3369,7 +3424,6 @@
     bleWarning: document.getElementById('bleWarning'),
     livePlayer: document.getElementById('livePlayer'),
     liveWorkoutName: document.getElementById('liveWorkoutName'),
-    liveSegmentIndex: document.getElementById('liveSegmentIndex'),
     liveSegmentLabel: document.getElementById('liveSegmentLabel'),
     trPower: document.getElementById('trPower'),
     trPowerBar: document.getElementById('trPowerBar'),
@@ -3380,6 +3434,14 @@
     liveIntensity: document.getElementById('liveIntensity'),
     intMinus: document.getElementById('intMinus'),
     intPlus: document.getElementById('intPlus'),
+    liveRest: document.getElementById('liveRest'),
+    restMinus: document.getElementById('restMinus'),
+    restPlus: document.getElementById('restPlus'),
+    trRest: document.getElementById('trRest'),
+    liveAvgRow: document.getElementById('liveAvgRow'),
+    avgPower: document.getElementById('avgPower'),
+    avgHr: document.getElementById('avgHr'),
+    avgCad: document.getElementById('avgCad'),
     trGrid: document.getElementById('trGrid'),
     settingsBtn: document.getElementById('settingsBtn'),
     liveSettings: document.getElementById('liveSettings'),
@@ -3413,6 +3475,9 @@
     summaryFitBtn: document.getElementById('summaryFitBtn'),
     sharePreview: document.getElementById('sharePreview'),
     shareStyles: document.getElementById('shareStyles'),
+    openShareBtn: document.getElementById('openShareBtn'),
+    shareModal: document.getElementById('shareModal'),
+    shareBack: document.getElementById('shareBack'),
     summaryImageBtn: document.getElementById('summaryImageBtn'),
     summaryCloseBtn: document.getElementById('summaryCloseBtn'),
     summaryDeleteBtn: document.getElementById('summaryDeleteBtn'),
@@ -5923,12 +5988,19 @@
     // Actual segment boundaries as ridden, in elapsed seconds. Recorded live
     // rather than derived from the plan, because skipping a segment moves them.
     laps:[], lapStartSec:0,
-    // Rider-adjustable workout intensity, 1.0 = as written. Scales every
-    // remaining target; recorded power is untouched.
-    intensity:1, chartMaxPct:0, ranges:null, lastErgWatts:null
+    // Rider-adjustable workout intensity, 1.0 = as written. Two independent
+    // trims: workFactor scales the whole ride (Overall), restFactor is an
+    // extra multiplier applied only to the recovery legs between work sets, so
+    // you can lift the recoveries without touching the efforts. Targets only —
+    // recorded power is untouched, so TSS/.fit stay true to what was ridden.
+    workFactor:1, restFactor:1, hasRest:false,
+    chartMaxPct:0, ranges:null, lastErgWatts:null
   };
 
   var INTENSITY_MIN = 50, INTENSITY_MAX = 150;
+  // Rest trim is deliberately wide — a recovery can be lifted past the efforts
+  // if that's what the rider wants — with just a sane floor, not a tight cap.
+  var REST_MIN = 50, REST_MAX = 250;
 
   // The FTP and max HR a ride is judged against are the ones it was ridden
   // at, snapshotted onto liveState at the start and restored with a saved
@@ -5974,6 +6046,31 @@
   }
   function beepTick(){ beep(660, 150, 0.16); }   // 3 - 2 - 1
   function beepGo(){ beep(990, 340, 0.20); }     // go, and each new segment
+  // A short celebratory arpeggio when a workout finishes — a C major chord
+  // climbing to its octave, over a soft root pad. Reuses the ride's audio
+  // context (already unlocked by the Start tap), so it plays without a gesture.
+  function playFinishChime(){
+    try{
+      if(!audioCtx || audioCtx.state !== 'running') return;
+      var t0 = audioCtx.currentTime, notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach(function(freq, i){
+        var t = t0 + i * 0.085, osc = audioCtx.createOscillator(), g = audioCtx.createGain();
+        osc.type = 'triangle'; osc.frequency.value = freq;
+        osc.connect(g); g.connect(audioCtx.destination);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.17, t + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.55);
+        osc.start(t); osc.stop(t + 0.6);
+      });
+      var pad = audioCtx.createOscillator(), pg = audioCtx.createGain();
+      pad.type = 'sine'; pad.frequency.value = 261.63;
+      pad.connect(pg); pg.connect(audioCtx.destination);
+      pg.gain.setValueAtTime(0.0001, t0);
+      pg.gain.exponentialRampToValueAtTime(0.08, t0 + 0.03);
+      pg.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.85);
+      pad.start(t0); pad.stop(t0 + 0.9);
+    }catch(e){}
+  }
 
   // Keep the screen awake for the length of the session where supported.
   var wakeLock = null;
@@ -5998,6 +6095,19 @@
     return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
   }
 
+  // Tag the recovery legs for the Rest trim. Rule: any leg sitting between the
+  // first and last work leg that isn't itself a work leg is a recovery — even
+  // a steady or endurance block dropped between intervals counts, whatever its
+  // own zone. Warm-up (before the first work leg) and cool-down (after the
+  // last) are never rest, so lifting recoveries never stiffens them.
+  function tagRestLegs(flat){
+    var first = -1, last = -1, i;
+    for(i = 0; i < flat.length; i++){ if(flat[i].work){ if(first < 0) first = i; last = i; } }
+    for(i = 0; i < flat.length; i++){
+      flat[i].rest = (first >= 0 && i > first && i < last && !flat[i].work);
+    }
+  }
+
   function startWorkout(key){
     var wo = byKey(key);
     if(!wo) return;
@@ -6005,6 +6115,8 @@
       // Rounded: a 20 s leg is stored as 1/3 min and 1/3 * 60 isn't exact.
       return {type:s.type, min:s.min, pct:s.pct, pctEnd:s.pctEnd, label:s.label, seconds:Math.round(s.min * 60), prep:s.prep, work:s.work, cue:s.cue};
     });
+    tagRestLegs(flat);
+    liveState.hasRest = flat.some(function(s){ return s.rest; });
     liveState.workout = wo;
     liveState.flat = flat;
     liveState.idx = 0;
@@ -6028,7 +6140,8 @@
     liveState.pedalHoldMs = 0;
     liveState.laps = [];
     liveState.lapStartSec = 0;
-    liveState.intensity = 1;
+    liveState.workFactor = 1;
+    liveState.restFactor = 1;
     liveState.ranges = null;
     liveState.rampBelow = 0;
     liveState.rampFailedAtStep = null;
@@ -6331,12 +6444,20 @@
     return (step.seconds - liveState.remaining) / step.seconds;
   }
 
+  // The intensity multiplier for a given leg: Overall everywhere, times the
+  // Rest trim on the recovery legs only.
+  function factorFor(step){
+    var f = liveState.workFactor;
+    if(step && step.rest) f *= liveState.restFactor;
+    return f;
+  }
+
   // The watts actually being asked for right now, after the intensity
   // adjustment. On a ramp this moves continuously through the step.
   function targetWatts(step, frac){
     if(!step || step.pct === null) return null;
     var pct = isRamp(step) ? pctAt(step, frac === undefined ? stepFraction() : frac) : step.pct;
-    return Math.round(watts(pct) * liveState.intensity);
+    return Math.round(watts(pct) * factorFor(step));
   }
 
   function applyCurrentTarget(){
@@ -6370,13 +6491,29 @@
     return !!(liveState.workout && liveState.workout.test === 'ramp');
   }
 
-  function adjustIntensity(deltaPct){
+  // Overall trim — scales every leg (the old single intensity control).
+  function adjustOverall(deltaPct){
     if(!liveState.active || liveState.phase !== 'running') return;
     if(intensityLocked()) return;
-    var next = Math.round(liveState.intensity * 100) + deltaPct;
+    var next = Math.round(liveState.workFactor * 100) + deltaPct;
     next = Math.max(INTENSITY_MIN, Math.min(INTENSITY_MAX, next));
-    if(next === Math.round(liveState.intensity * 100)) return;
-    liveState.intensity = next / 100;
+    if(next === Math.round(liveState.workFactor * 100)) return;
+    liveState.workFactor = next / 100;
+    applyCurrentTarget();
+    renderLivePlayer();
+    drawLiveChart();
+  }
+
+  // Rest trim — an extra multiplier on the recovery legs only. If the current
+  // leg is a recovery the ERG target moves right away; otherwise it lands on
+  // the next recovery.
+  function adjustRest(deltaPct){
+    if(!liveState.active || liveState.phase !== 'running') return;
+    if(intensityLocked()) return;
+    var next = Math.round(liveState.restFactor * 100) + deltaPct;
+    next = Math.max(REST_MIN, Math.min(REST_MAX, next));
+    if(next === Math.round(liveState.restFactor * 100)) return;
+    liveState.restFactor = next / 100;
     applyCurrentTarget();
     renderLivePlayer();
     drawLiveChart();
@@ -6386,13 +6523,15 @@
     if(!liveState.active || liveState.phase !== 'running') return;
     if(e.key === 'ArrowUp' || e.key === 'ArrowDown'){
       e.preventDefault();  // otherwise the page scrolls behind the player
-      adjustIntensity(e.key === 'ArrowUp' ? 1 : -1);
+      adjustOverall(e.key === 'ArrowUp' ? 1 : -1);
     }
   });
-  // Touch-first intensity trim: the +/- buttons nudge in 5% steps (arrows stay
-  // 1% for fine control).
-  if(els.intMinus) els.intMinus.addEventListener('click', function(){ adjustIntensity(-1); });
-  if(els.intPlus) els.intPlus.addEventListener('click', function(){ adjustIntensity(1); });
+  // Touch-first trims: the +/- buttons nudge 1% at a time (arrows match for the
+  // Overall control).
+  if(els.intMinus) els.intMinus.addEventListener('click', function(){ adjustOverall(-1); });
+  if(els.intPlus) els.intPlus.addEventListener('click', function(){ adjustOverall(1); });
+  if(els.restMinus) els.restMinus.addEventListener('click', function(){ adjustRest(-1); });
+  if(els.restPlus) els.restPlus.addEventListener('click', function(){ adjustRest(1); });
 
   // ---- readout layout (choosable via the display cog, remembered) ----
   var RAIL_LAYOUT_KEY = 'ftpPlan_railLayout_v1';
@@ -6640,12 +6779,11 @@
     if(!liveState.active) return;
     var step = liveState.flat[liveState.idx];
     var next = liveState.flat[liveState.idx + 1];
-    els.liveSegmentIndex.textContent = (liveState.idx + 1) + ' of ' + liveState.flat.length;
     els.liveSegmentLabel.textContent = step.label;
     els.trIntervalTime.textContent = mmss(liveState.remaining);
     els.trTotalTime.textContent = mmss(liveState.elapsedTotal);
 
-    var pctShown = Math.round(liveState.intensity * 100);
+    var pctShown = Math.round(liveState.workFactor * 100);
     var intLocked = intensityLocked();
     if(step.pct === null){
       els.trTarget.textContent = 'All-out';
@@ -6653,15 +6791,24 @@
     } else {
       // On a ramp, show where the target is heading as well as where it is.
       els.trTarget.textContent = isRamp(step)
-        ? targetWatts(step) + ' → ' + Math.round(watts(step.pctEnd) * liveState.intensity)
+        ? targetWatts(step) + ' → ' + Math.round(watts(step.pctEnd) * factorFor(step))
         : '' + targetWatts(step);
       els.liveTestNote.style.display = 'none';
     }
-    // Intensity stepper: the value sits between the +/- buttons; locked on tests
+    // Overall stepper: the value sits between the +/- buttons; locked on tests
     // and on free-ride/all-out segments where a target multiplier is meaningless.
     els.trIntensity.textContent = intLocked ? 'Locked' : pctShown + '%';
     els.trIntensity.classList.toggle('adj', pctShown !== 100 && !intLocked);
     els.liveIntensity.classList.toggle('locked', intLocked || step.pct === null);
+    // Rest stepper: only shown when the workout actually has recovery legs to
+    // trim; locked alongside the Overall control on tests.
+    if(els.liveRest){
+      els.liveRest.style.display = liveState.hasRest ? '' : 'none';
+      var restPct = Math.round(liveState.restFactor * 100);
+      els.trRest.textContent = intLocked ? 'Locked' : restPct + '%';
+      els.trRest.classList.toggle('adj', restPct !== 100 && !intLocked);
+      els.liveRest.classList.toggle('locked', intLocked);
+    }
 
     // Coaching cue for this segment. Re-inserting the node restarts the
     // fade-in, so a new cue is noticed even when the text is similar.
@@ -6674,9 +6821,28 @@
     }
 
     updateLiveReadoutsUI();
+    updateLiveAverages();
 
     els.liveNext.textContent = next ? ('Next: ' + next.label + ' \u2014 ' + fmtMin(next.seconds / 60)) : 'Last segment \u2014 nice work';
     els.livePauseBtn.textContent = liveState.paused ? 'Resume' : 'Pause';
+  }
+
+  // Ride-so-far averages for the line beside the steppers. Power is the plain
+  // mean of every recorded second; cadence drops coasting zeros (they'd drag
+  // it down); HR is a straight mean. Built from the recorded samples, which
+  // the target trims never touch, so they read true to what was ridden.
+  function updateLiveAverages(){
+    if(!els.avgPower) return;
+    var s = liveState.samples, pS = 0, pC = 0, hS = 0, hC = 0, cS = 0, cC = 0;
+    for(var i = 0; i < s.length; i++){
+      var x = s[i];
+      if(x.power != null){ pS += x.power; pC++; }
+      if(x.hr != null){ hS += x.hr; hC++; }
+      if(x.cadence != null && x.cadence > 0){ cS += x.cadence; cC++; }
+    }
+    els.avgPower.textContent = pC ? Math.round(pS / pC) + ' W' : '\u2014';
+    els.avgHr.textContent    = hC ? Math.round(hS / hC) + ' bpm' : '\u2014';
+    els.avgCad.textContent   = cC ? Math.round(cS / cC) + ' rpm' : '\u2014';
   }
 
   els.livePauseBtn.addEventListener('click', function(){
@@ -6893,13 +7059,14 @@
         // come is the bright part of the chart.
         var isPast = segEnd <= liveState.elapsedTotal;
         var alpha = isPast ? 0.22 : 1;
+        var sf = factorFor(step);
         if(isRamp(step)){
           // Trapezoid: the top edge slopes from the start power to the end.
-          var yA = H - pctToBarH(step.pct * liveState.intensity, H);
-          var yB = H - pctToBarH(step.pctEnd * liveState.intensity, H);
+          var yA = H - pctToBarH(step.pct * sf, H);
+          var yB = H - pctToBarH(step.pctEnd * sf, H);
           paintBlock(ctx, ZONE_HEX[step.type], x0, w, yA, yB, H, alpha, 4);
         } else {
-          var shown = step.pct === null ? null : step.pct * liveState.intensity;
+          var shown = step.pct === null ? null : step.pct * sf;
           var yT = H - pctToBarH(shown, H);
           paintBlock(ctx, ZONE_HEX[step.type], x0, w, yT, yT, H, alpha, 4);
         }
@@ -6938,10 +7105,14 @@
       // Cadence and HR get their own sticky ranges; power shares the block scale.
       // Cadence is the least important of the three, so it's smoothed hardest
       // and drawn faintest — it should read as context, not compete with power.
+      // Cadence rides in a compressed band low in the chart rather than
+      // spanning the full height — so it reads as quiet context at the foot of
+      // the plot instead of crossing the HR trace and the interval block tops.
+      var CAD_BAND = 0.30, CAD_FLOOR = 8;   // band height as a fraction of H; px off the bottom
       var cadVals = smoothSeries(samples, 'cadence', SMOOTH_CADENCE);
       var cadR = stickyRange(liveState.ranges, 'cad', cadVals, 50, 110, 3);
       strokeSeries(ctx, samples, cadVals, W, H, total, CHART.cadence, 1.3, CADENCE_LINE_ALPHA, function(v){
-        return H - 6 - ((v - cadR.lo) / (cadR.hi - cadR.lo)) * (H - 12);
+        return H - CAD_FLOOR - ((v - cadR.lo) / (cadR.hi - cadR.lo)) * (H * CAD_BAND);
       });
 
       var pwrVals = smoothSeries(samples, 'power', SMOOTH_POWER);
@@ -7138,8 +7309,7 @@
     els.summaryCloseBtn.textContent = opts.fromLog ? 'Close' : 'Save & close';
     liveState.summaryFromLog = !!opts.fromLog;
     els.summaryModal.style.display = 'flex';
-    renderSharePreview();
-    if(!opts.fromLog) saveCurrentRide();
+    if(!opts.fromLog){ playFinishChime(); saveCurrentRide(); }   // celebrate a fresh finish, not a reopened ride
   }
 
   // ---- parked ride: survives the Strava consent round-trip ----
@@ -7183,7 +7353,9 @@
     liveState.rpe = s.rpe || null;
     liveState.savedId = s.savedId || null;   // already in the log; don't save it twice
     liveState.stravaActivityId = null;
-    liveState.intensity = 1;
+    liveState.workFactor = 1;
+    liveState.restFactor = 1;
+    liveState.hasRest = false;
     liveState.chartMaxPct = Math.max(105, Math.ceil((peak + 8) / 5) * 5);
     liveState.elapsedTotal = liveState.totalSeconds;
     liveState.active = false;
@@ -7761,6 +7933,12 @@
     var b = e.target.closest('[data-style]'); if(!b) return;
     setImgStyle(b.getAttribute('data-style')); renderSharePreview();
   });
+  // The share image now lives on its own screen over the summary.
+  if(els.openShareBtn) els.openShareBtn.addEventListener('click', function(){
+    els.shareModal.style.display = 'flex';
+    renderSharePreview();   // render once the canvas has its on-screen width
+  });
+  if(els.shareBack) els.shareBack.addEventListener('click', function(){ els.shareModal.style.display = 'none'; });
 
   els.summaryImageBtn.addEventListener('click', function(){
     var btn = this;
@@ -7941,7 +8119,9 @@
       liveState.rpe = r.rpe || null;
       liveState.zone = r.zone || (wo && wo.zone) || null;   // share-image accent fallback when the workout's gone
       liveState.stravaActivityId = r.stravaActivityId || null;
-      liveState.intensity = 1;
+      liveState.workFactor = 1;
+      liveState.restFactor = 1;
+      liveState.hasRest = false;
       liveState.chartMaxPct = Math.max(105, Math.ceil((peak + 8) / 5) * 5);
       liveState.elapsedTotal = liveState.totalSeconds;
       liveState.active = false;
