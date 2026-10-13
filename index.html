@@ -451,6 +451,19 @@
   .rc-card.rc-detail .rc-grad{height:11px;}
   .rc-card.rc-detail .rc-thumb{width:18px;height:18px;}
   .rc-ends{display:flex;justify-content:space-between;margin-top:9px;font-size:11px;color:var(--text-faint);}
+  /* Signed-out state: prompt to connect Strava instead of showing partial scores. */
+  .rc-card.rc-connect{cursor:default;}
+  .rc-connect-msg{margin:0 0 14px;font-size:13px;line-height:1.5;color:var(--text-dim);}
+  .rc-connect-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;
+    background:#FC4C02;color:#fff;border:0;border-radius:11px;padding:11px 16px;font:inherit;font-size:13.5px;font-weight:650;cursor:pointer;}
+  .rc-connect-btn:hover{filter:brightness(1.06);}
+  .rc-connect-btn svg{width:16px;height:16px;}
+  .rc-connect-btn svg path{fill:#fff;}
+  /* Readiness bar inside the Fitness Trends modal (under the stat tiles). */
+  .tr-ready{background:var(--bg-card);border:1px solid var(--border);border-radius:14px;padding:14px 16px 16px;margin-bottom:14px;}
+  .tr-ready-top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:11px;}
+  .tr-ready-top span{font-size:11.5px;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;}
+  .tr-ready-top b{font-size:17px;font-weight:700;color:var(--text-strong);}
 
   /* Modal-flies-into-the-Filters-button close (mobile): kill the panel's own
      transition so the JS animation drives it, and drop the scrim quickly. */
@@ -2620,7 +2633,7 @@
       </button>
       <button class="foot-btn" id="trendsBtn" type="button" aria-label="Open training charts">
         <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 4v15.5a1 1 0 0 0 1 1h15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M7.5 14.5l3.5-4 3 2.5 4.5-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="foot-label">Charts</span>
+        <span class="foot-label">Fitness Trends</span>
       </button>
     </div>
   </aside>
@@ -2767,7 +2780,7 @@
       </button>
       <button class="hub-btn" id="hubChartsBtn" type="button">
         <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M4 4v15.5a1 1 0 0 0 1 1h15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7.5 14.5l3.5-4 3 2.5 4.5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="hub-text"><span class="hub-title">Charts</span><span class="hub-sub">Fitness, form and your power curve</span></span>
+        <span class="hub-text"><span class="hub-title">Fitness Trends</span><span class="hub-sub">Fitness, form and your power curve</span></span>
         <svg class="hub-go" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -3189,7 +3202,7 @@
 <div id="trendsModal" class="live-player no-print" style="display:none;" role="dialog" aria-modal="true" aria-label="Training charts">
   <div class="live-inner trends-inner">
     <div class="trends-head">
-      <h2 class="trends-title">Training</h2>
+      <h2 class="trends-title">Fitness Trends</h2>
       <div class="trends-range" id="trendsRange"></div>
       <span class="log-spacer"></span>
       <button class="action-btn danger" id="trendsCloseBtn" type="button">Close</button>
@@ -5883,6 +5896,9 @@
     els.summaryStravaBtn.style.display = on ? '' : 'none';
     if(els.connStravaDot) els.connStravaDot.className = 'device-dot' + (on ? ' strava' : '');
     if(els.connStravaName) els.connStravaName.textContent = first || 'Strava';
+    // The readiness card is gated on a Strava connection — repaint it so the
+    // connect prompt and the scores swap as the session comes and goes.
+    if(typeof refreshReadiness === 'function') refreshReadiness();
   }
 
   // One row now: tap to log in when out, to log out when in.
@@ -9668,8 +9684,12 @@
 
   // ---- 12-week trend (weekly TSS or hours) — a line chart ----
   function computeWeeks(acts){
-    var weeks = [], cur = mondayOf(Date.now());
-    for(var i = 11; i >= 0; i--) weeks.push({start: cur - i * 7 * DAY_MS, tss: 0, sec: 0});
+    // Build each week-start with setDate rather than fixed-ms subtraction, so
+    // every one is a true local-midnight Monday. With fixed ms a daylight-saving
+    // change makes a 23/25-hour week land an hour off, and its rides (hashed
+    // with mondayOf) never match the exact === — so whole weeks bucketed as zero.
+    var weeks = [], base = new Date(mondayOf(Date.now()));
+    for(var i = 11; i >= 0; i--){ var d = new Date(base); d.setDate(d.getDate() - i * 7); weeks.push({start: d.getTime(), tss: 0, sec: 0}); }
     acts.forEach(function(a){
       var ws = mondayOf(a.startDateMs);
       for(var j = 0; j < 12; j++){ if(weeks[j].start === ws){ weeks[j].tss += effLoad(a) || 0; weeks[j].sec += a.durationSec || 0; break; } }
@@ -9789,8 +9809,21 @@
       '<div class="v">' + val + (dir ? ' <span class="ar">' + rcArrow(dir) + '</span>' : '') + '</div>' +
       '<span class="l">' + label + '</span></div>';
   }
-  // '' when there's no training history yet — the card hides until a ride is logged.
+  function stravaOn(){ return typeof stravaConnected === 'function' && stravaConnected(); }
+  // Shown in place of the scores when Strava isn't connected: the fitness
+  // picture leans on the full activity history, so prompt to connect rather
+  // than show a partial number.
+  function readinessConnectHTML(variant){
+    return '<div class="rc-card rc-' + variant + ' rc-connect">' +
+      '<div class="rc-head">' + RC_ICON + 'Today’s Readiness</div>' +
+      '<p class="rc-connect-msg">Connect Strava to track your Fitness, Form and Fatigue from every ride.</p>' +
+      '<button class="rc-connect-btn" type="button">' + (typeof STRAVA_SVG === 'string' ? STRAVA_SVG : '') + 'Log in to Strava</button>' +
+    '</div>';
+  }
+  // Connect prompt when signed out; '' when connected but there's no history
+  // yet (the card hides until a ride is logged); otherwise the scores.
   function readinessCardHTML(variant){
+    if(!stravaOn()) return readinessConnectHTML(variant);
     var d = readinessData;
     if(!d) return '';
     var lo = -45, hi = 30, frac = Math.max(0, Math.min(1, (d.tsb - lo) / (hi - lo)));
@@ -9828,12 +9861,15 @@
       paintReadiness();
     }).catch(function(){});
   }
-  // Tapping either copy opens the full charts.
+  // The connect prompt's button logs in to Strava; tapping a populated card
+  // opens the full charts. (The connect card isn't itself a tap target.)
   document.addEventListener('click', function(e){
-    if(e.target.closest && e.target.closest('.rc-card') && typeof openTrends === 'function') openTrends();
+    if(!e.target.closest) return;
+    if(e.target.closest('.rc-connect-btn')){ if(typeof stravaConnect === 'function') stravaConnect(); return; }
+    if(e.target.closest('.rc-card:not(.rc-connect)') && typeof openTrends === 'function') openTrends();
   });
   document.addEventListener('keydown', function(e){
-    if((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('rc-card')){
+    if((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('rc-card') && !e.target.classList.contains('rc-connect')){
       e.preventDefault(); if(typeof openTrends === 'function') openTrends();
     }
   });
@@ -9860,8 +9896,19 @@
         ? '<div class="tr-prs">' + curve.prs.map(function(p){ return '<span class="tr-pr">★ New ' + p.label + ' best · ' + p.w + ' W</span>'; }).join('') + '</div>'
         : '';
 
+      // The same Overloaded->Fresh readiness bar from the opening-screen card,
+      // so the modal is the persistent home for it once a workout is picked.
+      var readyBar = today ? (
+        '<div class="tr-ready">' +
+          '<div class="tr-ready-top"><span>Training readiness</span><b class="' + (today.tsb >= 0 ? 'pos' : 'neg') + '">' + formWord(today.tsb) + '</b></div>' +
+          '<div class="rc-grad"><span class="rc-thumb" style="left:' + (Math.max(0, Math.min(1, (today.tsb + 45) / 75)) * 100).toFixed(1) + '%"></span></div>' +
+          '<div class="rc-ends"><span>Overloaded</span><span>Fresh</span></div>' +
+        '</div>'
+      ) : '';
+
       els.trendsBody.innerHTML =
         '<div class="tr-tiles">' + tiles + weekTiles + '</div>' +
+        readyBar +
         '<div class="trends-cols">' +
           '<div class="col-left">' +
             '<div class="tr-card"><div class="tr-card-head"><h3>Fitness &amp; Fatigue</h3>' +
