@@ -409,6 +409,49 @@
   }
   .lz-browse:hover{color:var(--text-dim);}
 
+  /* Today's readiness card. Two copies of one component: the landing copy sits
+     under Quick Pick (mobile opening screen); the detail copy fills the empty
+     detail pane (desktop opening screen). Each is shown only on its side. */
+  .lz-card{max-width:340px;}
+  .rc-landing{width:100%;}
+  @media(min-width:901px){ .rc-card.rc-landing{display:none;} }
+  @media(max-width:900px){ .rc-card.rc-detail{display:none;} }
+  .rc-card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:15px;text-align:left;width:100%;cursor:pointer;transition:border-color .15s ease;}
+  .rc-card.rc-detail{max-width:560px;margin:6px auto;padding:18px 20px;box-shadow:none;}
+  .rc-card.rc-landing{box-shadow:0 12px 32px -14px rgba(0,0,0,.4);}
+  .rc-card:hover{border-color:var(--text-faint);}
+  .rc-head{display:flex;align-items:center;gap:8px;margin:0 0 13px;font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);}
+  .rc-head svg{color:var(--accent);flex:none;}
+  .rc-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:13px;}
+  .rc-card.rc-detail .rc-tiles{gap:11px;margin-bottom:16px;}
+  .rc-tile{background:var(--bg-elev);border:1px solid var(--border-soft);border-radius:12px;padding:11px 11px 10px;position:relative;}
+  .rc-card.rc-detail .rc-tile{padding:14px 14px 13px;}
+  .rc-tile.form{border-color:var(--star);}
+  .rc-tile .v{font-family:var(--mono);font-size:26px;font-weight:700;line-height:1;letter-spacing:-.02em;color:var(--accent);}
+  .rc-card.rc-detail .rc-tile .v{font-size:34px;}
+  .rc-tile.form .v{color:var(--star);}
+  .rc-tile.fatigue .v{color:var(--c-anaerobic);}
+  .rc-tile .v .ar{font-size:.55em;margin-left:3px;opacity:.75;vertical-align:middle;}
+  .rc-tile .l{display:block;margin-top:7px;font-size:11.5px;font-weight:600;color:var(--text-dim);}
+  .rc-card.rc-detail .rc-tile .l{font-size:12.5px;}
+  .rc-tile .u{position:absolute;top:10px;right:11px;font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--text-faint);}
+  .rc-meter{background:var(--bg-elev);border:1px solid var(--border-soft);border-radius:12px;padding:13px 14px;}
+  .rc-card.rc-detail .rc-meter{padding:14px 16px 15px;}
+  .rc-meter-top{display:flex;align-items:center;justify-content:space-between;font-size:12px;font-weight:600;color:var(--text-dim);}
+  .rc-meter-top svg{color:var(--text-faint);flex:none;}
+  .rc-word{font-size:23px;font-weight:700;letter-spacing:-.01em;color:var(--text-strong);margin:2px 0 12px;}
+  .rc-card.rc-detail .rc-word{font-size:27px;}
+  /* Readiness scale: one smooth Overloaded->Fresh gradient with a single thumb
+     at today's Form. */
+  .rc-grad{position:relative;height:10px;border-radius:6px;margin-top:4px;
+    background:linear-gradient(90deg,var(--c-anaerobic),var(--c-threshold) 32%,var(--star) 54%,var(--c-tempo) 76%,var(--ok));}
+  .rc-thumb{position:absolute;top:50%;width:16px;height:16px;border-radius:50%;
+    background:var(--bg-card);border:3px solid var(--text);transform:translate(-50%,-50%);
+    box-shadow:0 2px 6px rgba(0,0,0,.25);transition:left .4s ease;}
+  .rc-card.rc-detail .rc-grad{height:11px;}
+  .rc-card.rc-detail .rc-thumb{width:18px;height:18px;}
+  .rc-ends{display:flex;justify-content:space-between;margin-top:9px;font-size:11px;color:var(--text-faint);}
+
   /* Modal-flies-into-the-Filters-button close (mobile): kill the panel's own
      transition so the JS animation drives it, and drop the scrim quickly. */
   .find-modal.to-filters .find-scrim{opacity:0;transition:opacity .18s ease;}
@@ -2635,6 +2678,10 @@
       <div class="lz-card">
         <button class="lz-go" id="listZeroGo" type="button">Quick Pick</button>
         <button class="lz-browse" id="listZeroBrowse" type="button">or browse all</button>
+        <!-- Today's readiness: filled by renderReadiness() from the ride log.
+             Shown here on the opening screen (mobile under the buttons; the
+             desktop copy lives in the empty detail pane). -->
+        <div class="rc-landing" id="rcLanding"></div>
       </div>
     </div>
   </main>
@@ -3443,6 +3490,7 @@
     avgHr: document.getElementById('avgHr'),
     avgCad: document.getElementById('avgCad'),
     trGrid: document.getElementById('trGrid'),
+    rcLanding: document.getElementById('rcLanding'),
     settingsBtn: document.getElementById('settingsBtn'),
     liveSettings: document.getElementById('liveSettings'),
     settingsClose: document.getElementById('settingsClose'),
@@ -4634,7 +4682,11 @@
     updateViewNav();      // keep the mobile prev/next/start pills in sync
     if(!wo){
       els.detailHead.innerHTML = '<span class="pane-label">Workout</span>';
-      els.detailBody.innerHTML = '<p class="detail-empty">Pick a workout from the list.</p>';
+      // Desktop opening screen: today's readiness fills the empty pane (the
+      // card returns '' until there's a logged ride). Hidden on mobile, where
+      // the landing copy under Quick Pick serves instead.
+      var rc = (typeof readinessCardHTML === 'function') ? readinessCardHTML('detail') : '';
+      els.detailBody.innerHTML = rc + '<p class="detail-empty">Pick a workout from the list.</p>';
       return;
     }
     var z = ZONES[wo.zone] || ZONES.endurance;
@@ -5804,6 +5856,9 @@
       els.bleWarning.textContent = 'Strava sign-in failed: ' + e.message + ' — try Connect again in a moment.';
     }
     updateStravaUI();
+    // Just connected: pull recent activity straight away so the charts and the
+    // readiness card are current without the rider opening the calendar.
+    if(stravaConnected() && typeof maybeAutoSync === 'function') maybeAutoSync();
   }
 
   function stravaDisconnect(){
@@ -8325,7 +8380,7 @@
       if(!news.length){ syncNote(''); return; }
       news.reduce(function(p, rec){ return p.then(function(){ return rideSave(rec); }); }, Promise.resolve())
         .then(dedupeIndoorTwins)
-        .then(function(){ renderLog(); refreshDoneMarks(); syncNote(news.length + ' new from Strava', true); });
+        .then(function(){ renderLog(); refreshDoneMarks(); if(typeof refreshReadiness === 'function') refreshReadiness(); syncNote(news.length + ' new from Strava', true); });
     }).catch(function(){ syncNote(''); });
   }
   // Back from a saved ride: same month, fresh data.
@@ -9709,6 +9764,80 @@
     if(tsb >= -30) return 'Building'; return 'Overreaching';
   }
 
+  // ============================================================
+  // TODAY'S READINESS CARD
+  // ============================================================
+  // A glanceable summary of the same PMC the charts show — Fitness / Form /
+  // Fatigue plus a Form-driven meter — surfaced on the opening screen so the
+  // numbers are seen without opening Charts. Renders instantly from whatever
+  // the ride log already holds; the background Strava sync re-paints it when
+  // new activity lands, so it's never blocked on the network.
+  var readinessData = null;   // cached {ctl, atl, tsb, word, trend}
+  var RC_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 14l4-5 4 4 5-7 5 6"/></svg>';
+  var RC_CHEV = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+
+  // Direction of each metric vs ~7 days ago, for the little trend arrow.
+  function pmcTrend(series){
+    if(!series || series.length < 2) return {ctl:0, atl:0, tsb:0};
+    var last = series[series.length - 1], back = series[Math.max(0, series.length - 1 - 7)];
+    function sign(a, b){ return a > b + 0.5 ? 1 : (a < b - 0.5 ? -1 : 0); }
+    return {ctl:sign(last.ctl, back.ctl), atl:sign(last.atl, back.atl), tsb:sign(last.tsb, back.tsb)};
+  }
+  function rcArrow(dir){ return dir > 0 ? '↑' : (dir < 0 ? '↓' : ''); }
+  function rcTile(label, unit, val, dir, cls){
+    return '<div class="rc-tile ' + cls + '"><span class="u">' + unit + '</span>' +
+      '<div class="v">' + val + (dir ? ' <span class="ar">' + rcArrow(dir) + '</span>' : '') + '</div>' +
+      '<span class="l">' + label + '</span></div>';
+  }
+  // '' when there's no training history yet — the card hides until a ride is logged.
+  function readinessCardHTML(variant){
+    var d = readinessData;
+    if(!d) return '';
+    var lo = -45, hi = 30, frac = Math.max(0, Math.min(1, (d.tsb - lo) / (hi - lo)));
+    return '<div class="rc-card rc-' + variant + '" role="button" tabindex="0" aria-label="Open training charts">' +
+      '<div class="rc-head">' + RC_ICON + 'Today’s Readiness</div>' +
+      '<div class="rc-tiles">' +
+        rcTile('Fitness', 'CTL', d.ctl, d.trend.ctl, '') +
+        rcTile('Form', 'TSB', (d.tsb > 0 ? '+' : '') + d.tsb, d.trend.tsb, 'form') +
+        rcTile('Fatigue', 'ATL', d.atl, d.trend.atl, 'fatigue') +
+      '</div>' +
+      '<div class="rc-meter">' +
+        '<div class="rc-meter-top"><span>Training Readiness</span>' + RC_CHEV + '</div>' +
+        '<div class="rc-word">' + d.word + '</div>' +
+        '<div class="rc-grad"><span class="rc-thumb" style="left:' + (frac * 100).toFixed(1) + '%"></span></div>' +
+        '<div class="rc-ends"><span>Overloaded</span><span>Fresh</span></div>' +
+      '</div>' +
+    '</div>';
+  }
+  // Paint the landing copy, and refresh the desktop empty-detail copy if that's
+  // what's on screen.
+  function paintReadiness(){
+    if(els.rcLanding) els.rcLanding.innerHTML = readinessCardHTML('landing');
+    if(typeof renderDetail === 'function' && typeof selectedKey !== 'undefined' && !selectedKey) renderDetail();
+  }
+  // Recompute from the ride log (async) and repaint. Safe to call any time.
+  function refreshReadiness(){
+    if(typeof rideAll !== 'function'){ return; }
+    rideAll().then(function(acts){
+      acts = acts.filter(function(a){ return !a.planned; });
+      var pmc = computePMC(acts);
+      readinessData = pmc.today ? {
+        ctl:pmc.today.ctl, atl:pmc.today.atl, tsb:pmc.today.tsb,
+        word:formWord(pmc.today.tsb), trend:pmcTrend(pmc.series)
+      } : null;
+      paintReadiness();
+    }).catch(function(){});
+  }
+  // Tapping either copy opens the full charts.
+  document.addEventListener('click', function(e){
+    if(e.target.closest && e.target.closest('.rc-card') && typeof openTrends === 'function') openTrends();
+  });
+  document.addEventListener('keydown', function(e){
+    if((e.key === 'Enter' || e.key === ' ') && e.target.classList && e.target.classList.contains('rc-card')){
+      e.preventDefault(); if(typeof openTrends === 'function') openTrends();
+    }
+  });
+
   function renderTrends(){
     rideAll().then(function(acts){
       acts = acts.filter(function(a){ return !a.planned; });   // plans aren't done yet
@@ -10285,6 +10414,11 @@
     });
     render();
     refreshDoneMarks();   // ticks on the cards come from the ride log
+    if(typeof refreshReadiness === 'function') refreshReadiness();   // opening-screen card, from local data
+    // Pull new Strava activity in the background so the charts and readiness
+    // are current without visiting the calendar. No-op unless connected;
+    // deferred so the on-load Strava token validation settles first.
+    if(typeof maybeAutoSync === 'function') setTimeout(maybeAutoSync, 1500);
     dismissLoadScreen();
     // After the library exists, so the prompt can name the real ramp test.
     maybeShowIntro();
