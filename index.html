@@ -171,9 +171,79 @@
   /* sidebar | scrolling list | pinned detail. Tuned for 1920x1080. */
   .app-shell{
     --head-h:52px;
+    --rail-w:248px;
     display:grid;
-    grid-template-columns:272px minmax(340px, 430px) 1fr;
+    grid-template-columns:var(--rail-w) minmax(320px, 420px) 1fr;
+    grid-template-rows:var(--head-h) 1fr;
+    grid-template-areas:"rail topbar topbar" "rail list detail";
     height:100vh;overflow:hidden;
+  }
+  .app-shell > .sidebar{grid-area:rail;}
+  .app-shell > .topbar{grid-area:topbar;}
+  .app-shell > .list-pane{grid-area:list;}
+  .app-shell > .detail-pane{grid-area:detail;}
+
+  /* ---- desktop rail + top bar. The ≤900 media query hides every piece of
+     this and restores the mobile tab layout, so these are desktop furniture. ---- */
+  .rail-brand{display:none;align-items:center;gap:9px;min-width:0;}
+  .rail-logo{width:26px;height:26px;border-radius:7px;background:var(--accent);color:var(--on-accent);display:grid;place-items:center;flex:none;}
+  .rail-name{font-size:14px;font-weight:700;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  @media(min-width:901px){
+    .side-head .hamburger, .side-head .conn-status{display:none;}
+    .rail-brand{display:flex;}
+  }
+  .rail-nav{display:flex;flex-direction:column;gap:2px;padding:8px 10px 6px;flex:none;}
+  .rn-item{display:flex;align-items:center;gap:11px;padding:9px 12px;border-radius:9px;border:1px solid transparent;background:none;color:var(--text-dim);font:inherit;font-size:14px;font-weight:600;cursor:pointer;text-align:left;width:100%;}
+  .rn-item:hover{background:var(--bg-card-hover);color:var(--text);}
+  .rn-item.on{background:var(--accent);color:var(--on-accent);}
+  .rn-count{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--text-faint);font-weight:600;}
+  .rn-item.on .rn-count{color:var(--on-accent);opacity:.72;}
+
+  .side-foot .foot-trigger{display:none;}
+  .util-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 2px;border-radius:9px;border:1px solid transparent;background:none;color:var(--text-faint);cursor:pointer;font:inherit;font-size:10.5px;font-weight:500;}
+  .util-btn:hover{background:var(--bg-card-hover);color:var(--text);}
+  .util-btn span{font-size:10px;letter-spacing:.02em;}
+
+  .topbar{display:flex;align-items:center;gap:14px;padding:0 18px 0 22px;border-bottom:1px solid var(--border-soft);background:var(--bg);min-width:0;}
+  .tb-page{font-size:14px;font-weight:700;color:var(--text-strong);}
+  .tb-right{margin-left:auto;display:flex;align-items:center;gap:13px;min-width:0;}
+  /* Two matching pills: the athlete numbers and the connection status. Each
+     opens the menu (numbers editor / device pairing) as a dropdown beneath it. */
+  .tb-chip{display:flex;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:9px;padding:6px 13px;font:inherit;cursor:pointer;color:var(--text-dim);}
+  .tb-chip:hover{border-color:var(--accent);color:var(--text);}
+  .tb-nums-chip{gap:15px;}
+  .tbn{display:flex;align-items:center;gap:6px;}
+  .tbn-l{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-faint);font-weight:600;}
+  .tbn b{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);}
+  .tb-conns{gap:14px;}
+  .tb-conn{display:flex;align-items:center;gap:6px;}
+  .tbc-l{font-size:12px;font-weight:600;color:var(--text-dim);}
+  .tb-conn .device-dot{width:7px;height:7px;}
+  .tb-conn .conn-strava{color:var(--text-faint);}
+
+  /* Desktop: the menu becomes a right-aligned dropdown under the top bar (it
+     still holds number editing + device pairing, reached from the top bar). */
+  @media(min-width:901px){
+    #sideMenu{position:fixed;top:calc(var(--head-h) + 8px);right:16px;left:auto;width:320px;max-height:calc(100vh - 80px);overflow-y:auto;z-index:70;}
+    /* Theme / guide / zones live in the rail now, so the dropdown drops them;
+       and each top-bar chip shows only its own section. */
+    #sideMenu .menu-about{display:none;}
+    #sideMenu.show-numbers .menu-sec-conns,
+    #sideMenu.show-conns .menu-sec-numbers{display:none;}
+    /* Keypad opens near the numbers chip (top-right) rather than screen-centre. */
+    .keypad-overlay{align-items:flex-start;justify-content:flex-end;}
+    .keypad-overlay .keypad-panel{margin:calc(var(--head-h) + 10px) 16px 0 0 !important;}
+  }
+
+  /* Calendar / Fitness dock into the content area (right of the rail, below the
+     top bar) instead of covering the screen. Keyed off a body attribute since
+     the modals live outside .app-shell. */
+  @media(min-width:901px){
+    body[data-deskview="calendar"] #logModal,
+    body[data-deskview="fitness"] #trendsModal{
+      inset:var(--head-h,52px) 0 0 var(--rail-w,248px);
+      background:var(--bg);   /* docked: fill the content area, drop the full-screen scrim */
+    }
   }
 
   /* One ground colour throughout; separation comes from a single hairline,
@@ -554,9 +624,11 @@
     /* Tab-bar height lives on body so the sheets (outside .app-shell) can read it too. */
     body{overflow-x:clip;--mtab-h:calc(56px + env(safe-area-inset-bottom));}
     .app-shell{
-      display:block;grid-template-columns:none;
+      display:block;grid-template-columns:none;grid-template-rows:none;grid-template-areas:none;
       height:100vh;height:100dvh;overflow:hidden;
     }
+    /* Desktop furniture off; the bottom tabs + sheets drive mobile. */
+    .topbar{display:none;}
     /* Panes stop above the tab bar. */
     .sidebar,.list-pane,.detail-pane{
       position:fixed;left:0;right:0;top:0;bottom:var(--mtab-h);z-index:5;
@@ -2484,6 +2556,12 @@
           <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
         </svg>
       </button>
+      <!-- Desktop-only brand; the hamburger + connection glance are hidden on
+           desktop (connections move to the top bar). -->
+      <span class="rail-brand">
+        <span class="rail-logo"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18l4-7 4 3 4-8 4 5"/></svg></span>
+        <span class="rail-name">Indoor Console</span>
+      </span>
       <!-- Connections at a glance: a status dot beside each of trainer, heart
            rate and Strava. Click opens the Menu to connect / manage. Relocates
            into the workouts header on mobile (the sidebar is hidden there). -->
@@ -2506,11 +2584,28 @@
       </button>
     </div>
 
+    <!-- Desktop primary nav: swaps the content area between the workout browser,
+         the calendar and the fitness charts. Hidden on mobile (bottom tabs). -->
+    <nav class="rail-nav" id="railNav" aria-label="Sections">
+      <button class="rn-item on" type="button" data-view="workouts">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h10" stroke-linecap="round"/></svg>
+        <span>Workouts</span><span class="rn-count" id="railCount"></span>
+      </button>
+      <button class="rn-item" type="button" data-view="calendar">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.2"/><path d="M3.5 9.5h17M8 3v4M16 3v4" stroke-linecap="round"/></svg>
+        <span>Calendar</span>
+      </button>
+      <button class="rn-item" type="button" data-view="fitness">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 4v15.5a1 1 0 0 0 1 1h15M7.5 14.5l3.5-4 3 2.5 4.5-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Fitness</span>
+      </button>
+    </nav>
+
     <!-- The menu: your numbers first (they drive every target), then the devices
          you connect before a ride, then the App utilities. Relocates whole into
          the Menu bottom sheet on mobile. -->
     <div class="side-menu" id="sideMenu" hidden>
-      <section class="menu-sec">
+      <section class="menu-sec menu-sec-numbers">
         <h3 class="menu-sec-h">Your numbers</h3>
       <!-- Read-only number chips: the value shows as a plain number; tapping a
            chip opens the large keypad (#keypadOverlay) to edit it. The inputs
@@ -2532,7 +2627,7 @@
       <div class="menu-wkg" id="menuWkg" hidden></div>
       </section>
 
-      <section class="menu-sec">
+      <section class="menu-sec menu-sec-conns">
         <h3 class="menu-sec-h">Connections</h3>
         <!-- Three stacked rows: identity on the left (icon + type, or the device
              name / athlete once connected), status-or-action on the right, so a
@@ -2625,18 +2720,46 @@
       <button class="reset-btn" id="resetFilters" type="button">Reset Filters</button>
     </div>
 
-    <!-- The two views on your training: the calendar and the charts. -->
+    <!-- Calendar / Fitness are now rail-nav items; these hidden buttons keep
+         their openLog / openTrends bindings and the mobile Training hub working.
+         The foot row is the compact utilities (theme / guide / zones). -->
     <div class="side-foot">
-      <button class="foot-btn" id="logBtn" type="button" aria-label="Open the ride log">
-        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3.5 9.5h17M8 3v4M16 3v4" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><rect x="7" y="12.5" width="3" height="3" rx=".7" fill="currentColor"/><rect x="12.5" y="12.5" width="3" height="3" rx=".7" fill="currentColor"/></svg>
-        <span class="foot-label">Calendar</span>
+      <button class="foot-trigger" id="logBtn" type="button" aria-label="Open the ride log" hidden></button>
+      <button class="foot-trigger" id="trendsBtn" type="button" aria-label="Open fitness charts" hidden></button>
+      <button class="util-btn" id="railTheme" type="button" title="Switch theme" aria-label="Switch theme">
+        <svg class="ico-moon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8.5 8.5 0 0 1 9.5 4a8.5 8.5 0 1 0 10.5 10.5z"/></svg>
+        <svg class="ico-sun" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true" style="display:none"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7"/></svg>
+        <span>Theme</span>
       </button>
-      <button class="foot-btn" id="trendsBtn" type="button" aria-label="Open training charts">
-        <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M4 4v15.5a1 1 0 0 0 1 1h15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/><path d="M7.5 14.5l3.5-4 3 2.5 4.5-6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="foot-label">Fitness Trends</span>
+      <button class="util-btn" id="railGuide" type="button" title="Quick guide" aria-label="Quick guide">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.3 2.5c-.6.2-.8.6-.8 1.2M12 16.6v.1"/></svg>
+        <span>Guide</span>
+      </button>
+      <button class="util-btn" id="railZones" type="button" title="Power &amp; HR zones" aria-label="Power and heart-rate zones">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><rect x="3.5" y="4" width="17" height="16" rx="2"/><path d="M3.5 9.5h17M3.5 15h17M9 4v16"/></svg>
+        <span>Zones</span>
       </button>
     </div>
   </aside>
+
+  <!-- Desktop top bar: page title on the left, athlete numbers + connection
+       status on the right. Hidden on mobile. Numbers open the keypad; the
+       connection cluster opens the menu to pair / manage devices. -->
+  <div class="topbar" id="topBar">
+    <span class="tb-page" id="tbPage">Workouts</span>
+    <div class="tb-right">
+      <button class="tb-chip tb-nums-chip" id="tbNumsChip" type="button" aria-label="Your numbers">
+        <span class="tbn"><span class="tbn-l">FTP</span><b id="tbFtp">—</b></span>
+        <span class="tbn"><span class="tbn-l">HR</span><b id="tbHr">—</b></span>
+        <span class="tbn"><span class="tbn-l">Wt</span><b id="tbWt">—</b></span>
+      </button>
+      <button class="tb-chip tb-conns" id="tbConns" type="button" aria-label="Connections — open menu">
+        <span class="tb-conn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="6" cy="16.5" r="3.1"/><circle cx="18" cy="16.5" r="3.1"/><path d="M6 16.5l3.6-7h5.2l3.2 7M12.2 16.5l2.6-7" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="tbc-l">Trainer</span><span class="device-dot" id="tbTrainerDot"></span></span>
+        <span class="tb-conn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 20S3.6 15 3.6 9.3A4.3 4.3 0 0112 7.1a4.3 4.3 0 018.4 2.2C20.4 15 12 20 12 20z" stroke-linejoin="round"/></svg><span class="tbc-l">HR</span><span class="device-dot" id="tbHrDot"></span></span>
+        <span class="tb-conn"><svg class="conn-strava" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" fill="currentColor"/></svg><span class="tbc-l">Strava</span><span class="device-dot" id="tbStravaDot"></span></span>
+      </button>
+    </div>
+  </div>
 
   <main class="list-pane" id="listPane">
     <!-- These act on the list, so they live above it rather than tucked into
@@ -2780,7 +2903,7 @@
       </button>
       <button class="hub-btn" id="hubChartsBtn" type="button">
         <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M4 4v15.5a1 1 0 0 0 1 1h15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7.5 14.5l3.5-4 3 2.5 4.5-6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="hub-text"><span class="hub-title">Fitness Trends</span><span class="hub-sub">Fitness, form and your power curve</span></span>
+        <span class="hub-text"><span class="hub-title">Fitness</span><span class="hub-sub">Fitness, form and your power curve</span></span>
         <svg class="hub-go" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
     </div>
@@ -3202,7 +3325,7 @@
 <div id="trendsModal" class="live-player no-print" style="display:none;" role="dialog" aria-modal="true" aria-label="Training charts">
   <div class="live-inner trends-inner">
     <div class="trends-head">
-      <h2 class="trends-title">Fitness Trends</h2>
+      <h2 class="trends-title">Fitness</h2>
       <div class="trends-range" id="trendsRange"></div>
       <span class="log-spacer"></span>
       <button class="action-btn danger" id="trendsCloseBtn" type="button">Close</button>
@@ -9419,12 +9542,17 @@
     var first = new Date(acts[0].startDateMs); first.setHours(0,0,0,0);
     var today = new Date(); today.setHours(0,0,0,0);
     var series = [], ctl = 0, atl = 0;
-    for(var t = first.getTime(); t <= today.getTime() + 1; t += DAY_MS){
+    // Step by calendar day with setDate rather than a fixed 24h: a daylight-
+    // saving day is 23/25h, and adding DAY_MS across it would skip or double a
+    // local day in the running averages.
+    var d = new Date(first.getTime()), endMs = today.getTime();
+    while(d.getTime() <= endMs){
       var prevCtl = ctl, prevAtl = atl;
-      var load = byDay[dayKey(t)] || 0;
+      var load = byDay[dayKey(d.getTime())] || 0;
       ctl = ctl + (load - ctl) / 42;
       atl = atl + (load - atl) / 7;
-      series.push({t:t, load:load, ctl:ctl, atl:atl, tsb:prevCtl - prevAtl});
+      series.push({t:d.getTime(), load:load, ctl:ctl, atl:atl, tsb:prevCtl - prevAtl});
+      d.setDate(d.getDate() + 1);
     }
     var last = series[series.length - 1];
     return {series:series, today:{ctl:Math.round(last.ctl), atl:Math.round(last.atl), tsb:Math.round(last.tsb)}};
@@ -9432,7 +9560,10 @@
 
   function mondayOf(ms){ var d = new Date(ms); d.setHours(0,0,0,0); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); return d.getTime(); }
   function weekStats(acts, weekStartMs){
-    var end = weekStartMs + 7 * DAY_MS, tss = 0, sec = 0, n = 0;
+    // Week end via setDate (DST-safe): + 7 * DAY_MS would land an hour off
+    // across a daylight-saving change and mis-bin a ride near the boundary.
+    var endD = new Date(weekStartMs); endD.setDate(endD.getDate() + 7);
+    var end = endD.getTime(), tss = 0, sec = 0, n = 0;
     acts.forEach(function(a){
       if(a.startDateMs >= weekStartMs && a.startDateMs < end){ tss += effLoad(a); sec += a.durationSec || 0; n++; }
     });
@@ -9880,7 +10011,9 @@
       var pmc = computePMC(acts), curve = powerCurve(acts);
       lastCurve = curve;
       if(!hasWeight()) pcUnit = 'w';   // W/kg needs a weight
-      var wk = weekStats(acts, mondayOf(Date.now())), lastWk = weekStats(acts, mondayOf(Date.now() - 7*DAY_MS));
+      var thisMon = mondayOf(Date.now());
+      var lastMonD = new Date(thisMon); lastMonD.setDate(lastMonD.getDate() - 7);   // DST-safe previous Monday
+      var wk = weekStats(acts, thisMon), lastWk = weekStats(acts, lastMonD.getTime());
       var today = pmc.today;
 
       var tiles = today ? (
@@ -10382,8 +10515,15 @@
   // ---- quick guide ----
   // Click toggles it open (was hover); Esc or clicking elsewhere closes.
   // Positioned beside the button and clamped so it never opens off-screen.
+  // On desktop the guide is triggered from the rail util button, so anchor the
+  // popover to whichever trigger is actually visible (the menu's guideBtn is
+  // hidden on desktop and would give a zero rect at 0,0).
+  function guideAnchor(){
+    var rg = document.getElementById('railGuide');
+    return (rg && rg.offsetParent !== null) ? rg : els.guideBtn;
+  }
   function placeGuide(){
-    var pop = els.guidePop, r = els.guideBtn.getBoundingClientRect();
+    var pop = els.guidePop, r = guideAnchor().getBoundingClientRect();
     pop.style.display = 'block';
     var pw = pop.offsetWidth, ph = pop.offsetHeight, m = 12;
     // Prefer to the right of the button, bottom-aligned with it; fall back
@@ -10404,7 +10544,8 @@
     if(guideOpen()) hideGuide(); else showGuide();
   });
   document.addEventListener('click', function(e){
-    if(guideOpen() && !els.guidePop.contains(e.target) && !els.guideBtn.contains(e.target)) hideGuide();
+    var rg = document.getElementById('railGuide');
+    if(guideOpen() && !els.guidePop.contains(e.target) && !els.guideBtn.contains(e.target) && !(rg && rg.contains(e.target))) hideGuide();
   });
   document.addEventListener('keydown', function(e){
     if(e.key === 'Escape' && guideOpen()) hideGuide();
@@ -10511,6 +10652,101 @@
       });
   }
   loadLibrary();
+
+  // ============================================================
+  // DESKTOP SHELL — left-rail nav + top bar
+  // ============================================================
+  // Desktop-only wiring (the rail, top bar and these controls are hidden on
+  // mobile, where the bottom tabs + sheets drive everything — untouched here).
+  // The rail nav swaps the content area between the workout browser, the
+  // calendar and the fitness charts; Calendar/Fitness reuse the existing modals,
+  // docked into the content area via a body attribute. The top bar mirrors the
+  // athlete numbers + connection status, still edited/managed through the same
+  // keypad and menu as before.
+  (function(){
+    var railNav = document.getElementById('railNav');
+    if(!railNav) return;
+    var tbPage = document.getElementById('tbPage');
+    var trendsModal = document.getElementById('trendsModal');
+    var logModal = els.logModal;
+    var isMobile = function(){ return window.matchMedia('(max-width:900px)').matches; };
+    function shown(m){ return m && m.style.display !== 'none'; }
+
+    var PAGE = {workouts:'Workouts', calendar:'Calendar', fitness:'Fitness'};
+    function setDeskView(v){
+      if(!PAGE[v]) v = 'workouts';
+      if(v !== 'calendar' && shown(logModal) && typeof closeLog === 'function') closeLog();
+      if(v !== 'fitness' && shown(trendsModal)) trendsModal.style.display = 'none';
+      document.body.setAttribute('data-deskview', v);
+      if(tbPage) tbPage.textContent = PAGE[v];
+      [].forEach.call(railNav.querySelectorAll('.rn-item'), function(b){ b.classList.toggle('on', b.getAttribute('data-view') === v); });
+      if(v === 'calendar' && els.logBtn) els.logBtn.click();
+      else if(v === 'fitness' && els.trendsBtn) els.trendsBtn.click();
+    }
+    railNav.addEventListener('click', function(e){
+      var b = e.target.closest('.rn-item'); if(b) setDeskView(b.getAttribute('data-view'));
+    });
+
+    // The docked modals hide themselves on their own Close / Escape; watch their
+    // display to snap the nav back to Workouts.
+    function resync(){
+      if(isMobile()) return;
+      if(!shown(logModal) && !shown(trendsModal) && document.body.getAttribute('data-deskview') !== 'workouts') setDeskView('workouts');
+    }
+    [logModal, trendsModal].forEach(function(m){
+      if(m) new MutationObserver(resync).observe(m, {attributes:true, attributeFilter:['style']});
+    });
+
+    // Rail utilities proxy the existing menu controls.
+    function proxy(id, targetId){ var b = document.getElementById(id), t = document.getElementById(targetId); if(b && t) b.addEventListener('click', function(){ t.click(); }); }
+    proxy('railTheme', 'themeToggle');
+    proxy('railGuide', 'guideBtn');
+    proxy('railZones', 'ftpHelp');
+
+    // Each top-bar chip opens the menu as a dropdown beneath it, showing only
+    // its own section: the numbers chip -> Your numbers (which open the keypad),
+    // the connections chip -> device pairing.
+    var sideMenu = els.sideMenu;
+    function openDeskMenu(mode, anchor){
+      var want = sideMenu.hidden || sideMenu.getAttribute('data-menumode') !== mode;
+      sideMenu.classList.remove('show-numbers', 'show-conns');
+      if(!want){ sideMenu.hidden = true; sideMenu.removeAttribute('data-menumode'); return; }
+      sideMenu.classList.add(mode === 'numbers' ? 'show-numbers' : 'show-conns');
+      sideMenu.setAttribute('data-menumode', mode);
+      sideMenu.hidden = false;
+      var r = anchor.getBoundingClientRect(), w = sideMenu.offsetWidth || 320;
+      sideMenu.style.right = 'auto';
+      sideMenu.style.left = Math.max(12, Math.min(r.left, window.innerWidth - w - 12)) + 'px';
+      sideMenu.style.top = (r.bottom + 8) + 'px';
+    }
+    var tbNumsChip = document.getElementById('tbNumsChip');
+    if(tbNumsChip && sideMenu) tbNumsChip.addEventListener('click', function(e){ e.stopPropagation(); openDeskMenu('numbers', tbNumsChip); });
+    var tbConns = document.getElementById('tbConns');
+    if(tbConns && sideMenu) tbConns.addEventListener('click', function(e){ e.stopPropagation(); openDeskMenu('conns', tbConns); });
+
+    // Keep the top bar in step without touching every update site: mirror the
+    // connection dots (class changes) and the number fields.
+    function syncTopbar(){
+      function mirror(src, dst){ var s = document.getElementById(src), d = document.getElementById(dst); if(s && d) d.className = s.className; }
+      mirror('connTrainerDot', 'tbTrainerDot');
+      mirror('connHrDot', 'tbHrDot');
+      mirror('connStravaDot', 'tbStravaDot');
+      function num(inp, out){ var i = document.getElementById(inp), o = document.getElementById(out); if(!i || !o) return; var v = (i.value || '').trim(); o.textContent = v ? v : '—'; }
+      num('ftpInput', 'tbFtp');
+      num('maxHrInput', 'tbHr');
+      num('weightInput', 'tbWt');
+    }
+    ['connTrainerDot','connHrDot','connStravaDot'].forEach(function(id){
+      var el2 = document.getElementById(id); if(el2) new MutationObserver(syncTopbar).observe(el2, {attributes:true, attributeFilter:['class']});
+    });
+    ['ftpInput','maxHrInput','weightInput'].forEach(function(id){
+      var el2 = document.getElementById(id); if(el2){ el2.addEventListener('input', syncTopbar); el2.addEventListener('change', syncTopbar); }
+    });
+    syncTopbar();
+
+    var railCount = document.getElementById('railCount');
+    if(railCount && typeof WORKOUTS !== 'undefined' && WORKOUTS) railCount.textContent = WORKOUTS.length || '';
+  })();
 
 })();
 </script>
