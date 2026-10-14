@@ -211,8 +211,10 @@
      opens the menu (numbers editor / device pairing) as a dropdown beneath it. */
   .tb-chip{display:flex;align-items:center;background:var(--bg-card);border:1px solid var(--border);border-radius:9px;padding:6px 13px;font:inherit;cursor:pointer;color:var(--text-dim);}
   .tb-chip:hover{border-color:var(--accent);color:var(--text);}
-  .tb-nums-chip{gap:15px;}
-  .tbn{display:flex;align-items:center;gap:6px;}
+  .tb-nums-chip{gap:4px;padding:3px 6px;cursor:default;}
+  .tb-nums-chip:hover{border-color:var(--border);}   /* the segments light up, not the whole pill */
+  .tbn{display:flex;align-items:center;gap:6px;background:none;border:0;font:inherit;color:inherit;cursor:pointer;padding:4px 7px;border-radius:7px;}
+  .tbn:hover{background:var(--bg-card-hover);}
   .tbn-l{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--text-faint);font-weight:600;}
   .tbn b{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);}
   .tb-conns{gap:14px;}
@@ -2748,11 +2750,11 @@
   <div class="topbar" id="topBar">
     <span class="tb-page" id="tbPage">Workouts</span>
     <div class="tb-right">
-      <button class="tb-chip tb-nums-chip" id="tbNumsChip" type="button" aria-label="Your numbers">
-        <span class="tbn"><span class="tbn-l">FTP</span><b id="tbFtp">—</b></span>
-        <span class="tbn"><span class="tbn-l">HR</span><b id="tbHr">—</b></span>
-        <span class="tbn"><span class="tbn-l">Wt</span><b id="tbWt">—</b></span>
-      </button>
+      <div class="tb-chip tb-nums-chip" id="tbNumsChip">
+        <button class="tbn" type="button" data-num="ftp" aria-label="Edit FTP"><span class="tbn-l">FTP</span><b id="tbFtp">—</b></button>
+        <button class="tbn" type="button" data-num="maxhr" aria-label="Edit max heart rate"><span class="tbn-l">HR</span><b id="tbHr">—</b></button>
+        <button class="tbn" type="button" data-num="weight" aria-label="Edit weight"><span class="tbn-l">Wt</span><b id="tbWt">—</b></button>
+      </div>
       <button class="tb-chip tb-conns" id="tbConns" type="button" aria-label="Connections — open menu">
         <span class="tb-conn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="6" cy="16.5" r="3.1"/><circle cx="18" cy="16.5" r="3.1"/><path d="M6 16.5l3.6-7h5.2l3.2 7M12.2 16.5l2.6-7" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="tbc-l">Trainer</span><span class="device-dot" id="tbTrainerDot"></span></span>
         <span class="tb-conn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 20S3.6 15 3.6 9.3A4.3 4.3 0 0112 7.1a4.3 4.3 0 018.4 2.2C20.4 15 12 20 12 20z" stroke-linejoin="round"/></svg><span class="tbc-l">HR</span><span class="device-dot" id="tbHrDot"></span></span>
@@ -10720,7 +10722,9 @@
       sideMenu.style.top = (r.bottom + 8) + 'px';
     }
     var tbNumsChip = document.getElementById('tbNumsChip');
-    if(tbNumsChip && sideMenu) tbNumsChip.addEventListener('click', function(e){ e.stopPropagation(); openDeskMenu('numbers', tbNumsChip); });
+    if(tbNumsChip && typeof openKeypad === 'function') tbNumsChip.addEventListener('click', function(e){
+      var b = e.target.closest('.tbn[data-num]'); if(b) openKeypad(b.getAttribute('data-num'));
+    });
     var tbConns = document.getElementById('tbConns');
     if(tbConns && sideMenu) tbConns.addEventListener('click', function(e){ e.stopPropagation(); openDeskMenu('conns', tbConns); });
 
