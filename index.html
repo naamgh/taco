@@ -2875,10 +2875,6 @@
       <div class="lz-card">
         <button class="lz-go" id="listZeroGo" type="button">Quick Pick</button>
         <button class="lz-browse" id="listZeroBrowse" type="button">or browse all</button>
-        <!-- Today's readiness: filled by renderReadiness() from the ride log.
-             Shown here on the opening screen (mobile under the buttons; the
-             desktop copy lives in the empty detail pane). -->
-        <div class="rc-landing" id="rcLanding"></div>
       </div>
     </div>
   </main>
@@ -4879,11 +4875,7 @@
     updateViewNav();      // keep the mobile prev/next/start pills in sync
     if(!wo){
       els.detailHead.innerHTML = '<span class="pane-label">Workout</span>';
-      // Desktop opening screen: today's readiness fills the empty pane (the
-      // card returns '' until there's a logged ride). Hidden on mobile, where
-      // the landing copy under Quick Pick serves instead.
-      var rc = (typeof readinessCardHTML === 'function') ? readinessCardHTML('detail') : '';
-      els.detailBody.innerHTML = rc + '<p class="detail-empty">Pick a workout from the list.</p>';
+      els.detailBody.innerHTML = '<p class="detail-empty">Pick a workout from the list.</p>';
       return;
     }
     var z = ZONES[wo.zone] || ZONES.endurance;
@@ -10043,19 +10035,9 @@
     if(els.rcLanding) els.rcLanding.innerHTML = readinessCardHTML('landing');
     if(typeof renderDetail === 'function' && typeof selectedKey !== 'undefined' && !selectedKey) renderDetail();
   }
-  // Recompute from the ride log (async) and repaint. Safe to call any time.
-  function refreshReadiness(){
-    if(typeof rideAll !== 'function'){ return; }
-    rideAll().then(function(acts){
-      acts = acts.filter(function(a){ return !a.planned; });
-      var pmc = computePMC(acts);
-      readinessData = pmc.today ? {
-        ctl:pmc.today.ctl, atl:pmc.today.atl, tsb:pmc.today.tsb,
-        word:formWord(pmc.today.tsb), trend:pmcTrend(pmc.series)
-      } : null;
-      paintReadiness();
-    }).catch(function(){});
-  }
+  // Readiness now lives in the Fitness tab (Summary), not the main screen, so
+  // this is a no-op kept for its existing callers (boot / Strava / auto-sync).
+  function refreshReadiness(){}
   // The connect prompt's button logs in to Strava; tapping a populated card
   // opens the full charts. (The connect card isn't itself a tap target.)
   document.addEventListener('click', function(e){
@@ -10162,6 +10144,7 @@
       els.trendsBody.innerHTML = subNav + summaryPane + perfPane + powerPane;
       drawTab(trendsTab);
       wireFormHelp();
+      updateRangeVisibility();
     }).catch(function(e){
       els.trendsBody.innerHTML = '<p class="log-error">Charts couldn’t be built: ' + (e && e.message) + '</p>';
     });
@@ -10206,6 +10189,11 @@
   function paintRangeButtons(){
     els.trendsRange.innerHTML = RANGES.map(function(r){ return '<button type="button" class="tr-range-btn' + (r[0] === trendsRange ? ' on' : '') + '" data-days="' + r[0] + '">' + r[1] + '</button>'; }).join('');
   }
+  // The range only scales the Fitness/Fatigue + Form charts, so it lives with
+  // the Performance tab and hides on Summary and Power.
+  function updateRangeVisibility(){
+    if(els.trendsRange) els.trendsRange.style.display = (trendsTab === 'performance') ? '' : 'none';
+  }
   els.trendsRange.addEventListener('click', function(e){
     var b = e.target.closest('[data-days]'); if(!b) return;
     trendsRange = +b.getAttribute('data-days'); paintRangeButtons(); renderTrends();
@@ -10218,6 +10206,7 @@
     [].forEach.call(els.trendsBody.querySelectorAll('.tr-subtab'), function(x){ x.classList.toggle('on', x.getAttribute('data-pane') === t); });
     [].forEach.call(els.trendsBody.querySelectorAll('.tr-tab'), function(x){ x.classList.toggle('on', x.getAttribute('data-pane') === t); });
     drawTab(t);
+    updateRangeVisibility();
   });
   // Watts vs W/kg: a two-state switch — clicking either side flips it. Only the
   // power curve redraws, no recompute.
