@@ -232,9 +232,9 @@
     #sideMenu .menu-about{display:none;}
     #sideMenu.show-numbers .menu-sec-conns,
     #sideMenu.show-conns .menu-sec-numbers{display:none;}
-    /* Keypad opens near the numbers chip (top-right) rather than screen-centre. */
-    .keypad-overlay{align-items:flex-start;justify-content:flex-end;}
-    .keypad-overlay .keypad-panel{margin:calc(var(--head-h) + 10px) 16px 0 0 !important;}
+    /* Keypad drops straight under the number segment (JS positions it), like the
+       connections menu under its chip — and no backdrop dimming on desktop. */
+    .keypad-overlay .keypad-scrim{background:transparent;}
   }
 
   /* Calendar / Fitness dock into the content area (right of the rail, below the
@@ -2491,6 +2491,16 @@
     display:inline-flex;align-items:center;justify-content:center;vertical-align:middle;font-family:inherit;
   }
   .help-dot:hover,.help-dot:focus-visible{color:var(--text);border-color:var(--accent);outline:none;}
+  /* Inline (?) with a hover tooltip — for one-line explanations beside a title. */
+  .tr-card-head h3 .tr-help{margin-left:6px;}
+  .tr-help{position:relative;display:inline-flex;vertical-align:middle;}
+  .tr-help-tip{
+    position:absolute;left:0;top:calc(100% + 8px);z-index:6;width:240px;
+    background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;
+    font-size:11.5px;line-height:1.5;font-weight:400;color:var(--text-dim);text-transform:none;letter-spacing:0;
+    box-shadow:0 8px 24px rgba(0,0,0,.18);opacity:0;visibility:hidden;transition:opacity .12s ease;
+  }
+  .tr-help:hover .tr-help-tip,.tr-help:focus-within .tr-help-tip{opacity:1;visibility:visible;}
   /* Form-zones popover (reuses .zone-pop) */
   .form-pop{width:340px;}
   .form-pop-lead{margin:0 0 11px;font-size:11.5px;line-height:1.5;color:var(--text-dim);}
@@ -2519,6 +2529,55 @@
   .tr-legend .k.fatig{color:var(--c-anaerobic);}
   .tr-canvas{display:block;width:100%;}
   .tr-note{margin:10px 0 0;font-size:11px;line-height:1.5;color:var(--text-faint);}
+
+  /* ===== Fitness dashboard (cohesive layout) ===== */
+  /* Sub-tabs: Summary · Performance · Power — one view at a time. */
+  .tr-subtabs{display:flex;gap:3px;background:var(--bg-card-list);border:1px solid var(--border);border-radius:11px;padding:3px;margin-bottom:16px;flex:none;}
+  .tr-subtab{flex:1;border:0;background:transparent;color:var(--text-dim);font:inherit;font-size:13px;font-weight:600;padding:8px 0;border-radius:8px;cursor:pointer;}
+  .tr-subtab:hover{color:var(--text);}
+  .tr-subtab.on{background:var(--accent);color:var(--on-accent);}
+  .tr-tab{display:none;}
+  .tr-tab.on{display:block;}
+
+  /* 1 · Today: readiness + the three PMC numbers in one band. */
+  .tr-status{display:grid;grid-template-columns:1.25fr 1fr;background:var(--bg-card-list);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:16px;flex:none;}
+  .trs-ready{padding:17px 22px;border-right:1px solid var(--border-soft);}
+  .trs-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-faint);}
+  .trs-word{font-size:27px;font-weight:700;letter-spacing:-.02em;margin:3px 0 14px;color:var(--text-strong);}
+  .trs-kpis{display:grid;grid-template-columns:repeat(3,1fr);}
+  .trs-kpi{padding:14px 12px;text-align:center;border-right:1px solid var(--border-soft);display:flex;flex-direction:column;justify-content:center;}
+  .trs-kpi:last-child{border-right:0;}
+  .trs-kpi .v{font-family:var(--mono);font-size:27px;font-weight:700;line-height:1;letter-spacing:-.02em;color:var(--text-strong);}
+  .trs-kpi .v .ar{font-size:14px;opacity:.75;}
+  .trs-kpi.form .v{color:var(--ok);}
+  .trs-kpi.fatigue .v{color:var(--c-threshold);}
+  .trs-kpi .l{font-size:11.5px;font-weight:600;color:var(--text-dim);margin-top:7px;}
+  .trs-kpi .u{font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--text-faint);margin-top:2px;}
+  .tr-status-empty{display:block;padding:22px;text-align:center;}
+  .tr-status-empty p{margin:0;color:var(--text-dim);font-size:13px;}
+
+  /* 2 · Performance: the Fitness/Fatigue chart with the Form chart beneath it,
+     each now with room to breathe (its own tab). */
+  .tr-perf #fitCanvas{height:230px;}
+  .tr-form-strip{margin-top:16px;padding-top:14px;border-top:1px solid var(--border-soft);}
+  .tr-fs-head{display:flex;align-items:center;justify-content:space-between;font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);margin-bottom:6px;}
+  .tr-form-canvas{height:170px;}
+
+  /* 3 · This week (Summary tab) + Power (own tab). */
+  .tr-wk-stats{display:flex;gap:9px;margin-bottom:14px;}
+  .tr-wk-stat{flex:1;background:var(--bg-elev);border:1px solid var(--border-soft);border-radius:11px;padding:10px 12px;min-width:0;}
+  .tr-wk-stat .v{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text-strong);display:flex;align-items:center;gap:5px;}
+  .tr-wk-stat .v em{font-style:normal;font-family:var(--mono);font-size:11px;font-weight:600;}
+  .tr-wk-stat .v em.up{color:var(--ok);} .tr-wk-stat .v em.down{color:var(--c-threshold);}
+  .tr-wk-stat .l{display:block;margin-top:4px;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--text-faint);font-weight:600;}
+  .tr-wk-head{margin-top:2px;}
+  .tr-week .wk-canvas{height:190px;}
+  .tr-power #pcCanvas{height:320px;}
+
+  @media(max-width:720px){
+    .tr-status{grid-template-columns:1fr;}
+    .trs-ready{border-right:0;border-bottom:1px solid var(--border-soft);}
+  }
 
   .tr-prs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
   /* A new best: a flat pill outlined in the app's gold star token (no gradient). */
@@ -2998,7 +3057,7 @@
   <div class="fz-rows">
     <div class="fz-row"><span class="fz-sw" style="background:rgba(242,169,59,0.55)"></span><span class="fz-num">+25 &amp; up</span><span class="fz-mean"><b>Too fresh</b> — tapered, fitness fading</span></div>
     <div class="fz-row"><span class="fz-sw" style="background:rgba(95,227,154,0.55)"></span><span class="fz-num">+5 to +25</span><span class="fz-mean"><b>Fresh</b> — race-ready</span></div>
-    <div class="fz-row"><span class="fz-sw" style="background:rgba(126,134,158,0.45)"></span><span class="fz-num">−10 to +5</span><span class="fz-mean"><b>Neutral</b> — maintaining</span></div>
+    <div class="fz-row"><span class="fz-sw" style="background:rgba(126,134,158,0.45)"></span><span class="fz-num">−10 to +5</span><span class="fz-mean"><b>Maintaining</b> — holding steady</span></div>
     <div class="fz-row"><span class="fz-sw" style="background:rgba(110,139,255,0.7)"></span><span class="fz-num">−10 to −30</span><span class="fz-mean"><b>Productive</b> — build here</span></div>
     <div class="fz-row"><span class="fz-sw" style="background:rgba(255,93,117,0.6)"></span><span class="fz-num">below −30</span><span class="fz-mean"><b>Overreaching</b> — back off soon</span></div>
   </div>
@@ -6019,7 +6078,7 @@
     els.stravaBtn.classList.toggle('on', on);
     els.stravaBtn.title = on ? 'Logged in to Strava — tap to log out' : 'Log in with Strava';
     els.summaryStravaBtn.style.display = on ? '' : 'none';
-    if(els.connStravaDot) els.connStravaDot.className = 'device-dot' + (on ? ' strava' : '');
+    if(els.connStravaDot) els.connStravaDot.className = 'device-dot ' + (on ? 'on' : 'off');
     if(els.connStravaName) els.connStravaName.textContent = first || 'Strava';
     // The readiness card is gated on a Strava connection — repaint it so the
     // connect prompt and the scores swap as the session comes and goes.
@@ -9659,7 +9718,7 @@
   // left-to-right by a growing clip, on an ease-out — so the data looks drawn
   // on rather than snapped in. Honours prefers-reduced-motion.
   var fitAnim = null;
-  function drawFitness(cv, series, rangeDays){
+  function drawFitness(cv, series, rangeDays, noAnim){
     var W = cv.clientWidth || 720, H = 210, ctx = setupCanvas(cv, W, H);
     var padL = 38, padR = 14, padT = 12, padB = 24;
     var accent = cssVar('--accent') || '#6E8BFF', warn = cssVar('--c-threshold') || '#F2764A';
@@ -9703,7 +9762,7 @@
       ctx.restore();
     }
     var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if(reduce){ frame(1); return; }
+    if(reduce || noAnim){ frame(1); return; }   // static when drawn on a tab switch (the reveal can stall if the pane isn't painting)
     var start = null, DUR = 620;
     function stepFrame(ts){
       if(start === null) start = ts;
@@ -9813,6 +9872,8 @@
   var weekMetric = 'tss'; // 12-week trend metric: 'tss' or 'hours' — remembered
   try{ var _wm = localStorage.getItem(WEEKMETRIC_KEY); if(_wm === 'hours' || _wm === 'tss') weekMetric = _wm; }catch(e){}
   var lastActs = null;    // kept so the trend toggle can redraw without recomputing
+  var lastPmc = null;     // kept so a sub-tab switch can redraw its charts
+  var trendsTab = 'summary';   // Fitness sub-tab: 'summary' | 'performance' | 'power'
   function fmtHrs(sec){ var h = Math.floor(sec/3600), m = Math.round((sec%3600)/60); return h ? h + 'h ' + (m<10?'0':'') + m + 'm' : m + 'm'; }
 
   // ---- 12-week trend (weekly TSS or hours) — a line chart ----
@@ -9831,6 +9892,7 @@
   }
   function drawWeeklyTrendLine(cv, weeks, metric, hoverIdx){
     var W = cv.clientWidth || 280, H = Math.round(W * 0.72), dpr = Math.min(3, window.devicePixelRatio || 1);
+    if(cv.clientHeight > 40) H = cv.clientHeight;   // honour a CSS-set height (dashboard uses a short, wide plot)
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
     var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     var faint = cssVar('--text-faint') || '#7E869E', accent = cssVar('--accent') || '#6E8BFF', strong = cssVar('--text-strong') || '#fff';
@@ -9913,7 +9975,7 @@
     });
   }
   function formWord(tsb){
-    if(tsb > 15) return 'Fresh'; if(tsb > 5) return 'Rested'; if(tsb >= -10) return 'Neutral';
+    if(tsb > 15) return 'Fresh'; if(tsb > 5) return 'Rested'; if(tsb >= -10) return 'Maintaining';
     if(tsb >= -30) return 'Building'; return 'Overreaching';
   }
 
@@ -10018,76 +10080,98 @@
       var wk = weekStats(acts, thisMon), lastWk = weekStats(acts, lastMonD.getTime());
       var today = pmc.today;
 
-      var tiles = today ? (
-        '<div class="tr-tile"><span>Fitness</span><b>' + today.ctl + '</b><i>CTL</i></div>' +
-        '<div class="tr-tile"><span>Fatigue</span><b>' + today.atl + '</b><i>ATL</i></div>' +
-        '<div class="tr-tile form ' + (today.tsb >= 0 ? 'pos' : 'neg') + '"><span>Form</span><b>' + (today.tsb>0?'+':'') + today.tsb + '</b><i>' + formWord(today.tsb) + '</i></div>'
-      ) : '';
-      var weekTiles =
-        '<div class="tr-tile"><span>This week</span><b>' + Math.round(wk.tss) + '</b><i>load ' + deltaMini(wk.tss, lastWk.tss) + '</i></div>' +
-        '<div class="tr-tile"><span>Time</span><b>' + fmtHrs(wk.sec) + '</b><i>' + wk.n + (wk.n===1?' activity':' activities') + '</i></div>';
+      var tr = pmcTrend(pmc.series);
+      function arrow(d){ return d ? ' <span class="ar">' + rcArrow(d) + '</span>' : ''; }
 
+      // 1 — Today: readiness + the three PMC numbers, one band.
+      var status = today ? (
+        '<div class="tr-status">' +
+          '<div class="trs-ready">' +
+            '<div class="trs-lbl">Today’s readiness</div>' +
+            '<div class="trs-word">' + formWord(today.tsb) + '</div>' +
+            '<div class="rc-grad"><span class="rc-thumb" style="left:' + (Math.max(0, Math.min(1, (today.tsb + 45) / 75)) * 100).toFixed(1) + '%"></span></div>' +
+            '<div class="rc-ends"><span>Overloaded</span><span>Fresh</span></div>' +
+          '</div>' +
+          '<div class="trs-kpis">' +
+            '<div class="trs-kpi"><div class="v">' + today.ctl + arrow(tr.ctl) + '</div><span class="l">Fitness</span><span class="u">CTL</span></div>' +
+            '<div class="trs-kpi form"><div class="v">' + (today.tsb>0?'+':'') + today.tsb + arrow(tr.tsb) + '</div><span class="l">Form</span><span class="u">TSB</span></div>' +
+            '<div class="trs-kpi fatigue"><div class="v">' + today.atl + arrow(tr.atl) + '</div><span class="l">Fatigue</span><span class="u">ATL</span></div>' +
+          '</div>' +
+        '</div>'
+      ) : '<div class="tr-status tr-status-empty"><p>Log a ride to see your fitness.</p></div>';
+
+      var wkToggle = '<div class="trends-range wk-toggle">' +
+        '<button type="button" class="tr-range-btn wk-btn' + (weekMetric==='tss'?' on':'') + '" data-wk="tss">TSS</button>' +
+        '<button type="button" class="tr-range-btn wk-btn' + (weekMetric==='hours'?' on':'') + '" data-wk="hours">Hours</button></div>';
+      var unitToggle = hasWeight()
+        ? '<div class="trends-range pc-unit">' +
+            '<button type="button" class="tr-range-btn pc-unit-btn' + (pcUnit==='w'?' on':'') + '" data-unit="w">W</button>' +
+            '<button type="button" class="tr-range-btn pc-unit-btn' + (pcUnit==='wkg'?' on':'') + '" data-unit="wkg">W/kg</button></div>'
+        : '';
       var prHtml = curve.prs.length
         ? '<div class="tr-prs">' + curve.prs.map(function(p){ return '<span class="tr-pr">★ New ' + p.label + ' best · ' + p.w + ' W</span>'; }).join('') + '</div>'
         : '';
 
-      // The same Overloaded->Fresh readiness bar from the opening-screen card,
-      // so the modal is the persistent home for it once a workout is picked.
-      var readyBar = today ? (
-        '<div class="tr-ready">' +
-          '<div class="tr-ready-top"><span>Training readiness</span><b class="' + (today.tsb >= 0 ? 'pos' : 'neg') + '">' + formWord(today.tsb) + '</b></div>' +
-          '<div class="rc-grad"><span class="rc-thumb" style="left:' + (Math.max(0, Math.min(1, (today.tsb + 45) / 75)) * 100).toFixed(1) + '%"></span></div>' +
-          '<div class="rc-ends"><span>Overloaded</span><span>Fresh</span></div>' +
-        '</div>'
-      ) : '';
-
-      els.trendsBody.innerHTML =
-        '<div class="tr-tiles">' + tiles + weekTiles + '</div>' +
-        readyBar +
-        '<div class="trends-cols">' +
-          '<div class="col-left">' +
-            '<div class="tr-card"><div class="tr-card-head"><h3>Fitness &amp; Fatigue</h3>' +
-              '<div class="tr-legend"><span class="k ctl">Fitness</span><span class="k atl">Fatigue</span>' +
-                '<span class="k lead-fit fill">Fitness leads</span><span class="k lead-fat fill">Fatigue leads</span></div></div>' +
-              '<canvas class="tr-canvas" id="fitCanvas"></canvas>' +
-              '<p class="tr-note">Fitness is a 42-day average of daily load; Fatigue a 7-day. The shaded gap between them is your Form — green when fitness leads, red when fatigue does. Load is TSS where power was recorded, otherwise estimated from RPE.</p>' +
-            '</div>' +
-            '<div class="tr-card"><div class="tr-card-head"><h3>Form ' +
-              '<button class="help-dot" id="formHelp" type="button" aria-label="What the Form zones mean">?</button></h3>' +
-              '<div class="tr-legend"><span class="k fresh">Fresh</span><span class="k fatig">Fatigued</span></div></div>' +
-              '<canvas class="tr-canvas" id="formCanvas"></canvas>' +
-              '<p class="tr-note">Form is Fitness minus Fatigue. Above zero you’re fresh (tapered); a touch below (−10 to −30) is productive overload; deeply negative means overreached.</p>' +
-            '</div>' +
-          '</div>' +
-          '<div class="col-right">' +
-            weeklyTrendCard() +
-            '<div class="tr-card"><div class="tr-card-head"><div class="tr-head-titles"><h3>Power Records</h3><span class="tr-subtitle">Best Average Power from Indoor Trainer Rides</span></div>' +
-              (hasWeight()
-                ? '<div class="trends-range pc-unit">' +
-                    '<button type="button" class="tr-range-btn pc-unit-btn' + (pcUnit==='w'?' on':'') + '" data-unit="w">W</button>' +
-                    '<button type="button" class="tr-range-btn pc-unit-btn' + (pcUnit==='wkg'?' on':'') + '" data-unit="wkg">W/kg</button>' +
-                  '</div>'
-                : '') +
-            '</div>' +
-            prHtml +
-            '<canvas class="tr-canvas" id="pcCanvas"></canvas>' +
-            '<p class="tr-note">' + curve.rides + (curve.rides===1?' ride':' rides') + ' with power. Best average at each duration; gold marks a new best.</p>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-      drawFitness(document.getElementById('fitCanvas'), pmc.series, trendsRange);
-      drawForm(document.getElementById('formCanvas'), pmc.series, trendsRange);
+      lastPmc = pmc;
       lastActs = acts;
-      // The weekly trend sizes wkCanvas, which sets how much height is left for
-      // the power curve beneath it in the right column — so draw it BEFORE the
-      // power curve, otherwise the curve reads a too-tall height and renders
-      // squished when the trend canvas later takes its share.
-      drawWeeklyTrend(acts);
-      drawPowerCurve(document.getElementById('pcCanvas'), curve, pcUnit);
+
+      // Split into sub-tabs so each view breathes (Form was getting squished and
+      // the page scrolled too far): Summary (today + this week), Performance
+      // (fitness/fatigue + form), Power (records).
+      var subNav = '<div class="tr-subtabs">' +
+        [['summary','Summary'],['performance','Performance'],['power','Power']].map(function(t){
+          return '<button type="button" class="tr-subtab' + (trendsTab===t[0]?' on':'') + '" data-pane="' + t[0] + '">' + t[1] + '</button>';
+        }).join('') + '</div>';
+
+      var summaryPane = '<section class="tr-tab' + (trendsTab==='summary'?' on':'') + '" data-pane="summary">' +
+        status +
+        '<div class="tr-card tr-week">' +
+          '<div class="tr-card-head"><h3>This week</h3><span class="tr-subtitle">vs last week</span></div>' +
+          '<div class="tr-wk-stats">' +
+            '<div class="tr-wk-stat"><div class="v">' + Math.round(wk.tss) + ' ' + deltaMini(wk.tss, lastWk.tss) + '</div><span class="l">Load</span></div>' +
+            '<div class="tr-wk-stat"><div class="v">' + fmtHrs(wk.sec) + '</div><span class="l">Time</span></div>' +
+            '<div class="tr-wk-stat"><div class="v">' + wk.n + '</div><span class="l">' + (wk.n===1?'Ride':'Rides') + '</span></div>' +
+          '</div>' +
+          '<div class="tr-fs-head tr-wk-head"><span>12-week ' + (weekMetric==='tss'?'load':'hours') + '</span>' + wkToggle + '</div>' +
+          '<div class="wk-plot"><canvas class="tr-canvas wk-canvas" id="wkCanvas"></canvas><div class="wk-tip" id="wkTip" hidden></div></div>' +
+        '</div>' +
+      '</section>';
+
+      var perfPane = '<section class="tr-tab' + (trendsTab==='performance'?' on':'') + '" data-pane="performance">' +
+        '<div class="tr-card tr-perf">' +
+          '<div class="tr-card-head"><h3>Fitness &amp; Fatigue' +
+            '<span class="tr-help"><button class="help-dot" type="button" aria-label="About Fitness and Fatigue">?</button>' +
+              '<span class="tr-help-tip">Fitness is a 42-day load average, Fatigue a 7-day; Form is the gap between them.</span></span></h3>' +
+            '<div class="tr-legend"><span class="k ctl">Fitness</span><span class="k atl">Fatigue</span><span class="k lead-fit fill">Form</span></div></div>' +
+          '<canvas class="tr-canvas" id="fitCanvas"></canvas>' +
+          '<div class="tr-form-strip"><div class="tr-card-head"><h3>Form</h3>' +
+            '<button class="help-dot" id="formHelp" type="button" aria-label="What the Form zones mean">?</button></div>' +
+            '<canvas class="tr-canvas tr-form-canvas" id="formCanvas"></canvas></div>' +
+        '</div>' +
+      '</section>';
+
+      var powerPane = '<section class="tr-tab' + (trendsTab==='power'?' on':'') + '" data-pane="power">' +
+        '<div class="tr-card tr-power">' +
+          '<div class="tr-card-head"><div class="tr-head-titles"><h3>Power Records</h3><span class="tr-subtitle">Best average from indoor rides</span></div>' + unitToggle + '</div>' +
+          prHtml +
+          '<canvas class="tr-canvas" id="pcCanvas"></canvas>' +
+          '<p class="tr-note">' + curve.rides + (curve.rides===1?' ride':' rides') + ' with power · ★ a new best</p>' +
+        '</div>' +
+      '</section>';
+
+      els.trendsBody.innerHTML = subNav + summaryPane + perfPane + powerPane;
+      drawTab(trendsTab);
       wireFormHelp();
     }).catch(function(e){
       els.trendsBody.innerHTML = '<p class="log-error">Charts couldn’t be built: ' + (e && e.message) + '</p>';
     });
+  }
+  // Draw only the charts in the active sub-tab — hidden canvases size to 0, so
+  // each is (re)drawn when its tab becomes visible.
+  function drawTab(t){
+    if(t === 'summary'){ if(lastActs) drawWeeklyTrend(lastActs); }
+    else if(t === 'performance'){ if(lastPmc){ drawFitness(document.getElementById('fitCanvas'), lastPmc.series, trendsRange, true); drawForm(document.getElementById('formCanvas'), lastPmc.series, trendsRange); } }
+    else if(t === 'power'){ if(lastCurve) drawPowerCurve(document.getElementById('pcCanvas'), lastCurve, pcUnit); }
   }
   function deltaMini(now, was){
     var d = Math.round(now - was); if(d === 0 || (!now && !was)) return '';
@@ -10125,6 +10209,15 @@
   els.trendsRange.addEventListener('click', function(e){
     var b = e.target.closest('[data-days]'); if(!b) return;
     trendsRange = +b.getAttribute('data-days'); paintRangeButtons(); renderTrends();
+  });
+  // Sub-tab switch: show the chosen pane and draw its (previously hidden) charts.
+  els.trendsBody.addEventListener('click', function(e){
+    var b = e.target.closest('.tr-subtab'); if(!b) return;
+    var t = b.getAttribute('data-pane'); if(t === trendsTab) return;
+    trendsTab = t;
+    [].forEach.call(els.trendsBody.querySelectorAll('.tr-subtab'), function(x){ x.classList.toggle('on', x.getAttribute('data-pane') === t); });
+    [].forEach.call(els.trendsBody.querySelectorAll('.tr-tab'), function(x){ x.classList.toggle('on', x.getAttribute('data-pane') === t); });
+    drawTab(t);
   });
   // Watts vs W/kg: a two-state switch — clicking either side flips it. Only the
   // power curve redraws, no recompute.
@@ -10722,9 +10815,28 @@
       sideMenu.style.top = (r.bottom + 8) + 'px';
     }
     var tbNumsChip = document.getElementById('tbNumsChip');
+    var kpOverlay = document.getElementById('keypadOverlay');
+    function anchorKeypad(anchor){
+      var panel = kpOverlay && kpOverlay.querySelector('.keypad-panel'); if(!panel) return;
+      var r = anchor.getBoundingClientRect(), pw = panel.offsetWidth || 260;
+      panel.style.position = 'fixed'; panel.style.margin = '0';
+      panel.style.top = (r.bottom + 8) + 'px';
+      panel.style.left = Math.max(12, Math.min(r.left, window.innerWidth - pw - 12)) + 'px';
+      panel.style.right = 'auto'; panel.style.bottom = 'auto';
+    }
     if(tbNumsChip && typeof openKeypad === 'function') tbNumsChip.addEventListener('click', function(e){
-      var b = e.target.closest('.tbn[data-num]'); if(b) openKeypad(b.getAttribute('data-num'));
+      var b = e.target.closest('.tbn[data-num]'); if(!b) return;
+      openKeypad(b.getAttribute('data-num'));
+      anchorKeypad(b);
     });
+    // Clear the inline anchor when the keypad closes, so a centred (mobile) open
+    // later isn't stuck under a stale position.
+    if(kpOverlay) new MutationObserver(function(){
+      if(kpOverlay.hidden){
+        var p = kpOverlay.querySelector('.keypad-panel');
+        if(p){ ['position','margin','top','left','right','bottom'].forEach(function(k){ p.style[k] = ''; }); }
+      }
+    }).observe(kpOverlay, {attributes:true, attributeFilter:['hidden']});
     var tbConns = document.getElementById('tbConns');
     if(tbConns && sideMenu) tbConns.addEventListener('click', function(e){ e.stopPropagation(); openDeskMenu('conns', tbConns); });
 
