@@ -11,7 +11,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700&display=swap');
   :root{
     /* Minimal-mono dark (Graphite): a neutral grey-black ground with no colour
        cast; ink is near-white, one flat accent (the ink itself, so primary
@@ -51,6 +51,9 @@
     --glow-bg2:rgba(0,0,0,0);
     --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Consolas, monospace;
     --sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    /* Display face for the typographic workout index (DM Mono). Scoped to the
+       index for now; the rest of the chrome stays on --sans until later steps. */
+    --display: 'DM Mono', ui-monospace, "SF Mono", Consolas, monospace;
 
     --c-recovery:#8C93A6;
     --c-endurance:#6E9BEF;
@@ -173,15 +176,19 @@
     --head-h:52px;
     --rail-w:248px;
     display:grid;
-    grid-template-columns:var(--rail-w) minmax(320px, 420px) 1fr;
+    grid-template-columns:1fr;
     grid-template-rows:var(--head-h) 1fr;
-    grid-template-areas:"rail topbar topbar" "rail list detail";
+    grid-template-areas:"topbar" "list";
     height:100vh;overflow:hidden;
   }
-  .app-shell > .sidebar{grid-area:rail;}
   .app-shell > .topbar{grid-area:topbar;}
   .app-shell > .list-pane{grid-area:list;}
-  .app-shell > .detail-pane{grid-area:detail;}
+  /* The workout browser is now a full-width typographic index: the left sidebar
+     and the pinned detail column are desktop-retired (both still drive the
+     mobile layout, which the ≤900 rules re-show). The sidebar's menu dropdown is
+     relocated onto <body> in JS so hiding the sidebar doesn't hide it. */
+  .app-shell > .sidebar{display:none;}
+  .app-shell > .detail-pane{grid-area:list;display:none;}
 
   /* ---- desktop rail + top bar. The ≤900 media query hides every piece of
      this and restores the mobile tab layout, so these are desktop furniture. ---- */
@@ -204,7 +211,7 @@
   .util-btn:hover{background:var(--bg-card-hover);color:var(--text);}
   .util-btn span{font-size:10px;letter-spacing:.02em;}
 
-  .topbar{display:flex;align-items:center;gap:14px;padding:0 18px 0 22px;border-bottom:1px solid var(--border-soft);background:var(--bg);min-width:0;}
+  .topbar{display:flex;align-items:center;gap:14px;padding:0 22px;border-bottom:1px solid var(--border-soft);background:var(--bg);min-width:0;}
   .tb-page{font-size:14px;font-weight:700;color:var(--text-strong);}
   .tb-right{margin-left:auto;display:flex;align-items:center;gap:13px;min-width:0;}
   /* Two matching pills: the athlete numbers and the connection status. Each
@@ -223,6 +230,51 @@
   .tb-conn .device-dot{width:7px;height:7px;}
   .tb-conn .conn-strava{color:var(--text-faint);}
 
+  /* Setup chip: device dots + FTP; opens the Numbers + Connections panel. */
+  .tb-setup{gap:11px;padding:6px 0;background:none;border:0;}
+  .tb-setup:hover .tb-setup-ftp,.tb-setup:hover .tb-setup-ftp b{color:var(--text-strong);}
+  .tb-setup-dots{display:flex;align-items:center;gap:10px;}
+  /* each connection: its icon (bike / heart / Strava) + a status dot, so a red
+     × next to an icon tells you exactly which one is missing. */
+  .tb-ind{display:flex;align-items:center;gap:4px;color:var(--text-faint);}
+  .tb-ind svg{width:14px;height:14px;display:block;}
+  .tb-ind .device-dot{width:8px;height:8px;}
+  .tb-setup-ftp{font-size:12px;letter-spacing:.04em;color:var(--text-dim);white-space:nowrap;}
+  .tb-setup-ftp b{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);margin-left:4px;}
+  /* Overflow button + dropdown (theme / guide / zones). */
+  .tb-more{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;border:0;background:none;color:var(--text-faint);cursor:pointer;flex:none;margin-left:10px;}
+  .tb-more:hover{background:var(--bg-card-hover);color:var(--text);}
+  .tb-more-menu{position:fixed;z-index:72;min-width:170px;background:var(--bg-elev);border:1px solid var(--border);border-radius:11px;padding:6px;box-shadow:0 18px 44px -16px rgba(0,0,0,.4);display:flex;flex-direction:column;gap:2px;}
+  .tb-more-menu[hidden]{display:none;}
+  .tb-more-menu .util-btn{flex:none;flex-direction:row;justify-content:flex-start;align-items:center;gap:12px;width:100%;height:auto;padding:10px 12px;border-radius:8px;color:var(--text);font-size:13px;}
+  .tb-more-menu .util-btn span{display:inline;font-size:13px;letter-spacing:0;text-transform:none;}
+  .tb-more-menu .util-btn:hover{background:var(--bg-card-hover);color:var(--text);}
+
+  /* Setup panel + keypad: typographic reskin (desktop dropdowns). */
+  @media(min-width:901px){
+    #sideMenu{font-family:var(--display);border-radius:12px;}
+    #sideMenu .menu-sec-h{font-family:var(--display);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:500;}
+    #sideMenu .menu-rider .ftp-chip{border:1px solid var(--border);border-radius:8px;background:var(--bg);}
+    #sideMenu .menu-rider .ftp-chip:hover{border-color:var(--text);background:var(--bg-card-hover);}
+    #sideMenu .menu-rider .ftp-chip label{font-family:var(--display);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);}
+    #sideMenu .menu-rider .ftp-chip .num-display{font-family:var(--display);font-size:20px;font-weight:500;color:var(--text-strong);}
+    #sideMenu .menu-wkg{font-family:var(--display);color:var(--text-dim);}
+    #sideMenu .menu-wkg b{font-family:var(--display);color:var(--text-strong);}
+    #sideMenu .conn-row{border:1px solid var(--border);border-radius:8px;background:var(--bg);}
+    #sideMenu .conn-row:hover{border-color:var(--text);background:var(--bg-card-hover);}
+    #sideMenu .cr-name{font-family:var(--display);font-size:13px;}
+    #sideMenu .cr-action{font-family:var(--display);font-size:11px;letter-spacing:.06em;text-transform:uppercase;}
+
+    #keypadOverlay .keypad-panel{font-family:var(--display);border-radius:12px;}
+    #keypadOverlay .kp-label{font-family:var(--display);font-size:11px;letter-spacing:.14em;color:var(--text-faint);}
+    #keypadOverlay .kp-value b{font-family:var(--display);font-weight:500;}
+    #keypadOverlay .kp-value i{font-family:var(--display);}
+    #keypadOverlay .kp-nudge button{font-family:var(--display);border-radius:8px;}
+    #keypadOverlay .kp-grid button{font-family:var(--display);font-weight:500;border-radius:8px;}
+    #keypadOverlay .kp-actions button{font-family:var(--display);font-weight:500;border-radius:8px;letter-spacing:.04em;}
+    #keypadOverlay .kp-actions .kp-set{letter-spacing:.1em;text-transform:uppercase;}
+  }
+
   /* Desktop: the menu becomes a right-aligned dropdown under the top bar (it
      still holds number editing + device pairing, reached from the top bar). */
   @media(min-width:901px){
@@ -237,13 +289,12 @@
     .keypad-overlay .keypad-scrim{background:transparent;}
   }
 
-  /* Calendar / Fitness dock into the content area (right of the rail, below the
-     top bar) instead of covering the screen. Keyed off a body attribute since
-     the modals live outside .app-shell. */
+  /* Calendar / Fitness dock into the content area (below the top bar) instead of
+     covering the screen. The sidebar is retired, so they fill the full width. */
   @media(min-width:901px){
     body[data-deskview="calendar"] #logModal,
     body[data-deskview="fitness"] #trendsModal{
-      inset:var(--head-h,52px) 0 0 var(--rail-w,248px);
+      inset:var(--head-h,52px) 0 0 0;
       background:var(--bg);   /* docked: fill the content area, drop the full-screen scrim */
     }
   }
@@ -609,10 +660,165 @@
   .plan-note{font-size:12.5px;color:var(--text-dim);margin:0 0 18px;}
   .detail-graph{margin-bottom:22px;}
 
+  /* ---------- TYPOGRAPHIC WORKOUT INDEX (desktop) ----------
+     The workout browser as a numbered, DM-Mono table of contents: number ·
+     name · structure · monotone shape thumbnail · zone/meta. A tapped row lifts
+     open into an inline panel (the detail content), with air above and below.
+     Desktop only — mobile keeps the card list + slide-over. */
+  @media(min-width:901px){
+    .list-pane{background:var(--bg);border-right:0;}
+    .list-pane .pane-head{background:var(--bg);padding-right:22px;}   /* match the top bar's right gutter */
+    .list-body{padding:0;}
+    /* Full-width: left gutter aligned to the nav (JS), right gutter to the top
+       bar — so names line up under WORKOUTS and the meta under FTP / sort. */
+    #workoutCards.wk-idx{max-width:none;margin:0;padding:4px 18px 48px 40px;}
+    #workoutCards.wk-idx .wk-row:first-child{border-top:1px solid var(--border);}
+
+    .wk-row{
+      display:grid;grid-template-columns:minmax(0,1fr) 176px 150px;
+      align-items:center;gap:18px;padding:16px 0;border-bottom:1px solid var(--border);cursor:pointer;
+    }
+    .wk-row:hover{background:var(--bg-card-hover);}
+    .wk-name{font-family:var(--display);font-size:30px;font-weight:500;line-height:1.03;letter-spacing:-.01em;
+      color:var(--text-strong);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    /* shape preview with the structure centred beneath it */
+    .wk-thumbwrap{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0;}
+    .wk-struct{font-family:var(--display);font-size:11px;color:var(--text-dim);line-height:1.3;text-align:center;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+    .wk-thumb{width:98px;height:34px;}
+    .wk-thumb svg{display:block;width:100%;height:100%;}
+    /* Monotone: the thumbnail is ink, the zone colour lives only in the swatch. */
+    .wk-thumb svg polygon{fill:var(--text)!important;fill-opacity:.12!important;}
+    .wk-thumb svg polyline{stroke:var(--text)!important;stroke-opacity:.72!important;}
+    .wk-meta{font-family:var(--display);text-align:right;font-size:12px;color:var(--text-dim);letter-spacing:.03em;line-height:1.7;}
+    .wk-zone{display:block;text-transform:uppercase;letter-spacing:.1em;color:var(--text-faint);}
+    .wk-zone i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:7px;vertical-align:baseline;}
+    .wk-big{color:var(--text);}
+    /* The recommended pill still rides the name; keep it quiet beside the big type. */
+    .wk-name .rec{vertical-align:middle;margin-left:10px;}
+
+    /* Selected row lifts onto the page ground (no panel, no border) with space
+       above and below; its thumbnail hides (its role passes to the big profile). */
+    .wk-row.sel{background:var(--bg);border-bottom:0;margin-top:22px;}
+    .wk-row.sel:hover{background:var(--bg);}
+    .wk-row.sel .wk-thumb{visibility:hidden;}
+    .wk-exp{background:var(--bg);margin-bottom:26px;overflow:hidden;}
+    /* Two-column spread: lead text left, profile right — the mock's composition. */
+    .wk-exp-in{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,440px);gap:46px;align-items:start;padding:6px 4px 32px;}
+    .wk-exp-lead{min-width:0;display:flex;flex-direction:column;align-items:flex-start;}
+    .wk-exp-lead .detail-line{margin:0 0 18px;}
+    .wk-exp-cue{font-family:var(--display);font-size:14px;line-height:1.6;color:var(--text-dim);max-width:46ch;margin:0 0 24px;}
+    .wk-exp-act{display:flex;align-items:center;gap:16px;margin-top:4px;}
+    .wk-exp-prof{min-width:0;}
+    .wk-exp-ph{font-family:var(--display);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);margin-bottom:12px;}
+    @media(max-width:1100px){
+      .wk-exp-in{grid-template-columns:1fr;gap:26px;}
+      .wk-exp-prof{max-width:620px;}
+    }
+
+    /* ---- opened card: typographic / monotone chrome ---- */
+    .wk-exp{font-family:var(--display);}
+    /* structure reads as a quiet outlined tag, not a filled colour chip */
+    .wk-exp .structure-chip{
+      background:none;color:var(--text-dim);border:1px solid var(--border);border-radius:6px;
+      font-family:var(--display);font-size:12px;font-weight:500;letter-spacing:.02em;padding:6px 11px;
+    }
+    .wk-exp .structure-chip.is-test{border-style:dashed;color:var(--c-test);}
+    /* specs: borderless label + big number, like the mock's spec row */
+    .wk-exp .plan-stats{display:flex;gap:38px;flex-wrap:wrap;border:0;background:none;border-radius:0;overflow:visible;margin:0 0 22px;}
+    .wk-exp .plan-stats .cell{padding:0;border:0;gap:7px;}
+    .wk-exp .plan-stats .k{font-family:var(--display);font-size:11px;letter-spacing:.13em;color:var(--text-faint);opacity:1;font-weight:400;}
+    .wk-exp .plan-stats .v{font-family:var(--display);font-size:24px;font-weight:500;letter-spacing:-.01em;color:var(--text-strong);}
+    .wk-exp .plan-stats .v i{font-size:13px;color:var(--text-dim);margin-left:3px;}
+    /* Start: outlined DM Mono, fills with ink on hover */
+    .wk-exp .action-btn.start-btn{
+      background:none;color:var(--text);border:1px solid var(--text);border-radius:6px;
+      font-family:var(--display);font-size:12.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:12px 24px;
+    }
+    .wk-exp .action-btn.start-btn:hover{background:var(--text);color:var(--bg);}
+    .wk-exp .action-btn.start-btn:active{transform:translateY(1px);}
+    /* interval table: DM Mono, quiet rules; the zone swatch keeps its colour */
+    .wk-exp table.interval-table{font-family:var(--display);font-size:12.5px;margin-top:8px;}
+    .wk-exp table.interval-table th{font-family:var(--display);font-weight:400;letter-spacing:.1em;color:var(--text-faint);border-bottom:1px solid var(--border);}
+    .wk-exp table.interval-table td{border-bottom:1px solid var(--border-soft);}
+    .wk-exp .rec-why,.wk-exp .purpose{font-family:var(--display);font-size:13px;color:var(--text-dim);border-top:0;padding-top:0;margin:0 0 18px;}
+    .wk-exp .detail-graph{margin:0 0 8px;}
+    /* the profile sits on the page ground, no white panel behind the blocks */
+    .wk-exp .timeline-graph{background:none;border:0;border-radius:0;}
+    /* Flat zone blocks (design A2): square shoulders, a solid tint, no glossy
+       top cap — just a hairline baseline. Matches the typographic screens. */
+    .wk-exp .tl-seg{border-radius:0;box-shadow:none;
+      background:color-mix(in srgb, var(--seg) 46%, transparent);}
+    .wk-exp .tl-seg.zone-test{background-color:color-mix(in srgb, var(--seg) 46%, transparent);}
+    .wk-exp .timeline{border-bottom:1px solid var(--border-soft);}
+    .wk-exp-hint{font-family:var(--display);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);margin:0 0 4px;}
+    /* open reveal */
+    @media (prefers-reduced-motion:no-preference){
+      .wk-exp{animation:wkExpIn .26s cubic-bezier(.4,0,.2,1);}
+      @keyframes wkExpIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+    }
+  }
+
+  /* ---- Full-width chrome: top-bar nav + utilities + compact filter bar ---- */
+  @media(min-width:901px){
+    .tb-brand{flex:none;width:32px;height:28px;font-size:0;color:transparent;
+      background:url('data:image/png;base64,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') no-repeat center/contain;}
+    /* Section nav, relocated into the top bar — underline tabs matching the
+       Fitness sub-tabs, with a single indicator that slides between tabs and
+       sits on the top bar's bottom border. */
+    .topbar{position:relative;}
+    .topbar .rail-nav{flex-direction:row;gap:22px;padding:0;margin-left:18px;flex:none;}
+    .topbar .rn-item svg{display:none;}
+    .topbar .rn-item{width:auto;font-family:var(--display);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;color:var(--text-faint);padding:0;border-radius:0;gap:8px;}
+    .topbar .rn-item:hover{background:none;color:var(--text);}
+    .topbar .rn-item.on{background:none;color:var(--text-strong);}
+    .topbar .rn-count{display:none;}   /* workout counter removed */
+    .tb-underline{position:absolute;bottom:-1px;left:0;width:0;height:2px;background:var(--text);pointer-events:none;
+      transition:left .32s cubic-bezier(.4,0,.2,1), width .32s cubic-bezier(.4,0,.2,1);}
+    @media (prefers-reduced-motion:reduce){ .tb-underline{transition:none;} }
+    /* Utilities as compact icon buttons in the right cluster. */
+    .topbar .util-btn{flex:none;flex-direction:row;width:32px;height:32px;padding:0;border-radius:8px;color:var(--text-faint);}
+    .topbar .util-btn span{display:none;}
+    .topbar .util-btn:hover{background:var(--bg-card-hover);color:var(--text);}
+
+    /* Compact filter bar in the list header. */
+    .df-facets{display:flex;align-items:center;gap:22px;margin-left:0;}   /* left edge aligned to the nav via JS padding */
+    /* result count now sits to the right of the facets (after Spice) */
+    .list-pane .pane-head #resultCount{font-family:var(--display);margin-left:18px;letter-spacing:.1em;}
+    /* search / star / sort: flat, borderless to match the theme */
+    .list-pane .pane-head .list-actions .icon-btn{border:0;background:none;color:var(--text-faint);}
+    .list-pane .pane-head .list-actions .icon-btn:hover{background:var(--bg-card-hover);color:var(--text);}
+    .list-pane .pane-head .list-actions .icon-btn.on{background:var(--accent-soft);border-color:transparent;color:var(--text-strong);}
+    /* No chip — plain text whose left edge aligns to the nav; an underline on
+       hover/open (on-theme with the tabs). */
+    .df{display:flex;align-items:baseline;gap:7px;background:none;cursor:pointer;font:inherit;
+      font-family:var(--display);padding:4px 0 5px;border:0;border-bottom:2px solid transparent;color:var(--text-dim);}
+    .df:hover,.df.open{background:none;border-bottom-color:var(--text);}
+    .df-k{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--text-faint);}
+    .df-v{font-size:12.5px;font-weight:500;color:var(--text-dim);}
+    .df.on .df-v{color:var(--text-strong);}
+    .df-reset{background:none;border:0;cursor:pointer;font:inherit;font-family:var(--display);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);padding:6px 9px;border-radius:7px;margin-left:2px;}
+    .df-reset:hover{background:var(--bg-card-hover);color:var(--text);}
+    .df-reset[hidden]{display:none;}
+  }
+  /* Facet popover (lives on <body>, position:fixed set in JS). */
+  .df-pop{position:fixed;z-index:72;min-width:182px;max-height:62vh;overflow-y:auto;
+    background:var(--bg-elev);border:1px solid var(--border);border-radius:11px;
+    padding:6px;box-shadow:0 18px 44px -16px rgba(0,0,0,.4);}
+  .df-pop[hidden]{display:none;}
+  .dfo{display:flex;align-items:center;gap:9px;width:100%;text-align:left;background:none;border:0;cursor:pointer;
+    font:inherit;font-family:var(--display);font-size:13px;color:var(--text);padding:9px 11px;border-radius:7px;}
+  .dfo:hover{background:var(--bg-card-hover);}
+  .dfo.on{color:var(--text-strong);font-weight:500;background:var(--accent-soft);}
+  .dfo.dead{opacity:.32;cursor:default;}
+  .dfo.dead:hover{background:none;}
+  .dfo-dot{width:9px;height:9px;border-radius:2px;flex:none;}
+  @media(max-width:900px){ .df-facets,.tb-brand{display:none;} }
+
   /* Tablet band: keep the full sidebar (no collapse now) and narrow the list a
      little so the workout detail column stays usable. */
   @media (max-width:1280px){
-    .app-shell{grid-template-columns:272px minmax(280px, 340px) 1fr;}
+    .app-shell{grid-template-columns:1fr;}
   }
   /* Below this the third column stops being usable. Rather than stack all three
      (which buried the list under the workout detail), we lead with the sidebar's
@@ -1022,6 +1228,26 @@
   }
   .find-apply:hover{background:var(--accent-hover);}
   .find-apply:disabled{opacity:.55;cursor:default;background:var(--bg-card);color:var(--text-faint);border-color:var(--border);}
+
+  /* ---- Quick Pick (Find a workout): typographic reskin ---- */
+  .find-panel{font-family:var(--display);border-radius:14px;}
+  .find-head h3{font-family:var(--display);font-size:13px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-strong);}
+  .find-clear{font-family:var(--display);font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--text-faint);}
+  .find-clear:hover{color:var(--text);background:var(--bg-card-hover);}
+  .find-x{border-radius:7px;}
+  .find-q{font-family:var(--display);font-size:11px;letter-spacing:.12em;color:var(--text-faint);font-weight:400;}
+  .find-q i{font-family:var(--display);color:var(--text-faint);font-weight:400;}
+  .find-opt{font-family:var(--display);font-size:12.5px;font-weight:400;border-radius:8px;color:var(--text-dim);}
+  .find-opt i{font-family:var(--display);}
+  .find-opt:hover{border-color:var(--text);color:var(--text);}
+  .find-opt.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
+  .find-seg{border-radius:8px;}
+  .find-apply{font-family:var(--display);font-size:13px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;border-radius:9px;height:48px;margin:10px 18px 6px;}
+  .find-browse-all{
+    margin:0 18px 16px;background:none;border:0;color:var(--text-faint);cursor:pointer;
+    font:inherit;font-family:var(--display);font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:9px;border-radius:8px;
+  }
+  .find-browse-all:hover{color:var(--text);background:var(--bg-card-hover);}
 
   /* Mobile View-tab action pills (shown only on that tab via the mobile block
      below). Floating row: Prev / Start / Next. */
@@ -1554,6 +1780,10 @@
   .waiting-chip .wc-val{display:block;font-family:var(--mono);font-size:34px;font-weight:700;color:var(--text-strong);line-height:1;}
   .waiting-chip.met .wc-val{color:var(--ok);}
   .waiting-chip .wc-need{display:block;font-size:10px;color:var(--text-faint);margin-top:5px;font-family:var(--mono);}
+  /* Design-B header + sensor-box status line are desktop-only (shown in the
+     min-width:901px block below); hidden here so mobile keeps its old layout. */
+  .waiting-head{display:none;}
+  .wc-stat{display:none;}
   /* Missing devices only. The warning names what's absent; each tile is the
      sidebar's glyph at a size you can hit from the saddle. */
   .waiting-devices{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:18px;}
@@ -1613,6 +1843,73 @@
     .waiting-chip{min-width:0;}
     .waiting-title{font-size:19px;}
   }
+
+  /* ============================================================
+     Desktop pre-ride waiting = typographic "Ready-check" (design B).
+     Reflows the shared markup into: workout header · ready-check rows
+     (only what's missing, + FTP) · live sensor boxes that light green ·
+     pedal prompt + actions. Count-in fires as soon as both boxes are green.
+     ============================================================ */
+  @media(min-width:901px){
+    #liveWaiting{justify-content:flex-start;padding:48px 30px 30px;gap:0;}
+    #liveWaiting .waiting-icon{display:none;}
+
+    /* header */
+    #liveWaiting .waiting-head{display:flex;flex-direction:column;align-items:center;gap:10px;order:1;margin-bottom:26px;}
+    #liveWaiting .waiting-wk{margin:0;font-family:var(--display);font-size:34px;font-weight:500;letter-spacing:-.01em;color:var(--text-strong);line-height:1.05;}
+    #liveWaiting .waiting-meta{margin:0;display:flex;align-items:center;gap:10px;font-family:var(--display);font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--text-dim);}
+    #liveWaiting .waiting-sw{width:9px;height:9px;border-radius:2px;background:var(--text-dim);flex:none;}
+
+    /* ready-check rows: the missing-device tiles + the FTP row, as a hairline list */
+    #liveWaiting .waiting-devices{order:2;width:100%;max-width:468px;margin:0;gap:0;align-items:stretch;}
+    #liveWaiting .wd-warn{order:0;font-family:var(--display);font-size:11px;font-weight:400;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);text-align:left;margin:0;padding:0 2px 2px;border-top:1px solid var(--border-soft);padding-top:16px;}
+    #liveWaiting .wd-tiles{flex-direction:column;gap:0;width:100%;}
+    #liveWaiting .wd-tile{flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;min-width:0;width:100%;
+      border:0;border-bottom:1px solid var(--border-soft);border-radius:0;background:transparent;padding:15px 2px;
+      font-family:var(--display);font-size:14px;font-weight:400;color:var(--text);}
+    #liveWaiting .wd-tile .wd-glyph{width:19px;height:19px;color:var(--text-dim);}
+    #liveWaiting .wd-tile:hover{background:transparent;color:var(--text);}
+    #liveWaiting .wd-tile::after{content:"Connect \203a";margin-left:auto;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--c-test);}
+    #liveWaiting .wd-tile[disabled]::after{content:"\2026";}
+
+    #liveWaiting .wd-ftp{order:3;position:static;transform:none;left:auto;bottom:auto;
+      width:100%;max-width:468px;margin:0 0 26px;justify-content:flex-start;gap:11px;
+      border:0;border-bottom:1px solid var(--border-soft);border-radius:0;background:transparent;
+      padding:15px 2px;font-family:var(--display);font-size:14px;color:var(--text);}
+    #liveWaiting .wd-ftp.unset{border-color:var(--border-soft);}
+    #liveWaiting .wd-ftp #wdFtpText{letter-spacing:.01em;}
+    #liveWaiting .wd-ftp-input{margin-left:auto;font-family:var(--display);}
+
+    /* live sensor boxes — dashed until data registers, then solid green */
+    #liveWaiting .waiting-readouts{order:4;display:flex;gap:16px;width:100%;max-width:468px;justify-content:center;margin:2px 0 24px;}
+    #liveWaiting .waiting-chip{flex:1;max-width:220px;min-width:0;display:flex;flex-direction:column;align-items:center;gap:8px;
+      padding:18px 16px 15px;border:1px dashed var(--border);border-radius:13px;background:transparent;
+      transition:border-color .3s,background .3s,box-shadow .3s;}
+    #liveWaiting .waiting-chip .wc-label{font-family:var(--display);font-size:11px;letter-spacing:.16em;color:var(--text-faint);margin-bottom:0;}
+    #liveWaiting .waiting-chip .wc-val{font-family:var(--display);font-size:38px;font-weight:500;color:var(--text-faint);transition:color .3s;}
+    #liveWaiting .waiting-chip.met{border-style:solid;border-color:var(--ok-line);background:var(--ok-soft);box-shadow:0 0 0 3px var(--ok-soft);}
+    #liveWaiting .waiting-chip.met .wc-val{color:var(--ok);}
+    #liveWaiting .wc-stat{display:flex;align-items:center;gap:7px;font-family:var(--display);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);}
+    #liveWaiting .wc-stat .sdot{width:7px;height:7px;border-radius:50%;background:var(--text-faint);}
+    #liveWaiting .wc-stat .s-live{display:none;}
+    #liveWaiting .waiting-chip.met .wc-stat{color:var(--ok);}
+    #liveWaiting .waiting-chip.met .wc-stat .sdot{background:var(--ok);animation:sbeat 1.3s ease-in-out infinite;}
+    #liveWaiting .waiting-chip.met .wc-stat .s-wait{display:none;}
+    #liveWaiting .waiting-chip.met .wc-stat .s-live{display:inline;}
+    @keyframes sbeat{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.55}}
+
+    /* prompt + count-in + actions */
+    #liveWaiting .waiting-title{order:5;font-family:var(--display);font-size:13px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);}
+    #liveWaiting .waiting-countdown{order:6;font-family:var(--display);font-size:72px;font-weight:500;color:var(--text-strong);margin:10px 0 0;}
+    #liveWaiting .waiting-sub{order:7;font-size:12.5px;color:var(--text-dim);margin-top:8px;}
+    #liveWaiting .waiting-actions{order:8;margin-top:22px;gap:14px;}
+    #liveWaiting .waiting-btn{font-family:var(--display);font-size:13px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;
+      padding:13px 30px;border-radius:8px;background:transparent;border:1px solid var(--text-strong);color:var(--text-strong);}
+    #liveWaiting .waiting-btn:hover{background:var(--text-strong);color:var(--bg-card);}
+    #liveWaiting .waiting-btn.ghost{border-color:transparent;color:var(--text-faint);}
+    #liveWaiting .waiting-btn.ghost:hover{background:transparent;color:var(--text);}
+  }
+
   /* One header line: workout name (left), segment name (centre), End (right) —
      frees the vertical space the separate name row used to take. */
   .live-top{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:14px;margin-bottom:16px;}
@@ -1795,6 +2092,42 @@
   /* Pause carries no special fill — it reads the same as Skip beside it. */
   .live-btn:hover{filter:brightness(1.08);}
 
+  /* ===== Live ride player: typographic reskin — DM Mono, borderless metric
+     cells, outlined controls. The live chart keeps its functional colours
+     (yellow power, red HR, grey cadence) for at-a-glance reading on the bike. ===== */
+  #livePlayer{font-family:var(--display);}
+  #livePlayer .live-workout-name{font-family:var(--display);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);}
+  #livePlayer .live-segment-label{font-family:var(--display);font-weight:500;letter-spacing:-.01em;color:var(--text-strong);}
+  #livePlayer .live-cog-btn{border-radius:7px;}
+  #livePlayer .live-end-btn{font-family:var(--display);font-size:12px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--text);color:var(--text);border-radius:7px;padding:10px 20px;}
+  #livePlayer .live-end-btn:hover{background:var(--text);color:var(--bg);border-color:var(--text);}
+
+  /* metric cells: borderless, big DM-Mono numbers, small-caps labels */
+  #livePlayer .tr-cell{background:none;border:0;border-radius:0;padding:8px 2px;}
+  #livePlayer .tr-label{font-family:var(--display);font-size:11px;letter-spacing:.14em;color:var(--text-faint);font-weight:400;margin-bottom:8px;}
+  #livePlayer .tr-val{font-family:var(--display);font-weight:500;color:var(--text-strong);}
+  #livePlayer .tr-sub,#livePlayer .tr-next{font-family:var(--display);}
+  #livePlayer .tr-bar-track{background:color-mix(in srgb, var(--text) 9%, transparent);}
+  #livePlayer .tr-bar-fill{background:var(--text);opacity:.8;}
+
+  /* intensity steppers */
+  #livePlayer .li-btn{border:1px solid var(--border);background:none;border-radius:7px;}
+  #livePlayer .li-btn:hover{border-color:var(--text);background:var(--bg-card-hover);}
+  #livePlayer .li-val{font-family:var(--display);font-weight:500;}
+  #livePlayer .li-rlabel{font-family:var(--display);}
+  #livePlayer .live-steppers .live-rest{border-left-color:var(--border);}
+
+  /* averages */
+  #livePlayer .live-avgs{font-family:var(--display);}
+  #livePlayer .live-avgs .la-cap{font-family:var(--display);}
+  #livePlayer .live-avgs .la-v{font-family:var(--display);font-weight:500;}
+
+  /* controls: outlined DM Mono; Pause takes the ink border */
+  #livePlayer .live-btn{font-family:var(--display);font-size:13px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;border-radius:7px;background:none;}
+  #livePlayer .live-btn:hover{filter:none;background:var(--bg-card-hover);}
+  #livePlayer .live-btn-primary{border-color:var(--text);color:var(--text);}
+  #livePlayer .live-btn-primary:hover{background:var(--text);color:var(--bg);}
+
   /* On a phone the live player goes full-bleed — every pixel to the chart and
      readouts, none to a floating card, since it's read from the saddle. */
   @media (max-width:640px){
@@ -1917,25 +2250,9 @@
      global .action-btn.danger{margin-top} rule later in the file). */
   .summary-row .action-btn{flex:1 1 0;justify-content:center;margin:0;}
   .summary-row .action-btn.danger{margin-top:0;}
-  /* "Create share image": a quiet full-width button that opens the share screen. */
+  /* "Download share image": a quiet full-width button that exports the Bars PNG. */
   .open-share-btn{justify-content:flex-start;gap:9px;padding:12px 14px;}
-  .open-share-btn .open-share-chev{margin-left:auto;color:var(--text-faint);font-size:18px;line-height:1;}
-  /* Share screen (overlays the summary): style picker, a big preview, downloads. */
-  .share-inner{max-width:560px;display:flex;flex-direction:column;gap:14px;text-align:left;}
-  .share-top{display:flex;align-items:center;gap:12px;}
-  .share-screen-title{margin:0;font-size:19px;font-weight:750;color:var(--text-strong);}
-  .share-inner .share-styles{align-self:center;}
-  .share-actions{display:flex;flex-direction:column;gap:10px;margin-top:2px;}
-  /* Share-image block: a style picker over a live preview, then the download. */
-  .summary-share{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--border-soft);border-radius:14px;background:var(--bg-card-list);}
-  .share-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
-  .share-label{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--text-faint);}
-  .share-styles{display:flex;gap:4px;background:var(--bg-list);border:1px solid var(--border);border-radius:9px;padding:3px;}
-  .share-style{border:none;background:transparent;color:var(--text-dim);cursor:pointer;font-family:var(--mono);
-    font-size:11.5px;font-weight:600;padding:5px 11px;border-radius:6px;transition:background .12s,color .12s;}
-  .share-style:hover{color:var(--text);}
-  .share-style.on{background:var(--accent);color:var(--on-accent);}
-  .share-preview{display:block;width:100%;border-radius:8px;background:#0C0D10;}
+  /* "Download .fit file": quiet secondary action under the share button. */
   .fit-link{align-self:center;background:transparent;border:none;color:var(--text-faint);font-size:12px;font-weight:600;
     padding:4px 8px;min-height:0;margin-top:2px;}
   .fit-link:hover{color:var(--text-dim);background:transparent;}
@@ -2121,6 +2438,121 @@
   .log-week span{font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;}
   .log-week-empty{color:var(--text-faint);}
   .log-error{color:var(--c-test);text-align:center;}
+
+  /* ===== Calendar page: typographic reskin (desktop only; mobile dock keeps its
+     own look below 720px) — a flat hairline month grid in DM Mono, zone-dot
+     entries with a big TSS, a plain week-total rail, and a boxed today. ===== */
+  @media(min-width:901px){
+    #logModal .log-inner{font-family:var(--display);max-width:1120px;padding:26px 40px 40px;}
+    #logModal .log-head{border-bottom:0;padding-bottom:18px;gap:12px;}
+    #logModal .log-month{font-family:var(--display);font-size:15px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-strong);min-width:0;margin:0 4px;}
+    #logModal .log-head .icon-btn{border:0;background:none;color:var(--text-faint);}
+    #logModal .log-head .icon-btn:hover{color:var(--text);background:var(--bg-card-hover);}
+
+    /* connected hairline grid (no gaps, no rounded cards) */
+    #logModal .log-dow,#logModal .log-row{grid-template-columns:repeat(7,minmax(0,1fr)) 104px;gap:0;}
+    #logModal .log-dow{margin-bottom:0;border-top:1px solid var(--border);border-left:1px solid var(--border);}
+    #logModal .log-dow span{font-family:var(--display);font-size:10px;letter-spacing:.14em;color:var(--text-faint);padding:9px 10px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);}
+    #logModal .log-dow span:last-child{text-align:right;}
+    #logModal .log-row{margin-bottom:0;border-left:1px solid var(--border);}
+    #logModal .log-day{
+      background:none;border:0;border-right:1px solid var(--border);border-bottom:1px solid var(--border);border-radius:0;
+      min-height:104px;padding:8px 10px 18px;gap:5px;
+    }
+    #logModal .log-day.weekend{background:color-mix(in srgb, var(--text) 2.5%, transparent);}
+    #logModal .log-day.out{opacity:1;}
+    #logModal .log-day.out .log-date{color:var(--text-faint);opacity:.5;}
+    #logModal .log-day.out .log-entry,#logModal .log-day.out .log-day-add{display:none;}
+    #logModal .log-day.today{box-shadow:inset 0 0 0 2px var(--text);}
+    #logModal .log-date{font-family:var(--display);font-size:12px;color:var(--text-dim);}
+    #logModal .log-day.today .log-date{color:var(--text-strong);}
+
+    /* entry: zone dot · name · big TSS, borderless */
+    #logModal .log-entry{background:none;border:0;border-radius:0;padding:2px 0;gap:8px;font-family:var(--display);font-size:12px;font-weight:400;color:var(--text);}
+    #logModal .log-entry:hover{background:none;color:var(--text-strong);}
+    #logModal .log-entry i{width:8px;height:8px;border-radius:2px;}
+    #logModal .log-entry b{font-family:var(--display);font-size:15px;font-weight:500;color:var(--text-strong);margin-left:auto;}
+    #logModal .log-entry.needs-rpe{border:0;}
+    #logModal .log-entry.planned{background:none;border:0;}
+    #logModal .log-entry.planned span{font-style:normal;color:var(--text-faint);}
+    #logModal .log-entry.planned b{color:var(--text-faint);font-weight:400;}
+    /* planned = hollow swatch; completed stays solid */
+    #logModal .log-entry.planned i{background:none;border:1.5px solid var(--c);opacity:1;}
+    #logModal .log-entry.selected{background:var(--bg-card-hover);box-shadow:none;border:0;}
+
+    /* week-total rail: plain right-aligned text, no dashed box */
+    #logModal .log-week{
+      background:none;border:0;border-right:1px solid var(--border);border-bottom:1px solid var(--border);border-radius:0;
+      align-items:flex-end;justify-content:flex-start;text-align:right;padding:9px 10px;gap:0;
+    }
+    #logModal .log-week b{font-family:var(--display);font-size:17px;font-weight:500;color:var(--text-strong);line-height:1.25;}
+    #logModal .log-week span{font-family:var(--display);font-size:9px;letter-spacing:.08em;color:var(--text-faint);margin:0;}
+    #logModal .log-week-empty{color:var(--text-faint);}
+    #logModal .log-day-add{border:1px solid var(--border);background:var(--bg);color:var(--text-faint);border-radius:5px;}
+    #logModal .log-day-add:hover{border-color:var(--text);color:var(--text);}
+
+    /* ---- detail side panel ---- */
+    #logModal .log-side{padding-left:30px;}
+    #logModal .log-detail{font-family:var(--display);}
+    #logModal .dv-name{font-family:var(--display);font-size:20px;font-weight:500;letter-spacing:-.01em;color:var(--text-strong);}
+    #logModal .dv-sub{font-family:var(--display);font-size:12px;letter-spacing:.02em;color:var(--text-dim);}
+    #logModal .dv-sub i{width:9px;height:9px;border-radius:2px;}
+    #logModal .dv-strava{font-family:var(--display);font-size:12px;letter-spacing:.04em;}
+    /* stats as a quiet DM-Mono ledger: label over hairline, mono value */
+    #logModal .dv-stats{grid-template-columns:1fr 1fr;gap:0 28px;margin:22px 0 4px;}
+    #logModal .dv-row{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid var(--border-soft);}
+    #logModal .dv-row span{font-family:var(--display);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);}
+    #logModal .dv-row b{font-family:var(--display);font-size:14px;font-weight:500;color:var(--text-strong);}
+    #logModal .dv-graph-wrap{margin-top:26px;}
+    #logModal .dv-ghead h4{font-family:var(--display);font-size:11px;letter-spacing:.13em;color:var(--text-faint);}
+    #logModal .dv-gsub{font-family:var(--display);font-size:10.5px;letter-spacing:.04em;}
+    #logModal .dv-rpe,#logModal .dv-note{font-family:var(--display);margin-top:18px;}
+    #logModal .dv-rpe b{font-family:var(--display);}
+    #logModal .lf-hbtn{border-radius:7px;}
+    /* planned-workout detail bits */
+    #logModal .dv-plan-note{font-family:var(--display);}
+    #logModal .dv-plan-browse-label{font-family:var(--display);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);font-weight:400;}
+    #logModal .dv-dur{font-family:var(--display);background:none;border:1px solid var(--border);border-radius:7px;color:var(--text-dim);}
+    #logModal .dv-dur:hover{border-color:var(--text);color:var(--text-strong);background:none;}
+    #logModal .dv-plan-date{font-family:var(--display);}
+    #logModal .dv-plan-date input{font-family:var(--display);}
+
+    /* ---- quick-log form ---- */
+    #logModal .log-form{background:none;border:0;border-radius:0;padding:0;gap:16px;font-family:var(--display);}
+    #logModal .log-form h3{font-family:var(--display);font-size:13px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-strong);}
+    #logModal .log-form label,#logModal .lf-field{display:flex;flex-direction:column;gap:6px;font-family:var(--display);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);}
+    #logModal .lf-flabel{font-family:var(--display);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);}
+    #logModal .log-form input{font-family:var(--display);font-size:14px;font-weight:500;color:var(--text-strong);background:var(--bg-elev);border:1px solid var(--border);border-radius:8px;padding:9px 11px;letter-spacing:0;text-transform:none;}
+    #logModal .log-form input:focus{outline:none;border-color:var(--text);}
+    #logModal .lf-unit{display:flex;align-items:center;gap:8px;}
+    #logModal .lf-unit em{font-family:var(--display);font-style:normal;font-size:11px;color:var(--text-faint);text-transform:none;letter-spacing:0;}
+    #logModal .lf-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    #logModal .log-types{display:flex;flex-wrap:wrap;gap:6px;}
+    #logModal .log-types button{font-family:var(--display);font-size:12px;color:var(--text-dim);background:none;border:1px solid var(--border);border-radius:7px;padding:7px 11px;display:flex;align-items:center;gap:7px;cursor:pointer;text-transform:none;letter-spacing:0;}
+    #logModal .log-types button.on{border-color:var(--text);color:var(--text-strong);}
+    #logModal .log-types button i{width:9px;height:9px;border-radius:2px;background:var(--c);}
+    #logModal .lf-static-type{font-family:var(--display);font-size:12px;color:var(--text-dim);display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;}
+    #logModal .lf-static-type i{width:9px;height:9px;border-radius:2px;}
+    #logModal .lf-multi-btns{display:flex;flex-wrap:wrap;gap:6px;}
+    #logModal .lf-multi-btns button{font-family:var(--display);font-size:12px;color:var(--text-dim);background:none;border:1px solid var(--border);border-radius:7px;padding:6px 10px;cursor:pointer;text-transform:none;letter-spacing:0;}
+    #logModal .lf-multi-btns button.on{border-color:var(--text);color:var(--text-strong);}
+    #logModal .rpe-row .rpe-label{font-family:var(--display);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);}
+    #logModal .rpe-btns button{font-family:var(--display);}
+  }
+
+  /* Plan popover (calendar only, lives on <body>) — typographic. */
+  .plan-pop{font-family:var(--display);border-radius:10px;}
+  .plan-title{font-family:var(--display);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-strong);font-weight:500;}
+  .plan-sub{font-family:var(--display);font-size:11px;color:var(--text-faint);}
+  .plan-cat{font-family:var(--display);background:none;border:0;border-bottom:1px solid var(--border-soft);border-radius:0;padding:10px 4px;font-size:13px;font-weight:400;color:var(--text);}
+  .plan-cat:last-child{border-bottom:0;}
+  .plan-cat:hover{background:var(--bg-card-hover);}
+  .plan-cat i{width:9px;height:9px;border-radius:2px;}
+  .plan-cat .plan-chev{color:var(--text-faint);}
+  .plan-target{font-family:var(--display);background:none;border:1px solid var(--border);border-radius:7px;color:var(--text-dim);font-size:12px;font-weight:400;}
+  .plan-target:hover{border-color:var(--text);color:var(--text-strong);background:none;}
+  .plan-back{font-family:var(--display);}
+
   /* The quick-log form — one column, sized to the side panel. */
   .log-form{
     background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:16px 18px;
@@ -2299,6 +2731,35 @@
   .pie-key i{width:8px;height:8px;border-radius:2px;flex:none;}
   .pie-key b{color:var(--text);font-weight:650;}
 
+  /* ---------- End-of-workout summary: typographic reskin (desktop) ---------- */
+  @media(min-width:901px){
+    #summaryModal .summary-inner{font-family:var(--display);max-width:900px;text-align:left;}
+    #summaryModal .summary-title{font-family:var(--display);font-size:13px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--text-faint);}
+    #summaryModal .live-segment-index{font-family:var(--display);font-size:22px;font-weight:500;letter-spacing:-.01em;color:var(--text-strong);text-align:left;margin:5px 0 22px;}
+    /* stats as a borderless ledger */
+    #summaryModal .summary-grid{grid-template-columns:1fr 1fr;gap:0 32px;}
+    #summaryModal .summary-chip{background:none;border:0;border-radius:0;padding:11px 0;border-bottom:1px solid var(--border-soft);display:flex;align-items:baseline;justify-content:space-between;gap:12px;text-align:left;}
+    #summaryModal .summary-chip span{font-family:var(--display);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);margin:0;}
+    #summaryModal .summary-chip b{font-family:var(--display);font-size:18px;font-weight:500;color:var(--text-strong);}
+    /* zone breakdowns: typographic bars (stacked), no card chrome */
+    #summaryModal .summary-pies{grid-template-columns:1fr;gap:20px;}
+    #summaryModal .pie-card{background:none;border:0;border-radius:0;padding:0;}
+    #summaryModal .pie-card h4{font-family:var(--display);font-size:11px;letter-spacing:.12em;color:var(--text-faint);margin:0 0 12px;}
+    #summaryModal .dv-hrz-rows{gap:8px;}
+    /* RPE */
+    #summaryModal .rpe-label{font-family:var(--display);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);}
+    #summaryModal .rpe-label em{font-family:var(--display);}
+    #summaryModal .rpe-btns button{font-family:var(--display);border-radius:7px;font-weight:500;}
+    #summaryModal .rpe-btns button.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);}
+    /* actions */
+    #summaryModal .action-btn{font-family:var(--display);border-radius:8px;font-weight:500;letter-spacing:.04em;}
+    #summaryModal .action-btn.primary{letter-spacing:.1em;text-transform:uppercase;font-size:13px;}
+    #summaryModal .action-btn.danger{background:none;border:1px solid var(--c-anaerobic);color:var(--c-anaerobic);}
+    #summaryModal .action-btn.danger:hover{background:var(--c-anaerobic);color:#fff;}
+    #summaryModal .action-btn.strava-sync,#summaryModal .action-btn.strava-link{text-transform:none;letter-spacing:.02em;}
+    #summaryModal .open-share-btn{border-radius:8px;}
+  }
+
   /* ---------- ACTIVITY DETAIL (read-only, in the side panel) ---------- */
   .log-detail{
     background:var(--bg-elev);border:1px solid var(--border);border-radius:14px;padding:16px 18px;
@@ -2332,6 +2793,26 @@
   .dv-ghead h4{margin:0;font-size:10px;color:var(--text-faint);text-transform:uppercase;letter-spacing:.06em;font-weight:600;}
   .dv-gsub{font-size:10px;color:var(--text-faint);font-family:var(--mono);}
   .dv-graph-cv{display:block;width:100%;}
+
+  /* Typographic heart-rate zone chart: a zone row per line — swatch · code ·
+     name, an ink bar sized to its share, the %, and the average zone in colour. */
+  .dv-hrz{font-family:var(--display);}
+  .dv-hrz-rows{display:flex;flex-direction:column;gap:9px;margin-top:2px;}
+  .hz-row{display:grid;grid-template-columns:104px 1fr 38px;align-items:center;gap:12px;}
+  .hz-lab{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text-dim);min-width:0;}
+  .hz-sq{width:9px;height:9px;border-radius:2px;flex:none;}
+  .hz-lab b{color:var(--text-strong);font-weight:500;}
+  .hz-nm{color:var(--text-faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .hz-bar{height:8px;border-radius:2px;overflow:hidden;background:color-mix(in srgb, var(--text) 9%, transparent);}
+  .hz-fill{display:block;height:100%;border-radius:2px;background:var(--text);opacity:.8;}
+  .hz-pct{font-size:12px;font-weight:500;color:var(--text);text-align:right;}
+  .hz-row.zero .hz-pct{color:var(--text-faint);font-weight:400;}
+  /* The zone the ride averaged in: its bar takes the zone colour, label strengthens. */
+  .hz-row.is-avg .hz-fill{background:var(--zc);opacity:1;}
+  .hz-row.is-avg .hz-lab{color:var(--text);}
+  .hz-row.is-avg .hz-pct{color:var(--text-strong);}
+  .dv-hrz-cap{font-size:11.5px;color:var(--text-dim);margin:14px 0 0;letter-spacing:.02em;}
+  .dv-hrz-cap b{color:var(--text-strong);font-weight:500;}
   .dv-nodata{margin:0;font-size:11.5px;color:var(--text-faint);text-align:center;line-height:1.5;padding:14px 8px;background:var(--bg-card);border:1px dashed var(--border);border-radius:10px;}
   .dv-rpe{font-size:12px;color:var(--text-dim);}
   .dv-rpe b{font-family:var(--mono);color:var(--text-strong);font-weight:700;}
@@ -2586,6 +3067,68 @@
     border:1px solid var(--star);border-radius:20px;padding:4px 11px;letter-spacing:.01em;
   }
 
+  /* ===== Fitness page: typographic reskin (desktop) — big status word,
+     borderless KPIs, underline sub-tabs, hairline sections, monotone charts. ===== */
+  @media(min-width:901px){
+    #trendsModal .trends-inner{max-width:1040px;font-family:var(--display);padding:26px 40px 40px;}
+    #trendsModal .trends-head{border-bottom:0;padding-bottom:0;}
+    #trendsModal .trends-title{font-family:var(--display);font-size:15px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-strong);}
+    #trendsModal .trends-scroll{padding-top:6px;}
+
+    /* underline sub-tabs with a sliding indicator; range selector sits inline */
+    #trendsModal .tr-subtabs{display:flex;align-items:stretch;background:none;border:0;border-bottom:1px solid var(--border);border-radius:0;padding:0;gap:0;margin:16px 0 0;}
+    #trendsModal .tr-subtab-list{display:flex;align-items:flex-end;gap:24px;position:relative;}
+    #trendsModal .tr-subtab{flex:0 0 auto;font-family:var(--display);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;color:var(--text-faint);padding:11px 0;border-radius:0;}
+    #trendsModal .tr-subtab:hover{background:none;color:var(--text);}
+    #trendsModal .tr-subtab.on{background:none;color:var(--text-strong);}
+    #trendsModal .tr-subunderline{position:absolute;bottom:-1px;left:0;width:0;height:2px;background:var(--text);pointer-events:none;transition:left .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1);}
+    #trendsModal .tr-subtabs .trends-range{margin-left:auto;align-self:center;}
+    #trendsModal .tr-tab{padding-top:26px;}
+    @media (prefers-reduced-motion:reduce){ #trendsModal .tr-subunderline{transition:none;} }
+
+    /* quiet range / toggle buttons */
+    #trendsModal .trends-range{background:none;border:0;border-radius:0;padding:0;gap:16px;}
+    #trendsModal .tr-range-btn{font-family:var(--display);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);padding:4px 1px;border-radius:0;}
+    #trendsModal .tr-range-btn:hover{background:none;color:var(--text);}
+    #trendsModal .tr-range-btn.on{background:none;color:var(--text-strong);}
+
+    /* status: big word + meter, then a borderless KPI strip */
+    #trendsModal .tr-status{display:block;background:none;border:0;border-radius:0;overflow:visible;margin:0;}
+    #trendsModal .trs-ready{padding:2px 0 0;border:0;}
+    #trendsModal .trs-lbl{font-family:var(--display);font-size:11px;letter-spacing:.16em;color:var(--text-faint);}
+    #trendsModal .trs-word{font-family:var(--display);font-size:44px;font-weight:500;letter-spacing:-.02em;line-height:1;margin:8px 0 16px;color:var(--text-strong);}
+    #trendsModal .rc-grad{background:linear-gradient(90deg, var(--text-faint), var(--text-strong));}
+    #trendsModal .rc-ends{font-family:var(--display);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);}
+    #trendsModal .trs-kpis{border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin-top:24px;}
+    #trendsModal .trs-kpi{text-align:left;padding:18px 0 18px 22px;justify-content:flex-start;border-right:1px solid var(--border-soft);}
+    #trendsModal .trs-kpi:first-child{padding-left:0;}
+    #trendsModal .trs-kpi:last-child{border-right:0;}
+    #trendsModal .trs-kpi .v{font-family:var(--display);font-size:34px;font-weight:500;color:var(--text-strong);}
+    #trendsModal .trs-kpi.form .v,#trendsModal .trs-kpi.fatigue .v{color:var(--text-strong);}   /* monotone — the word carries the meaning */
+    #trendsModal .trs-kpi .v .ar{font-size:15px;color:var(--text-faint);}
+    #trendsModal .trs-kpi .l{font-family:var(--display);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-dim);margin-top:9px;font-weight:400;}
+    #trendsModal .trs-kpi .u{font-family:var(--display);font-size:9.5px;letter-spacing:.1em;color:var(--text-faint);}
+
+    /* sections: borderless, with air and small-caps eyebrows */
+    #trendsModal .tr-card{background:none;border:0;border-radius:0;padding:0;margin:36px 0 0;box-shadow:none;}
+    #trendsModal .tr-card-head h3{font-family:var(--display);font-size:13px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-strong);}
+    #trendsModal .tr-subtitle{font-family:var(--display);font-size:11px;letter-spacing:.04em;color:var(--text-faint);}
+
+    /* this-week stats as borderless big numbers */
+    #trendsModal .tr-wk-stats{gap:44px;margin-bottom:22px;}
+    #trendsModal .tr-wk-stat{background:none;border:0;border-radius:0;padding:0;flex:0 0 auto;}
+    #trendsModal .tr-wk-stat .v{font-family:var(--display);font-size:30px;font-weight:500;color:var(--text-strong);}
+    #trendsModal .tr-wk-stat .v em{font-family:var(--display);font-size:13px;}
+    #trendsModal .tr-wk-stat .l{font-family:var(--display);font-size:10.5px;letter-spacing:.1em;color:var(--text-faint);margin-top:7px;}
+
+    #trendsModal .tr-legend .k{font-family:var(--display);font-size:10px;letter-spacing:.06em;text-transform:uppercase;}
+    #trendsModal .tr-legend .k.atl{color:var(--text-dim);}
+    #trendsModal .tr-note{font-family:var(--display);}
+    #trendsModal .tr-pr{font-family:var(--display);background:none;border:0;color:var(--text-strong);padding:0;letter-spacing:.04em;font-weight:500;}
+    #trendsModal .tr-fs-head{font-family:var(--display);}
+    #trendsModal .tr-fs-head span{font-family:var(--display);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);}
+  }
+
   @media (max-width:720px){
     /* The last stat spans the row when the count is odd, so the strip stays flush. */
     .tr-tile:last-child:nth-child(odd){grid-column:1 / -1;}
@@ -2809,15 +3352,19 @@
   <div class="topbar" id="topBar">
     <span class="tb-page" id="tbPage">Workouts</span>
     <div class="tb-right">
-      <div class="tb-chip tb-nums-chip" id="tbNumsChip">
-        <button class="tbn" type="button" data-num="ftp" aria-label="Edit FTP"><span class="tbn-l">FTP</span><b id="tbFtp">—</b></button>
-        <button class="tbn" type="button" data-num="maxhr" aria-label="Edit max heart rate"><span class="tbn-l">HR</span><b id="tbHr">—</b></button>
-        <button class="tbn" type="button" data-num="weight" aria-label="Edit weight"><span class="tbn-l">Wt</span><b id="tbWt">—</b></button>
-      </div>
-      <button class="tb-chip tb-conns" id="tbConns" type="button" aria-label="Connections — open menu">
-        <span class="tb-conn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="6" cy="16.5" r="3.1"/><circle cx="18" cy="16.5" r="3.1"/><path d="M6 16.5l3.6-7h5.2l3.2 7M12.2 16.5l2.6-7" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="tbc-l">Trainer</span><span class="device-dot" id="tbTrainerDot"></span></span>
-        <span class="tb-conn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 20S3.6 15 3.6 9.3A4.3 4.3 0 0112 7.1a4.3 4.3 0 018.4 2.2C20.4 15 12 20 12 20z" stroke-linejoin="round"/></svg><span class="tbc-l">HR</span><span class="device-dot" id="tbHrDot"></span></span>
-        <span class="tb-conn"><svg class="conn-strava" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" fill="currentColor"/></svg><span class="tbc-l">Strava</span><span class="device-dot" id="tbStravaDot"></span></span>
+      <!-- One setup chip: a glance at device status (three dots) + your FTP.
+           Opens the combined Numbers + Connections panel. -->
+      <button class="tb-chip tb-setup" id="tbSetup" type="button" aria-label="Rider setup — numbers and connections">
+        <span class="tb-setup-dots" aria-hidden="true">
+          <span class="tb-ind"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="6" cy="16.5" r="3.1"/><circle cx="18" cy="16.5" r="3.1"/><path d="M6 16.5l3.6-7h5.2l3.2 7M12.2 16.5l2.6-7" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="device-dot" id="tbTrainerDot"></span></span>
+          <span class="tb-ind"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20S3.6 15 3.6 9.3A4.3 4.3 0 0112 7.1a4.3 4.3 0 018.4 2.2C20.4 15 12 20 12 20z" stroke-linejoin="round"/></svg><span class="device-dot" id="tbHrDot"></span></span>
+          <span class="tb-ind"><svg class="conn-strava" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" fill="currentColor"/></svg><span class="device-dot" id="tbStravaDot"></span></span>
+        </span>
+        <span class="tb-setup-ftp">FTP <b id="tbFtp">—</b></span>
+      </button>
+      <!-- Overflow: theme / guide / zones (moved in by desktop-nav JS). -->
+      <button class="tb-more" id="tbMore" type="button" aria-label="More" aria-haspopup="true" aria-expanded="false">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="5" cy="12" r="1.9" fill="currentColor"/><circle cx="12" cy="12" r="1.9" fill="currentColor"/><circle cx="19" cy="12" r="1.9" fill="currentColor"/></svg>
       </button>
     </div>
   </div>
@@ -2997,6 +3544,7 @@
       </div>
     </div>
     <button class="find-apply" id="findApply" type="button">Show workouts</button>
+    <button class="find-browse-all" id="findBrowseAll" type="button">Close &amp; browse all workouts</button>
   </div>
 </div>
 
@@ -3121,6 +3669,12 @@
   <div class="live-inner">
 
     <div class="live-waiting" id="liveWaiting">
+      <!-- Desktop (design B "Ready-check") header: the workout being armed.
+           Hidden on mobile, which keeps the original pedal-to-begin layout. -->
+      <div class="waiting-head" id="waitingHead">
+        <p class="waiting-wk" id="waitingWk"></p>
+        <p class="waiting-meta" id="waitingMeta"><span class="waiting-sw" id="waitingSw"></span><span id="waitingMetaText"></span></p>
+      </div>
       <div class="waiting-icon pulsing" id="waitingIcon">🚴</div>
       <p class="waiting-title" id="waitingTitle">Pedal to begin</p>
       <p class="waiting-sub" id="waitingSub">Or press Start now.</p>
@@ -3129,10 +3683,12 @@
         <div class="waiting-chip" id="waitingCadenceChip">
           <span class="wc-label">Cadence</span>
           <span class="wc-val" id="waitingCadence">—</span>
+          <span class="wc-stat"><i class="sdot"></i><em class="s-wait">Waiting</em><em class="s-live">Registering</em></span>
         </div>
         <div class="waiting-chip" id="waitingPowerChip">
           <span class="wc-label">Power</span>
           <span class="wc-val" id="waitingPower">—</span>
+          <span class="wc-stat"><i class="sdot"></i><em class="s-wait">Waiting</em><em class="s-live">Registering</em></span>
         </div>
       </div>
       <!-- Only what's missing is shown here, so a forgotten strap doesn't mean
@@ -3342,38 +3898,14 @@
       <a class="action-btn strava-link" id="summaryStravaLink" href="#" target="_blank" rel="noopener" style="display:none;">View on Strava &#8599;</a>
       <p class="strava-status" id="summaryStravaStatus" style="display:none;"></p>
       <button class="action-btn open-share-btn" id="openShareBtn" type="button">
-        <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16M12 4v11M8.5 7.5 12 4l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span>Create share image</span>
-        <span class="open-share-chev" aria-hidden="true">&#8250;</span>
+        <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true"><path d="M12 3.5v11M12 14.5l-4.2-4.2M12 14.5l4.2-4.2M4.5 16.5v2.2a1.8 1.8 0 001.8 1.8h11.4a1.8 1.8 0 001.8-1.8v-2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="open-share-label">Download share image</span>
       </button>
+      <button class="action-btn fit-link" id="summaryFitBtn" type="button">Download .fit file</button>
       <div class="summary-row">
         <button class="action-btn danger" id="summaryDeleteBtn" style="display:none;">Delete ride</button>
         <button class="action-btn primary" id="summaryCloseBtn">Close</button>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- Share image: pick a plot style, preview it, download the PNG or the .fit. -->
-<div id="shareModal" class="live-player no-print" style="display:none;" role="dialog" aria-modal="true" aria-label="Share image">
-  <div class="live-inner share-inner">
-    <div class="share-top">
-      <button class="icon-btn" id="shareBack" type="button" title="Back" aria-label="Back to summary">&#8249;</button>
-      <h2 class="share-screen-title">Share image</h2>
-    </div>
-    <div class="share-styles" id="shareStyles" role="group" aria-label="Image style">
-      <button type="button" class="share-style" data-style="bars">Bars</button>
-      <button type="button" class="share-style" data-style="blocks">Blocks</button>
-      <button type="button" class="share-style" data-style="skyline">Skyline</button>
-      <button type="button" class="share-style" data-style="matrix">Matrix</button>
-    </div>
-    <canvas class="share-preview" id="sharePreview" aria-label="Share image preview"></canvas>
-    <div class="share-actions">
-      <button class="action-btn primary" id="summaryImageBtn">
-        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M12 3.5v11M12 14.5l-4.2-4.2M12 14.5l4.2-4.2M4.5 16.5v2.2a1.8 1.8 0 001.8 1.8h11.4a1.8 1.8 0 001.8-1.8v-2.2" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        Download Timeline Image
-      </button>
-      <button class="action-btn fit-link" id="summaryFitBtn">Download .fit file</button>
     </div>
   </div>
 </div>
@@ -3693,6 +4225,9 @@
     liveTestNote: document.getElementById('liveTestNote'),
     liveCue: document.getElementById('liveCue'),
     liveWaiting: document.getElementById('liveWaiting'),
+    waitingWk: document.getElementById('waitingWk'),
+    waitingMetaText: document.getElementById('waitingMetaText'),
+    waitingSw: document.getElementById('waitingSw'),
     waitingIcon: document.getElementById('waitingIcon'),
     waitingTitle: document.getElementById('waitingTitle'),
     waitingSub: document.getElementById('waitingSub'),
@@ -3714,12 +4249,7 @@
     summaryGrid: document.getElementById('summaryGrid'),
     ftpEstimate: document.getElementById('ftpEstimate'),
     summaryFitBtn: document.getElementById('summaryFitBtn'),
-    sharePreview: document.getElementById('sharePreview'),
-    shareStyles: document.getElementById('shareStyles'),
     openShareBtn: document.getElementById('openShareBtn'),
-    shareModal: document.getElementById('shareModal'),
-    shareBack: document.getElementById('shareBack'),
-    summaryImageBtn: document.getElementById('summaryImageBtn'),
     summaryCloseBtn: document.getElementById('summaryCloseBtn'),
     summaryDeleteBtn: document.getElementById('summaryDeleteBtn'),
     summaryTitle: document.getElementById('summaryTitle'),
@@ -3749,6 +4279,9 @@
   var savedSort = 'name';
   try{ var _s = localStorage.getItem(SORT_KEY); if(_s) savedSort = _s; }catch(e){}
   var filters = {duration:null, zone:null, shape:null, spice:null, search:'', sort:savedSort, starredOnly:false};
+  // Set by the desktop chrome (10-desktop-nav) so the compact top filter bar can
+  // mirror slider state every time the filters re-render. Null on mobile.
+  var onFiltersRendered = null;
 
   // Whether the recommended badges are shown at all. A preference, not a
   // filter: on, the badged rides wear the pill and lead the list; off, the
@@ -4034,6 +4567,7 @@
       g.classList.toggle('filter-off', testsOnly);
       g.title = testsOnly ? 'Not applied while Fitness test is selected' : '';
     });
+    if(onFiltersRendered) onFiltersRendered();   // mirror into the desktop top bar
   }
 
   // The readout is also the clear control: "Any" while nothing is picked, the
@@ -4191,6 +4725,13 @@
     var m = els.findModal;
     setTimeout(function(){ if(!m.classList.contains('open')) m.hidden = true; }, 220);
   }
+  // Dismissing Quick Pick (X, scrim, Esc, or "Close & browse all") reveals the
+  // full list — it's the landing, so there's always a way through to browsing.
+  function closeFindAndBrowse(){
+    browseAll = true;
+    closeFindModal();
+    renderWorkoutCards();
+  }
   function applyFind(){
     // A fresh query: the three picks are the whole of it, so shape/search/star
     // stand down (the sidebar sliders are still there to fine-tune afterwards).
@@ -4249,25 +4790,36 @@
       markFindRow(els.findSpice, 'spice');
       updateFindCount();
     });
-    [].forEach.call(els.findModal.querySelectorAll('[data-findclose]'), function(x){ x.addEventListener('click', closeFindModal); });
-    document.addEventListener('keydown', function(e){ if(!els.findModal.hidden && e.key === 'Escape') closeFindModal(); });
+    [].forEach.call(els.findModal.querySelectorAll('[data-findclose]'), function(x){ x.addEventListener('click', closeFindAndBrowse); });
+    var findBrowse = document.getElementById('findBrowseAll');
+    if(findBrowse) findBrowse.addEventListener('click', closeFindAndBrowse);
+    document.addEventListener('keydown', function(e){ if(!els.findModal.hidden && e.key === 'Escape') closeFindAndBrowse(); });
   }
 
   // ---- list zero-state ----
   // Until the rider searches or filters, the whole list sits blurred behind a
   // single "Find a workout" call, so the library isn't a wall on open. Engaging
   // (a pick, or "browse all") clears it for the session; Reset brings it back.
-  var browseAll = false;
+  var browseAll = false, findLandingDone = false;
   function isZeroQuery(){
     return filters.duration === null && filters.zone === null && filters.spice === null &&
            filters.shape === null && !filters.starredOnly && !(filters.search && filters.search.trim());
   }
+  // The opening screen is now Quick Pick itself: on a fresh zero-state the Find
+  // modal opens over the list (its own scrim dims it), instead of a blurred veil
+  // with a prompt card. Dismissing it (any way) reveals the full list.
   function updateListZero(){
     if(!els.listZero || !els.listPane) return;
     var show = isZeroQuery() && !browseAll && WORKOUTS.length > 0;
-    els.listPane.classList.toggle('zero-on', show);
-    els.listZero.hidden = !show;
-    if(show && els.lzCount) els.lzCount.textContent = WORKOUTS.length;
+    els.listPane.classList.remove('zero-on');   // no blurred veil any more
+    els.listZero.hidden = true;
+    if(show && !findLandingDone && els.findModal){
+      var intro = document.getElementById('introModal');
+      if(!(intro && intro.style.display !== 'none')){   // let the first-run FTP intro go first
+        findLandingDone = true;
+        openFindModal();
+      }
+    }
   }
   if(els.listZeroGo) els.listZeroGo.addEventListener('click', openFindModal);
   if(els.listZeroBrowse) els.listZeroBrowse.addEventListener('click', function(){
@@ -4530,8 +5082,11 @@
       '<i class="tw a">' + REC_STAR + '</i><i class="tw b">' + REC_STAR + '</i><i class="tw c">' + REC_STAR + '</i></span>';
   }
 
-  function renderWorkoutCard(wo){
+  function renderWorkoutCard(wo, idx){
     var z = ZONES[wo.zone] || ZONES.endurance;
+
+    // Desktop: the typographic index row. Mobile keeps the card below.
+    if(!mqMobile.matches) return renderIndexRow(wo, idx || 0, z);
 
     var card = document.createElement('div');
     // `doneByKey` is filled from the ride log once it has been read.
@@ -4575,6 +5130,131 @@
     return card;
   }
 
+  // Desktop index row: number · name · structure · monotone shape · zone/meta.
+  // A row click toggles the inline expand (openDesktopExpand); the shape thumb
+  // is drawn by thumbSvg and recoloured to ink by CSS.
+  function renderIndexRow(wo, idx, z){
+    var row = document.createElement('div');
+    row.className = 'wk-row' + (selectedKey === wo.key ? ' sel' : '');
+    row.id = 'workout-' + wo.key;
+    row.setAttribute('data-card', wo.key);
+    row.innerHTML =
+      '<span class="wk-name">' + wo.name + recPill(wo) + '</span>' +
+      '<span class="wk-thumbwrap">' +
+        '<span class="wk-thumb">' + thumbSvg(wo) + '</span>' +
+        '<span class="wk-struct">' + shortLabel(wo) + '</span>' +
+      '</span>' +
+      '<span class="wk-meta"><span class="wk-zone"><i style="background:' + z.color + '"></i>' +
+        (wo.test ? 'Test' : z.label) + '</span>' +
+        '<span class="wk-big">' + wo.durationMin + ' min</span>' + (wo.test ? '' : ' · TSS ' + wo.tss) +
+      '</span>';
+    row.addEventListener('click', function(e){
+      if(e.target.closest('a,button')) return;   // let the expand's own controls act
+      if(selectedKey === wo.key && row.classList.contains('sel')){ selectedKey = null; openDesktopExpand(null); }
+      else selectWorkout(wo.key);
+    });
+    return row;
+  }
+
+  // The inline expand's content — the same pieces as the detail pane, minus the
+  // name (the row already shows it). Reuses the real builders so it can't drift.
+  // Factual one-liners describing what each focus zone trains — used as the
+  // opened card's lead line when a workout carries no prose of its own.
+  var ZONE_BLURB = {
+    recovery:  'Easy recovery spin — keep it genuinely light and let the legs clear.',
+    endurance: 'Aerobic base — steady, conversational riding that builds the engine.',
+    tempo:     'Sustained tempo — aerobic strength held at a hard-but-steady pace.',
+    sweetspot: 'Sweet spot — the most fitness per minute, sitting just under threshold.',
+    threshold: 'Threshold work — hold the effort and lift the ceiling you can sustain.',
+    vo2:       'VO2 max — short, sharp efforts at the ceiling of your aerobic power.',
+    anaerobic: 'Anaerobic — all-out neuromuscular bursts with full recoveries.',
+    test:      'A fitness test to measure your FTP — pace it evenly and push.'
+  };
+  function desktopExpandInner(wo){
+    var z = ZONES[wo.zone] || ZONES.endurance, pp = planPower(wo);
+    var stats = wo.test
+      ? '<div class="plan-stats">' + planStat('Duration', wo.durationMin, 'min') + '</div>' +
+        '<p class="plan-note">' + (wo.test === 'ramp' ? 'FTP = 75% of your best 1-minute power.' : 'FTP = 95% of your 20-minute average.') + '</p>'
+      : '<div class="plan-stats">' +
+          planStat('Duration', wo.durationMin, 'min') +
+          planStat('Time in zone', wo.workMin, 'min') +
+          planStat('TSS', wo.tss) +
+          planStat('Est. avg power', pp.avg !== null ? pp.avg : '—', pp.avg !== null ? 'W' : '') +
+          planStat('Normalised', pp.np !== null ? pp.np : '—', pp.np !== null ? 'W' : '') +
+        '</div>';
+    // Editorial voice: the curator's note if there is one, else a factual line
+    // about what this focus zone trains (the library carries no per-workout prose).
+    var cueText = wo.purpose || (showRec && typeof wo.recommended === 'string' ? wo.recommended : '') || ZONE_BLURB[wo.zone] || '';
+    var cue = cueText ? '<p class="wk-exp-cue">' + cueText + '</p>' : '';
+    // Two-column spread: lead text on the left, the profile on the right.
+    return '<div class="wk-exp-in">' +
+      '<div class="wk-exp-lead">' +
+        '<div class="detail-line">' +
+          '<span class="structure-chip' + (wo.test ? ' is-test' : '') + '" style="--seg:' + z.color + '">' + shortLabel(wo) + '</span>' +
+          (wo.test ? '' : chillies(wo.spice)) +
+        '</div>' +
+        cue +
+        stats +
+        '<div class="wk-exp-act">' +
+          '<button class="action-btn start-btn" data-live="' + wo.key + '">▶ Start Workout</button>' +
+          '<button class="star-btn' + (isFav(wo.key) ? ' on' : '') + '" data-star="' + wo.key + '" aria-label="Toggle favourite">' + starSvg() + '</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="wk-exp-prof">' +
+        '<div class="wk-exp-ph">Profile</div>' +
+        '<div class="detail-graph">' + renderTimeline(wo, 206) + '</div>' +
+        '<p class="wk-exp-hint">Hover for each block’s target.</p>' +
+      '</div>' +
+    '</div>';
+  }
+
+  // Place (or clear) the inline expand under the selected row. Desktop only.
+  function openDesktopExpand(key, opts){
+    var host = els.workoutCards;
+    var old = host.querySelector('.wk-exp'); if(old) old.parentNode.removeChild(old);
+    Array.prototype.forEach.call(host.querySelectorAll('.wk-row'), function(r){
+      r.classList.toggle('sel', r.getAttribute('data-card') === key);
+    });
+    if(!key) return;
+    var wo = byKey(key); if(!wo) return;
+    var row = document.getElementById('workout-' + key); if(!row) return;
+    var exp = document.createElement('div');
+    exp.className = 'wk-exp';
+    exp.innerHTML = desktopExpandInner(wo);
+    row.insertAdjacentElement('afterend', exp);
+    wireWorkoutButtons(exp);
+    if(opts && opts.scrollIntoView && row.scrollIntoView) row.scrollIntoView({block:'nearest'});
+    travelThumb(row, exp);
+  }
+
+  // The row's shape preview flies up and grows into the opened profile — a light
+  // shared-element flourish. Fully guarded: a timeout restores the profile even
+  // if the transition is throttled (so the pane can never be left blank).
+  function travelThumb(row, exp){
+    var reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    var thumb = row.querySelector('.wk-thumb svg');
+    var prof = exp.querySelector('.wk-exp-prof .timeline-graph') || exp.querySelector('.wk-exp-prof .detail-graph');
+    if(reduce || !thumb || !prof) return;
+    var tr = thumb.getBoundingClientRect(), pr = prof.getBoundingClientRect();
+    if(!tr.width || !pr.width) return;
+    var fly = document.createElement('div');
+    fly.style.cssText = 'position:fixed;z-index:60;pointer-events:none;overflow:hidden;' +
+      'left:' + tr.left + 'px;top:' + tr.top + 'px;width:' + tr.width + 'px;height:' + tr.height + 'px;' +
+      'opacity:.85;transition:left .42s cubic-bezier(.4,0,.2,1),top .42s cubic-bezier(.4,0,.2,1),' +
+      'width .42s cubic-bezier(.4,0,.2,1),height .42s cubic-bezier(.4,0,.2,1),opacity .42s ease;';
+    var clone = thumb.cloneNode(true); clone.style.width = '100%'; clone.style.height = '100%'; clone.style.display = 'block';
+    fly.appendChild(clone);
+    document.body.appendChild(fly);
+    prof.style.opacity = '0';
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      fly.style.left = pr.left + 'px'; fly.style.top = pr.top + 'px';
+      fly.style.width = pr.width + 'px'; fly.style.height = pr.height + 'px'; fly.style.opacity = '0';
+    }); });
+    var done = function(){ if(fly.parentNode) fly.parentNode.removeChild(fly); prof.style.opacity = '1'; };
+    fly.addEventListener('transitionend', function(e){ if(e.propertyName === 'opacity') done(); }, {once:true});
+    setTimeout(done, 520);
+  }
+
   function byKey(k){
     return WORKOUTS.filter(function(w){ return w.key === k; })[0];
   }
@@ -4582,6 +5262,8 @@
   // ---- detail pane ----
   function selectWorkout(key, opts){
     selectedKey = key;
+    // Desktop: open the inline expand in the index (no separate detail pane).
+    if(!mqMobile.matches){ openDesktopExpand(key, opts); updateViewNav(); return; }
     Array.prototype.forEach.call(els.workoutCards.querySelectorAll('.workout-card'), function(c){
       c.classList.toggle('selected', c.getAttribute('data-card') === key);
     });
@@ -4749,9 +5431,13 @@
     if(mqMobile.matches){
       if(sideMenuEl.parentNode !== els.menuSheetBody) els.menuSheetBody.appendChild(sideMenuEl);
     } else {
-      if(sideMenuHome && sideMenuEl.parentNode !== sideMenuHome.p) sideMenuHome.p.insertBefore(sideMenuEl, sideMenuHome.n);
+      // Desktop: the sidebar is retired on the Workouts page, so the menu
+      // dropdown lives on <body> (it's position:fixed anyway) rather than inside
+      // the hidden sidebar, which would hide it too.
+      if(sideMenuEl.parentNode !== document.body) document.body.appendChild(sideMenuEl);
     }
   }
+  void sideMenuHome;   // retained for reference; desktop home is now <body>
   syncMenuLocation();
 
   // The connection indicator lives in the sidebar head on desktop/tablet only;
@@ -4764,6 +5450,9 @@
     if(!e.matches){ closeDetailMobile(); var s = document.querySelector('.sheet.open'); if(s) closeSheet(s); }
     syncFilterLocation();
     syncMenuLocation();
+    // The card list and the index are different markup, so rebuild for the
+    // viewport we've crossed into.
+    if(typeof renderWorkoutCards === 'function') renderWorkoutCards();
   };
   if(mqMobile.addEventListener) mqMobile.addEventListener('change', mqHandler);
   else if(mqMobile.addListener) mqMobile.addListener(mqHandler);
@@ -4794,10 +5483,13 @@
       '<span class="tl-sc-meta"><b>' + d.dur + '</b> &nbsp;·&nbsp; <b>' + d.w + '</b></span>' +
       (d.rep ? '<span class="tl-sc-rep">rep ' + d.rep + '</span>' : '');
   }
-  function setSegFocus(ri){
+  function setSegFocus(graph, ri){
     if(ri === segFocusRi) return;
     segFocusRi = ri;
-    var tbody = els.detailBody.querySelector('.interval-table tbody');
+    // Highlight the matching row only if a table shares the chart's container
+    // (the mobile detail pane). The desktop expand has no table — pill only.
+    var container = (graph && (graph.closest('.wk-exp') || graph.closest('.detail-body'))) || els.detailBody;
+    var tbody = container && container.querySelector('.interval-table tbody');
     if(tbody){
       [].forEach.call(tbody.children, function(tr){
         tr.classList.toggle('tr-hot', ri !== null && tr.getAttribute('data-ri') === ri);
@@ -4813,12 +5505,11 @@
 
   // One rAF-throttled update per frame: mousemove can fire far faster than the
   // screen refreshes, and every update reads layout.
-  var scrubPending = null, scrubRaf = 0;
-  function scrubTo(clientX){
-    var graph = els.detailBody.querySelector('.timeline-graph');
-    var tl = els.detailBody.querySelector('.timeline');
-    var line = els.detailBody.querySelector('.tl-scrub');
-    if(!graph || !tl || !line) return;
+  var scrubPending = null, scrubRaf = 0, scrubGraph = null;
+  function scrubTo(graph, clientX){
+    var tl = graph.querySelector('.timeline');
+    var line = graph.querySelector('.tl-scrub');
+    if(!tl || !line) return;
     var gr = graph.getBoundingClientRect(), tr = tl.getBoundingClientRect();
     var x = Math.max(tr.left, Math.min(tr.right, clientX));
 
@@ -4847,26 +5538,24 @@
       var want = Math.max(half + pad, Math.min(gr.width - half - pad, lineX));
       t.style.left = (want - lineX) + 'px';
     }
-    setSegFocus(hit ? hit.getAttribute('data-ri') : null);
+    setSegFocus(graph, hit ? hit.getAttribute('data-ri') : null);
   }
-  function scrubEnd(){
-    var graph = els.detailBody.querySelector('.timeline-graph');
-    if(graph) graph.classList.remove('scrubbing');
-    setSegFocus(null);
+  function scrubEnd(graph){
+    if(!graph) return;
+    graph.classList.remove('scrubbing');
+    setSegFocus(graph, null);
   }
-  els.detailBody.addEventListener('mousemove', function(e){
-    if(!e.target.closest('.timeline-graph')) return;
-    scrubPending = e.clientX;
+  // Delegated on the document so the scrubber works both in the desktop inline
+  // expand and the mobile detail pane. It only acts over a chart.
+  document.addEventListener('mousemove', function(e){
+    var graph = e.target.closest && e.target.closest('.timeline-graph');
+    if(!graph){ if(scrubGraph){ scrubEnd(scrubGraph); scrubGraph = null; } return; }
+    scrubGraph = graph; scrubPending = e.clientX;
     if(scrubRaf) return;
     scrubRaf = requestAnimationFrame(function(){
       scrubRaf = 0;
-      if(scrubPending !== null) scrubTo(scrubPending);
+      if(scrubPending !== null && scrubGraph) scrubTo(scrubGraph, scrubPending);
     });
-  });
-  els.detailBody.addEventListener('mouseleave', scrubEnd);
-  els.detailBody.addEventListener('mouseover', function(e){
-    // Left the chart but still in the pane (e.g. over the table): stand down.
-    if(!e.target.closest('.timeline-graph')) scrubEnd();
   });
 
   function renderDetail(){
@@ -5009,30 +5698,37 @@
     els.workoutCards.innerHTML = '';
     els.noResults.style.display = list.length ? 'none' : 'block';
     if(!list.length) paintEmptyState();
-    els.resultCount.textContent = list.length === WORKOUTS.length
-      ? WORKOUTS.length + ' workouts'
-      : list.length + ' of ' + WORKOUTS.length + ' workouts';
+    els.resultCount.textContent = String(list.length);   // just the count showing
 
-    list.forEach(function(wo){
-      els.workoutCards.appendChild(renderWorkoutCard(wo));
+    // Desktop renders the typographic index (wk-idx); mobile the card list.
+    var desktop = !mqMobile.matches;
+    els.workoutCards.classList.toggle('wk-idx', desktop);
+    list.forEach(function(wo, i){
+      els.workoutCards.appendChild(renderWorkoutCard(wo, i));
     });
     wireWorkoutButtons(els.workoutCards);
     updateListZero();   // blur-and-prompt when nothing's been searched yet
 
     // In the fresh zero-state (nothing searched yet) the list is blurred behind
-    // the Quick Pick prompt, so leave the detail pane blank rather than auto-
-    // opening the first workout. Once the rider engages (Quick Pick or browse
-    // all), keep the current selection if it survived the filter, otherwise
-    // fall back to the first result so the pane always shows something.
+    // the Quick Pick prompt, so nothing is opened. Once the rider engages (Quick
+    // Pick or browse all): on mobile the detail pane falls back to the first
+    // result; on desktop the index keeps whatever row was open but never auto-
+    // opens one (the index reads as a table of contents, all closed).
     if(list.length && isZeroQuery() && !browseAll){
       selectedKey = null;
-      renderDetail();
+      if(desktop) openDesktopExpand(null); else renderDetail();
     } else if(list.length){
-      if(visibleKeys.indexOf(selectedKey) < 0) selectWorkout(list[0].key);
-      else renderDetail();
+      if(desktop){
+        if(visibleKeys.indexOf(selectedKey) >= 0) openDesktopExpand(selectedKey);
+        else { selectedKey = null; openDesktopExpand(null); }
+      } else if(visibleKeys.indexOf(selectedKey) < 0){
+        selectWorkout(list[0].key);
+      } else {
+        renderDetail();
+      }
     } else {
       selectedKey = null;
-      renderDetail();
+      if(desktop) openDesktopExpand(null); else renderDetail();
     }
   }
 
@@ -6257,7 +6953,9 @@
 
   // The workout arms itself when the window opens and only starts the clock
   // once the rider is actually turning the cranks.
-  var PEDAL_START = {cadence:20, power:20, holdMs:1500, countdownSec:3};
+  // holdMs 0: the count-in begins the moment both readouts are above threshold
+  // (both sensor boxes "green"), rather than after a sustained hold.
+  var PEDAL_START = {cadence:20, power:20, holdMs:0, countdownSec:3};
 
   // ---- audio cues ----
   // Synthesised rather than loaded, so the file stays self-contained. The
@@ -6456,6 +7154,7 @@
     }
     els.waitingStartBtn.textContent = resuming ? 'Resume now' : 'Start now';
     els.waitingCancelBtn.textContent = resuming ? 'End workout' : 'Cancel';
+    paintWaitingHead();
     refreshWaitingOverlay();
     els.waitingCadence.textContent = '\u2014';
     els.waitingPower.textContent = '\u2014';
@@ -6486,6 +7185,22 @@
     paintWaitingDevice(trainerState, els.wdTrainerBtn, els.wdTrainerText, 'Connect trainer');
     paintWaitingDevice(hrState, els.wdHrBtn, els.wdHrText, 'Connect HR');
     paintWaitingFtp();
+  }
+
+  // Design-B header (desktop): the workout name + a zone · duration · TSS line
+  // with the zone's colour swatch. Hidden on mobile via CSS.
+  function paintWaitingHead(){
+    if(!els.waitingWk) return;
+    var wo = liveState.workout;
+    if(!wo){ els.waitingWk.textContent = ''; if(els.waitingMetaText) els.waitingMetaText.textContent = ''; return; }
+    els.waitingWk.textContent = wo.name;
+    var z = ZONES[wo.zone];
+    if(els.waitingSw) els.waitingSw.style.background = (z && z.hex) || 'var(--text-dim)';
+    var bits = [];
+    if(z) bits.push(z.label);
+    if(wo.durationMin != null) bits.push(wo.durationMin + ' min');
+    if(wo.tss != null) bits.push('TSS ' + wo.tss);
+    if(els.waitingMetaText) els.waitingMetaText.textContent = bits.join('  ·  ');
   }
 
   // The FTP row on the waiting screen. Reads as a warning until it's set,
@@ -7475,6 +8190,23 @@
     }).join('') + '</div>';
   }
 
+  // Time-in-zone as the typographic bar list (same style as the calendar's HR
+  // chart): swatch · code · name · ink bar sized to share · %, with the dominant
+  // (focus) zone picked out in its own colour.
+  function zoneBarsHtml(slices, total, popIdx){
+    if(total <= 0) return '';
+    var rows = slices.map(function(s, i){
+      var frac = s.sec / total, pct = Math.round(frac * 100);
+      var w = frac > 0 ? Math.max(2, frac * 100) : 0;
+      return '<div class="hz-row' + (i === popIdx ? ' is-avg' : '') + (frac > 0 ? '' : ' zero') + '">' +
+        '<span class="hz-lab"><i class="hz-sq" style="background:' + s.color + '"></i><b>' + s.z + '</b> <span class="hz-nm">' + s.label + '</span></span>' +
+        '<span class="hz-bar"><span class="hz-fill" style="width:' + w + '%;--zc:' + s.color + '"></span></span>' +
+        '<b class="hz-pct">' + pct + '%</b>' +
+      '</div>';
+    }).join('');
+    return '<div class="dv-hrz"><div class="dv-hrz-rows">' + rows + '</div></div>';
+  }
+
   function renderZonePies(){
     var samples = liveState.samples, wo = liveState.workout;
     if(!samples.length) return '';
@@ -7485,21 +8217,18 @@
       var hi = hrZoneIndex(s.hr);       if(hi >= 0){ hSecs[hi]++; hTotal++; }
     });
     var cards = '';
-    summaryPieSpecs = [];
-    var cvHtml = '<canvas class="pie-cv" width="' + PIE_CV_W + '" height="' + PIE_CV_H + '" aria-hidden="true"></canvas>';
+    summaryPieSpecs = [];   // no canvases on-screen now (the export still uses drawPie3d)
     if(pTotal >= 60){
       var pSlices = POWER_PIE_ZONES.map(function(z, i){ return {z:z.z, label:z.label, sec:pSecs[i], color:z.color || ZONES[z.key].hex}; });
       var pPop = focusZoneIndex(wo, pSecs);
       if(pPop < 0 || !pSecs[pPop]) pPop = pSecs.indexOf(Math.max.apply(null, pSecs));
       var pTitle = 'Power zones' + (pPop >= 0 && wo && !wo.test ? ' \u00b7 focus ' + POWER_PIE_ZONES[pPop].label : '');
-      cards += '<div class="pie-card"><h4>' + pTitle + '</h4>' + cvHtml + pieKey(pSlices, pPop) + '</div>';
-      summaryPieSpecs.push({slices:pSlices, total:pTotal, focus:pPop});
+      cards += '<div class="pie-card"><h4>' + pTitle + '</h4>' + zoneBarsHtml(pSlices, pTotal, pPop) + '</div>';
     }
     if(hTotal >= 60 && rideMaxHr()){
       var hSlices = HR_ZONES.map(function(z, i){ return {z:z.z, label:z.label, sec:hSecs[i], color:z.color}; });
       var hPop = hSecs.indexOf(Math.max.apply(null, hSecs));
-      cards += '<div class="pie-card"><h4>Heart rate zones \u00b7 max ' + rideMaxHr() + '</h4>' + cvHtml + pieKey(hSlices, hPop) + '</div>';
-      summaryPieSpecs.push({slices:hSlices, total:hTotal, focus:hPop});
+      cards += '<div class="pie-card"><h4>Heart rate zones \u00b7 max ' + rideMaxHr() + '</h4>' + zoneBarsHtml(hSlices, hTotal, hPop) + '</div>';
     }
     return cards;
   }
@@ -8067,7 +8796,6 @@
   var IMG_STYLE_KEY = 'ftpPlan_imgStyle_v1';
   var IMG_STYLES = ['bars', 'blocks', 'skyline', 'matrix'];
   function imgStyle(){ try{ var v = localStorage.getItem(IMG_STYLE_KEY); return IMG_STYLES.indexOf(v) >= 0 ? v : 'blocks'; }catch(e){ return 'blocks'; } }
-  function setImgStyle(s){ if(IMG_STYLES.indexOf(s) < 0) return; try{ localStorage.setItem(IMG_STYLE_KEY, s); }catch(e){} }
 
   // Downsample the ride to N columns of normalised power (0..1 against an FTP
   // ceiling) and HR (0..1 against its own min/max). `work` flags the hard bins.
@@ -8163,34 +8891,11 @@
     return c;
   }
 
-  // Live preview on the summary screen, and the active-style highlight.
-  function renderSharePreview(){
-    if(!els.sharePreview) return;
-    var cv = els.sharePreview;
-    try{
-      var img = buildSummaryImage(imgStyle());
-      var cw = cv.clientWidth || 360, ch = Math.round(cw * IMG_H / IMG_W), dpr = Math.min(2, window.devicePixelRatio || 1);
-      cv.width = Math.round(cw * dpr); cv.height = Math.round(ch * dpr); cv.style.height = ch + 'px';
-      var p = cv.getContext('2d'); p.setTransform(dpr, 0, 0, dpr, 0, 0);
-      p.clearRect(0, 0, cw, ch); p.drawImage(img, 0, 0, cw, ch);
-    }catch(e){ console.log('Preview failed:', e && e.message); }
-    if(els.shareStyles) [].forEach.call(els.shareStyles.querySelectorAll('[data-style]'), function(b){ b.classList.toggle('on', b.getAttribute('data-style') === imgStyle()); });
-  }
-  if(els.shareStyles) els.shareStyles.addEventListener('click', function(e){
-    var b = e.target.closest('[data-style]'); if(!b) return;
-    setImgStyle(b.getAttribute('data-style')); renderSharePreview();
-  });
-  // The share image now lives on its own screen over the summary.
+  // Share image: one tap exports the Bars-style 4:3 PNG — no style picker, so social posts stay uniform.
   if(els.openShareBtn) els.openShareBtn.addEventListener('click', function(){
-    els.shareModal.style.display = 'flex';
-    renderSharePreview();   // render once the canvas has its on-screen width
-  });
-  if(els.shareBack) els.shareBack.addEventListener('click', function(){ els.shareModal.style.display = 'none'; });
-
-  els.summaryImageBtn.addEventListener('click', function(){
-    var btn = this;
+    var label = this.querySelector('.open-share-label');
     try{
-      var canvas = buildSummaryImage();
+      var canvas = buildSummaryImage('bars');
       var name = exportBasename() + '.png';
       if(canvas.toBlob){
         canvas.toBlob(function(blob){ downloadBinary(blob, name, 'image/png'); }, 'image/png');
@@ -8201,7 +8906,7 @@
       }
     }catch(e){
       console.error('Image export failed:', e);
-      btn.textContent = 'Image export failed';
+      if(label) label.textContent = 'Image export failed';
     }
   });
   // ============================================================
@@ -9065,6 +9770,30 @@
       ctx.fillText(lbl, fx0 + tw / 2, pillY + 7.5);
     }
   }
+  // Heart-rate time-in-zone as a typographic bar list: a zone-colour swatch +
+  // code + name, an ink bar (length = share of the ride), the %, and the zone
+  // the ride averaged in picked out in its own colour. Replaces the canvas
+  // funnel so it matches the DM-Mono theme and themes with light/dark for free.
+  function hrZonesHtml(dist, total, avg, ref){
+    var bpm = hrZoneBpm(ref);
+    var avgZi = (avg && ref) ? hrZoneOf(avg, ref) : -1;
+    var rows = bpm.map(function(b, i){
+      var frac = total ? dist[i] / total : 0, pct = Math.round(frac * 100);
+      var w = frac > 0 ? Math.max(2, frac * 100) : 0;
+      var rng = b.hi === null ? (b.lo + '+') : (b.lo + '–' + b.hi);
+      return '<div class="hz-row' + (i === avgZi ? ' is-avg' : '') + (frac > 0 ? '' : ' zero') + '" title="' + b.label + ' · ' + rng + ' bpm">' +
+        '<span class="hz-lab"><i class="hz-sq" style="background:' + b.color + '"></i><b>' + b.z + '</b> <span class="hz-nm">' + b.label + '</span></span>' +
+        '<span class="hz-bar"><span class="hz-fill" style="width:' + w + '%;--zc:' + b.color + '"></span></span>' +
+        '<b class="hz-pct">' + pct + '%</b>' +
+      '</div>';
+    }).join('');
+    var cap = (avg && avgZi >= 0)
+      ? '<p class="dv-hrz-cap">Average <b>' + Math.round(avg) + ' bpm</b> · ' + bpm[avgZi].z + ' ' + bpm[avgZi].label + '</p>' : '';
+    return '<div class="dv-hrz">' +
+      '<div class="dv-ghead"><h4>Heart-rate zones</h4><span class="dv-gsub">max ' + ref + ' bpm</span></div>' +
+      '<div class="dv-hrz-rows">' + rows + '</div>' + cap +
+    '</div>';
+  }
   function renderDetailGraph(rec){
     var box = els.logAdd.querySelector('#dvGraph'); if(!box) return;
     function paint(hr){
@@ -9073,9 +9802,7 @@
       var dist = HR_ZONES.map(function(){ return 0; }), sum = 0;
       hr.forEach(function(v){ dist[hrZoneOf(v, ref)]++; sum += v; });
       var total = hr.length, avg = total ? sum / total : 0;
-      box.innerHTML = '<div class="dv-graph"><div class="dv-ghead"><h4>Heart-rate zones</h4>' +
-        '<span class="dv-gsub">max ' + ref + ' bpm</span></div><canvas class="dv-graph-cv"></canvas></div>';
-      drawHrZones(box.querySelector('.dv-graph-cv'), dist, total, avg, ref);
+      box.innerHTML = hrZonesHtml(dist, total, avg, ref);
     }
     var hr = hrSeriesFor(rec);
     if(hr && hr.length){ paint(hr); return; }
@@ -9713,7 +10440,7 @@
   function drawFitness(cv, series, rangeDays, noAnim){
     var W = cv.clientWidth || 720, H = 210, ctx = setupCanvas(cv, W, H);
     var padL = 38, padR = 14, padT = 12, padB = 24;
-    var accent = cssVar('--accent') || '#6E8BFF', warn = cssVar('--c-threshold') || '#F2764A';
+    var accent = cssVar('--accent') || '#6E8BFF', atlC = cssVar('--text-dim') || '#8A8A82';
     var faint = cssVar('--text-faint') || '#7E869E', grid = gridColor();
     var freshFill = tint('--ok', 0.15), fatigFill = tint('--c-anaerobic', 0.14);
     if(fitAnim){ cancelAnimationFrame(fitAnim); fitAnim = null; }
@@ -9748,8 +10475,8 @@
         ctx.fillStyle = ((a.ctl + b.ctl) >= (a.atl + b.atl)) ? freshFill : fatigFill;
         ctx.fill();
       }
-      line('atl', warn, 1.8);
-      line('ctl', accent, 2.6);
+      ctx.setLineDash([4, 3]); line('atl', atlC, 1.5); ctx.setLineDash([]);   // fatigue reads secondary
+      line('ctl', accent, 2.6);                                               // fitness, solid ink
       monthTicks(ctx, view, x, H, faint);
       ctx.restore();
     }
@@ -9770,7 +10497,7 @@
   function drawForm(cv, series, rangeDays){
     var W = cv.clientWidth || 720, H = cv.clientHeight || 168, ctx = setupCanvas(cv, W, H);
     var padL = 34, padR = 62, padT = 12, padB = 24;
-    var ok = cssVar('--ok') || '#5FE39A', danger = cssVar('--c-anaerobic') || '#FF5D75';
+    var accent = cssVar('--accent') || '#444';
     var faint = cssVar('--text-faint') || '#7E869E', grid = gridColor();
     ctx.clearRect(0, 0, W, H);
     if(series.length < 2){ ctx.fillStyle = faint; ctx.font = '13px ' + IMG_SANS; ctx.textAlign = 'center'; ctx.fillText('Not enough history yet', W/2, H/2); return; }
@@ -9785,17 +10512,14 @@
       var yt = y(Math.min(hi, tsbAbs)), yb = y(Math.max(lo, -tsbAbs));
       ctx.fillStyle = fill; ctx.fillRect(padL, yt, W - padL - padR, yb - yt);
     }
-    band(25, tsbAbs, tint('--star', 0.08));
-    band(5, 25, tint('--ok', 0.11));
-    band(-10, 5, tint('--text-faint', 0.08));   // neutral / maintaining
-    band(-30, -10, tint('--c-endurance', 0.13));
-    band(-tsbAbs, -30, tint('--c-anaerobic', 0.10));
-    // zone labels down the right margin
+    // Monotone: no loud zone bands — the right-margin labels and the zero line
+    // carry the meaning, in keeping with the typographic style.
     ctx.font = '9px ' + IMG_MONO; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
-    ctx.fillStyle = ok; ctx.fillText('Fresh', W - padR + 6, y(15));
-    ctx.fillStyle = faint; ctx.fillText('Maintain', W - padR + 6, y(-2.5));
-    ctx.fillStyle = cssVar('--c-endurance') || '#8CA0FF'; ctx.fillText('Productive', W - padR + 6, y(-20));
-    ctx.fillStyle = danger; ctx.fillText('Overreach', W - padR + 6, y(Math.min(-38, (-30 - tsbAbs) / 2)));
+    ctx.fillStyle = faint;
+    ctx.fillText('Fresh', W - padR + 6, y(15));
+    ctx.fillText('Maintain', W - padR + 6, y(-2.5));
+    ctx.fillText('Productive', W - padR + 6, y(-20));
+    ctx.fillText('Overreach', W - padR + 6, y(Math.min(-38, (-30 - tsbAbs) / 2)));
     ctx.font = '10px ' + IMG_MONO; ctx.textBaseline = 'middle';
     var zeroLine = 'rgba(' + (cssVar('--ink-rgb') || '128,128,128') + ',0.22)';
     [tsbAbs, 0, -tsbAbs].forEach(function(lv){
@@ -9810,10 +10534,10 @@
       ctx.beginPath();
       ctx.moveTo(x(a.t), y(a.tsb)); ctx.lineTo(x(b.t), y(b.tsb));
       ctx.lineTo(x(b.t), y(0)); ctx.lineTo(x(a.t), y(0)); ctx.closePath();
-      ctx.fillStyle = pos ? tint('--ok', 0.16) : tint('--c-anaerobic', 0.16);
+      ctx.fillStyle = tint('--accent', 0.07);
       ctx.fill();
       ctx.beginPath(); ctx.moveTo(x(a.t), y(a.tsb)); ctx.lineTo(x(b.t), y(b.tsb));
-      ctx.strokeStyle = pos ? ok : danger; ctx.lineWidth = 1.8; ctx.lineJoin = 'round'; ctx.stroke();
+      ctx.strokeStyle = accent; ctx.lineWidth = 2; ctx.lineJoin = 'round'; ctx.stroke();
     }
     monthTicks(ctx, view, x, H, faint);
   }
@@ -10051,6 +10775,16 @@
     }
   });
 
+  // Slide the sub-tab indicator under the active tab (relative to the list).
+  function moveSubUnderline(){
+    if(!els.trendsBody) return;
+    var list = els.trendsBody.querySelector('.tr-subtab-list'); if(!list) return;
+    var on = list.querySelector('.tr-subtab.on'), u = list.querySelector('.tr-subunderline');
+    if(!on || !u) return;
+    u.style.left = on.offsetLeft + 'px';
+    u.style.width = on.offsetWidth + 'px';
+  }
+
   function renderTrends(){
     rideAll().then(function(acts){
       acts = acts.filter(function(a){ return !a.planned; });   // plans aren't done yet
@@ -10100,10 +10834,10 @@
       // Split into sub-tabs so each view breathes (Form was getting squished and
       // the page scrolled too far): Summary (today + this week), Performance
       // (fitness/fatigue + form), Power (records).
-      var subNav = '<div class="tr-subtabs">' +
+      var subNav = '<div class="tr-subtabs"><div class="tr-subtab-list">' +
         [['summary','Summary'],['performance','Performance'],['power','Power']].map(function(t){
           return '<button type="button" class="tr-subtab' + (trendsTab===t[0]?' on':'') + '" data-pane="' + t[0] + '">' + t[1] + '</button>';
-        }).join('') + '</div>';
+        }).join('') + '<span class="tr-subunderline"></span></div></div>';
 
       var summaryPane = '<section class="tr-tab' + (trendsTab==='summary'?' on':'') + '" data-pane="summary">' +
         status +
@@ -10142,9 +10876,14 @@
       '</section>';
 
       els.trendsBody.innerHTML = subNav + summaryPane + perfPane + powerPane;
+      // Range selector moves inline with the sub-tabs (right side).
+      var subtabsRow = els.trendsBody.querySelector('.tr-subtabs');
+      if(subtabsRow && els.trendsRange) subtabsRow.appendChild(els.trendsRange);
       drawTab(trendsTab);
       wireFormHelp();
       updateRangeVisibility();
+      moveSubUnderline();
+      requestAnimationFrame(moveSubUnderline);   // settle after layout/font
     }).catch(function(e){
       els.trendsBody.innerHTML = '<p class="log-error">Charts couldn’t be built: ' + (e && e.message) + '</p>';
     });
@@ -10207,6 +10946,7 @@
     [].forEach.call(els.trendsBody.querySelectorAll('.tr-tab'), function(x){ x.classList.toggle('on', x.getAttribute('data-pane') === t); });
     drawTab(t);
     updateRangeVisibility();
+    moveSubUnderline();
   });
   // Watts vs W/kg: a two-state switch — clicking either side flips it. Only the
   // power curve redraws, no recompute.
@@ -10751,6 +11491,7 @@
     var railNav = document.getElementById('railNav');
     if(!railNav) return;
     var tbPage = document.getElementById('tbPage');
+    var moveUnderline = null;   // set by the chrome setup below; slides the nav indicator
     var trendsModal = document.getElementById('trendsModal');
     var logModal = els.logModal;
     var isMobile = function(){ return window.matchMedia('(max-width:900px)').matches; };
@@ -10764,6 +11505,7 @@
       document.body.setAttribute('data-deskview', v);
       if(tbPage) tbPage.textContent = PAGE[v];
       [].forEach.call(railNav.querySelectorAll('.rn-item'), function(b){ b.classList.toggle('on', b.getAttribute('data-view') === v); });
+      if(moveUnderline) moveUnderline();
       if(v === 'calendar' && els.logBtn) els.logBtn.click();
       else if(v === 'fitness' && els.trendsBtn) els.trendsBtn.click();
     }
@@ -10795,7 +11537,9 @@
       var want = sideMenu.hidden || sideMenu.getAttribute('data-menumode') !== mode;
       sideMenu.classList.remove('show-numbers', 'show-conns');
       if(!want){ sideMenu.hidden = true; sideMenu.removeAttribute('data-menumode'); return; }
-      sideMenu.classList.add(mode === 'numbers' ? 'show-numbers' : 'show-conns');
+      if(mode === 'numbers') sideMenu.classList.add('show-numbers');
+      else if(mode === 'conns') sideMenu.classList.add('show-conns');
+      // 'setup' adds neither class → both Numbers and Connections sections show
       sideMenu.setAttribute('data-menumode', mode);
       sideMenu.hidden = false;
       var r = anchor.getBoundingClientRect(), w = sideMenu.offsetWidth || 320;
@@ -10851,6 +11595,202 @@
 
     var railCount = document.getElementById('railCount');
     if(railCount && typeof WORKOUTS !== 'undefined' && WORKOUTS) railCount.textContent = WORKOUTS.length || '';
+
+    // ---- Full-width chrome: the sidebar is retired on the Workouts page, so the
+    // section nav + utilities move into the top bar and the filters become a
+    // compact bar in the list header. (All hidden on mobile, which keeps its
+    // bottom tabs + sliders.) ----
+    var topBar = document.getElementById('topBar');
+    if(topBar){
+      var tbRight = topBar.querySelector('.tb-right');
+      var brand = document.createElement('span');
+      brand.className = 'tb-brand'; brand.setAttribute('role', 'img'); brand.setAttribute('aria-label', 'FTP');
+      topBar.insertBefore(brand, topBar.firstChild);
+      if(tbPage) tbPage.style.display = 'none';
+      topBar.insertBefore(railNav, brand.nextSibling);         // nav keeps its setDeskView handler
+
+      // Setup chip → the combined Numbers + Connections panel.
+      var tbSetup = document.getElementById('tbSetup');
+      if(tbSetup && sideMenu) tbSetup.addEventListener('click', function(e){ e.stopPropagation(); if(typeof closeMore === 'function') closeMore(); openDeskMenu('setup', tbSetup); });
+      // Keypad opened from a menu number chip anchors under that chip (03 opens it).
+      var menuRider = document.querySelector('.menu-rider');
+      if(menuRider) menuRider.addEventListener('click', function(e){
+        var chip = e.target.closest('.ftp-chip[data-num]'); if(chip) anchorKeypad(chip);
+      });
+      // Clicking outside the setup panel closes it (not the chip, which toggles, nor the keypad).
+      document.addEventListener('click', function(e){
+        if(sideMenu && !sideMenu.hidden && !e.target.closest('#sideMenu') && !e.target.closest('#tbSetup') && !e.target.closest('#keypadOverlay')){
+          sideMenu.hidden = true; sideMenu.removeAttribute('data-menumode');
+        }
+      });
+
+      // Overflow: theme / guide / zones collapse into a '⋯' dropdown on <body>.
+      var tbMore = document.getElementById('tbMore');
+      if(tbMore) topBar.insertBefore(tbMore, railNav.nextSibling);   // sit next to the nav (after Fitness)
+      var tbMoreMenu = document.createElement('div');
+      tbMoreMenu.className = 'tb-more-menu'; tbMoreMenu.id = 'tbMoreMenu'; tbMoreMenu.hidden = true;
+      document.body.appendChild(tbMoreMenu);
+      ['railTheme','railGuide','railZones'].forEach(function(id){ var u = document.getElementById(id); if(u) tbMoreMenu.appendChild(u); });
+      function closeMore(){ tbMoreMenu.hidden = true; if(tbMore) tbMore.setAttribute('aria-expanded', 'false'); }
+      if(tbMore){
+        tbMore.addEventListener('click', function(e){
+          e.stopPropagation();
+          if(sideMenu && !sideMenu.hidden){ sideMenu.hidden = true; sideMenu.removeAttribute('data-menumode'); }   // close the setup panel
+          var show = tbMoreMenu.hidden;
+          tbMoreMenu.hidden = !show;
+          tbMore.setAttribute('aria-expanded', show ? 'true' : 'false');
+          if(show){
+            var r = tbMore.getBoundingClientRect(), w = tbMoreMenu.offsetWidth || 180;
+            tbMoreMenu.style.left = Math.round(Math.max(12, Math.min(r.right - w, window.innerWidth - w - 12))) + 'px';
+            tbMoreMenu.style.top = (r.bottom + 8) + 'px';
+          }
+        });
+        tbMoreMenu.addEventListener('click', function(){ setTimeout(closeMore, 0); });   // a util was chosen
+        document.addEventListener('click', function(e){ if(!tbMoreMenu.hidden && !e.target.closest('#tbMoreMenu') && !e.target.closest('#tbMore')) closeMore(); });
+      }
+
+      // Sliding active-section indicator on the top bar's bottom border. One bar,
+      // positioned under whichever nav item is active; CSS transitions the move.
+      var tbUnderline = document.createElement('span');
+      tbUnderline.className = 'tb-underline';
+      topBar.appendChild(tbUnderline);
+      moveUnderline = function(){
+        var on = railNav.querySelector('.rn-item.on');
+        if(!on){ tbUnderline.style.width = '0'; return; }
+        var ir = on.getBoundingClientRect(), tr = topBar.getBoundingClientRect();
+        if(!ir.width) return;   // hidden (mobile) — leave it be
+        tbUnderline.style.left = (ir.left - tr.left) + 'px';
+        tbUnderline.style.width = ir.width + 'px';
+      };
+      // Left-align the filter row (the pane-head) to the Workouts nav item above it.
+      function alignFilterRow(){
+        var nav = railNav.querySelector('.rn-item[data-view="workouts"]');
+        if(!nav) return;
+        var r = nav.getBoundingClientRect();
+        if(!r.width) return;   // hidden (mobile)
+        var left = Math.round(r.left) + 'px';
+        var ph = document.querySelector('.list-pane .list-top .pane-head');
+        if(ph) ph.style.paddingLeft = left;
+        var idx = document.getElementById('workoutCards');   // line the index up too
+        if(idx){
+          idx.style.paddingLeft = left;
+          // The list scrolls, so its scrollbar steals width the (non-scrolling)
+          // top bar + filter row don't lose. Trim the index's right gutter by the
+          // scrollbar width so the meta's right edge still meets FTP / sort (22px).
+          var listBody = document.querySelector('.list-body');
+          var sb = listBody ? Math.max(0, listBody.offsetWidth - listBody.clientWidth) : 0;
+          idx.style.paddingRight = Math.max(0, 22 - sb) + 'px';
+        }
+      }
+      function reflowChrome(){ moveUnderline(); alignFilterRow(); }
+      requestAnimationFrame(function(){ requestAnimationFrame(reflowChrome); });
+      window.addEventListener('load', reflowChrome);
+      setTimeout(reflowChrome, 300);        // fallback once the mono font has laid out
+      if(document.fonts && document.fonts.ready) document.fonts.ready.then(reflowChrome);
+      window.addEventListener('resize', reflowChrome);
+
+      // Compact filter bar in the list header, wired to the same filter state.
+      var paneHead = document.querySelector('.list-pane .list-top .pane-head');
+      var facets = null;
+      if(paneHead){
+        facets = document.createElement('div');
+        facets.className = 'df-facets'; facets.id = 'deskFilters';
+        paneHead.insertBefore(facets, paneHead.querySelector('.list-actions') || null);
+        // Result count moves to the right of the facets (after Spice), not the left.
+        var resultCount = document.getElementById('resultCount');
+        if(resultCount) paneHead.insertBefore(resultCount, paneHead.querySelector('.list-actions') || null);
+      }
+      var pop = document.createElement('div');
+      pop.className = 'df-pop'; pop.hidden = true; pop.id = 'dfPop';
+      document.body.appendChild(pop);
+
+      var FACETS = [['zone','Zone'],['duration','Time'],['shape','Shape'],['spice','Spice']];
+      function facetText(key){
+        if(key === 'zone')     return filters.zone ? (ZONES[filters.zone] ? ZONES[filters.zone].label : filters.zone) : 'All';
+        if(key === 'duration') return filters.duration != null ? (filters.duration + ' min') : 'Any';
+        if(key === 'shape')    return filters.shape ? shapeLabel(filters.shape) : 'Any';
+        if(key === 'spice')    return filters.spice ? (SPICE_LABEL[filters.spice] || filters.spice) : 'Any';
+        return '';
+      }
+      function facetSet(key){ return key === 'duration' ? filters.duration != null : !!filters[key]; }
+      var built = false;
+      function buildFacets(){
+        if(!facets || !filterOpts) return;
+        facets.innerHTML = FACETS.map(function(p){
+          return '<button class="df" type="button" data-facet="' + p[0] + '"><span class="df-k">' + p[1] + '</span> <b class="df-v"></b></button>';
+        }).join('') + '<button class="df-reset" type="button" hidden>Reset</button>';
+        [].forEach.call(facets.querySelectorAll('.df'), function(b){
+          b.addEventListener('click', function(e){ e.stopPropagation(); openFacet(b.getAttribute('data-facet'), b); });
+        });
+        var rb = facets.querySelector('.df-reset');
+        if(rb) rb.addEventListener('click', function(e){
+          e.stopPropagation(); closePop();
+          filters.duration = filters.zone = filters.shape = filters.spice = null;   // clear facets, keep browse state
+          renderFilters(); renderWorkoutCards();
+        });
+        built = true;
+      }
+      function updateFacets(){
+        if(!facets) return;
+        if(!built) buildFacets();
+        var anySet = false;
+        [].forEach.call(facets.querySelectorAll('.df'), function(b){
+          var k = b.getAttribute('data-facet'), v = b.querySelector('.df-v');
+          if(v) v.textContent = facetText(k);
+          var on = facetSet(k); b.classList.toggle('on', on); if(on) anySet = true;
+        });
+        var rb = facets.querySelector('.df-reset'); if(rb) rb.hidden = !anySet;
+      }
+      function facetOptions(key){
+        var opts = [{val:null, label:(key === 'zone' ? 'All' : 'Any')}];
+        if(!filterOpts) return opts;
+        if(key === 'zone')          filterOpts.zones.forEach(function(z){ opts.push({val:z, label:(ZONES[z] ? ZONES[z].label : z), dot:(ZONES[z] ? ZONES[z].color : null)}); });
+        else if(key === 'duration') filterOpts.durations.forEach(function(d){ opts.push({val:d, label:d + ' min'}); });
+        else if(key === 'shape')    filterOpts.shapes.forEach(function(k2){ opts.push({val:k2, label:shapeLabel(k2)}); });
+        else if(key === 'spice')    SPICE_ORDER.forEach(function(g){ opts.push({val:g, label:SPICE_LABEL[g]}); });
+        return opts;
+      }
+      var openKey = null;
+      function closePop(){
+        if(!pop) return;
+        pop.hidden = true; openKey = null;
+        if(facets) [].forEach.call(facets.querySelectorAll('.df.open'), function(b){ b.classList.remove('open'); });
+      }
+      function openFacet(key, anchor){
+        if(openKey === key){ closePop(); return; }
+        closePop(); openKey = key;
+        var cur = key === 'duration' ? filters.duration : filters[key];
+        pop.innerHTML = facetOptions(key).map(function(o){
+          var on = (o.val === cur) || (o.val === null && (cur === null || cur === undefined));
+          // Grey out a value that would empty the list (a dead end), holding the
+          // other filters fixed. "Any/All" and the current pick are never dead.
+          var dead = o.val !== null && !on && typeof anyMatch === 'function' && !anyMatch(probeFilters(key, o.val));
+          return '<button class="dfo' + (on ? ' on' : '') + (dead ? ' dead' : '') + '" type="button"' + (dead ? ' disabled' : '') +
+            ' data-val="' + (o.val === null ? '' : o.val) + '">' +
+            (o.dot ? '<i class="dfo-dot" style="background:' + o.dot + '"></i>' : '') + o.label + '</button>';
+        }).join('');
+        [].forEach.call(pop.querySelectorAll('.dfo'), function(b){
+          b.addEventListener('click', function(e){
+            e.stopPropagation();
+            var raw = b.getAttribute('data-val');
+            var val = raw === '' ? null : (key === 'duration' ? +raw : raw);
+            filters[key] = val;                 // explicit set (menu pick, not a toggle)
+            renderFilters(); renderWorkoutCards();
+            closePop();
+          });
+        });
+        pop.hidden = false;
+        var r = anchor.getBoundingClientRect(), pw = pop.offsetWidth || 200;
+        pop.style.left = Math.max(12, Math.min(r.left, window.innerWidth - pw - 12)) + 'px';
+        pop.style.top = (r.bottom + 7) + 'px';
+        anchor.classList.add('open');
+      }
+      document.addEventListener('click', function(e){ if(openKey && !e.target.closest('#dfPop') && !e.target.closest('.df')) closePop(); });
+      document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closePop(); });
+
+      onFiltersRendered = updateFacets;   // every renderFilters refreshes the bar
+      updateFacets();                     // once now, if the library is already in
+    }
   })();
 
 })();
