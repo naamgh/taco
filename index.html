@@ -54,6 +54,10 @@
     /* Display face for the typographic workout index (DM Mono). Scoped to the
        index for now; the rest of the chrome stays on --sans until later steps. */
     --display: 'DM Mono', ui-monospace, "SF Mono", Consolas, monospace;
+    /* Desktop content column cap: keeps the top bar, filter row and workout
+       index in one centred column on wide monitors instead of spanning edge
+       to edge. Tune this one number to taste. */
+    --page-max: 1280px;
 
     --c-recovery:#8C93A6;
     --c-endurance:#6E9BEF;
@@ -767,6 +771,10 @@
        Fitness sub-tabs, with a single indicator that slides between tabs and
        sits on the top bar's bottom border. */
     .topbar{position:relative;}
+    /* Centre the bar's content in the page column on wide screens; the
+       border-bottom still spans full width. alignFilterRow() mirrors this
+       padding onto the filter row + index so every edge lines up. */
+    .topbar{padding-inline:max(22px, calc((100% - var(--page-max)) / 2));}
     .topbar .rail-nav{flex-direction:row;gap:22px;padding:0;margin-left:18px;flex:none;}
     .topbar .rn-item svg{display:none;}
     .topbar .rn-item{width:auto;font-family:var(--display);font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;color:var(--text-faint);padding:0;border-radius:0;gap:8px;}
@@ -11890,17 +11898,22 @@
         var r = nav.getBoundingClientRect();
         if(!r.width) return;   // hidden (mobile)
         var left = Math.round(r.left) + 'px';
+        // The top bar is centred in the page column (CSS max() padding); mirror
+        // its right padding so the filter row + index end at the same column edge
+        // (meta under FTP), instead of running to the viewport edge on wide screens.
+        var topbar = document.querySelector('.topbar');
+        var padR = topbar ? parseFloat(getComputedStyle(topbar).paddingRight) || 22 : 22;
         var ph = document.querySelector('.list-pane .list-top .pane-head');
-        if(ph) ph.style.paddingLeft = left;
+        if(ph){ ph.style.paddingLeft = left; ph.style.paddingRight = padR + 'px'; }
         var idx = document.getElementById('workoutCards');   // line the index up too
         if(idx){
           idx.style.paddingLeft = left;
           // The list scrolls, so its scrollbar steals width the (non-scrolling)
           // top bar + filter row don't lose. Trim the index's right gutter by the
-          // scrollbar width so the meta's right edge still meets FTP / sort (22px).
+          // scrollbar width so the meta's right edge still meets FTP / sort.
           var listBody = document.querySelector('.list-body');
           var sb = listBody ? Math.max(0, listBody.offsetWidth - listBody.clientWidth) : 0;
-          idx.style.paddingRight = Math.max(0, 22 - sb) + 'px';
+          idx.style.paddingRight = Math.max(0, padR - sb) + 'px';
         }
       }
       function reflowChrome(){ moveUnderline(); alignFilterRow(); }
