@@ -44,6 +44,9 @@
     --line-cadence:#C6C6C0;
     --scrim:rgba(8,8,9,0.6);    /* behind the player and summary */
     --divider:#2C2C2F;
+    /* Soft shadow under the sticky filter row, shown only once the list scrolls
+       under it (added via .list-top.is-stuck). */
+    --head-shadow:0 9px 18px -10px rgba(0,0,0,0.55);
     --chip-text:#121213;        /* text on a zone-coloured chip */
     --bg-list:#161618;          /* workout list pane and its cards */
     --bg-card-list:#1B1B1D;
@@ -112,6 +115,7 @@
     --scrim:rgba(20,20,15,0.35);
     --divider:#E7E5DD;
     --chip-text:#14140F;
+    --head-shadow:0 8px 16px -10px rgba(20,20,15,0.22);
     --bg-list:#FBFAF7;          /* list pane sits a hair off the cards */
     --bg-card-list:#FFFFFF;
     --glow-bg:rgba(0,0,0,0);
@@ -323,6 +327,17 @@
     font-size:11px;color:var(--text-faint);text-transform:uppercase;
     letter-spacing:0.09em;font-weight:650;white-space:nowrap;
   }
+  /* Quick Pick button (the old result-count slot): a quiet outlined chip — the
+     one action in the filter row, so it earns a border the flat facets don't. */
+  .qp-btn{
+    font-family:var(--display);font-size:12px;font-weight:500;letter-spacing:.05em;
+    color:var(--text-dim);background:none;border:1px solid var(--border);border-radius:7px;
+    padding:6px 12px;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:7px;
+    transition:border-color .12s ease,color .12s ease;
+  }
+  .qp-btn::before{content:"\2726";color:var(--text-faint);font-size:.95em;line-height:1;transition:color .12s ease;}
+  .qp-btn:hover{border-color:var(--text-strong);color:var(--text-strong);}
+  .qp-btn:hover::before{color:var(--text-strong);}
   .side-head{justify-content:space-between;}
   /* The menu button is the one committed-ink control in the side head: a filled
      ink square with the glyph knocked out in paper. */
@@ -600,7 +615,10 @@
   .filters-fab.fab-land{animation:fabLand .45s ease;}
   @media (prefers-reduced-motion:reduce){ .filters-fab.fab-land{animation:none;} }
   /* Wraps the header (+ mobile filter host) as one block; only sticky on mobile. */
-  .list-top{flex:none;min-width:0;}
+  .list-top{flex:none;min-width:0;position:relative;z-index:3;transition:box-shadow .2s ease;}
+  /* Separates the sticky filter row from the scrolling list — only once the list
+     has actually scrolled under it (toggled by JS on list-body scroll). */
+  .list-top.is-stuck{box-shadow:var(--head-shadow);}
   .list-body{flex:1 1 auto;overflow-y:auto;padding:12px 14px 60px;}
   .list-note{color:var(--text-faint);font-size:11px;font-family:var(--mono);margin-left:auto;}
 
@@ -792,7 +810,7 @@
     /* Compact filter bar in the list header. */
     .df-facets{display:flex;align-items:center;gap:22px;margin-left:0;}   /* left edge aligned to the nav via JS padding */
     /* result count now sits to the right of the facets (after Spice) */
-    .list-pane .pane-head #resultCount{font-family:var(--display);margin-left:18px;letter-spacing:.1em;}
+    .list-pane .pane-head #resultCount{margin-left:18px;}
     /* search / star / sort: flat, borderless to match the theme */
     .list-pane .pane-head .list-actions .icon-btn{border:0;background:none;color:var(--text-faint);}
     .list-pane .pane-head .list-actions .icon-btn:hover{background:var(--bg-card-hover);color:var(--text);}
@@ -3156,7 +3174,7 @@
 
     /* Header: result count + search/star/sort, flat and mono. */
     .list-pane .pane-head{background:var(--bg-list);border-bottom:1px solid var(--border-soft);}
-    .list-pane .pane-head #resultCount{font-family:var(--display);letter-spacing:.14em;font-size:12px;color:var(--text-faint);}
+    .list-pane .pane-head #resultCount{font-size:11.5px;letter-spacing:.04em;}
     .list-pane .pane-head .list-actions .icon-btn{border:0;background:none;color:var(--text-faint);}
     .list-pane .pane-head .list-actions .icon-btn:hover,
     .list-pane .pane-head .list-actions .icon-btn.on{background:none;color:var(--text-strong);}
@@ -3605,7 +3623,10 @@
          quick refining while scrolling. -->
     <div class="list-top" id="listTop">
     <div class="pane-head">
-      <span class="pane-label" id="resultCount">Workouts</span>
+      <!-- Quick Pick re-entry: replaces the old result counter. Opens the Find
+           modal, which pre-fills itself from any filters already set. Keeps the
+           id="resultCount" so boot's loading text still has a home. -->
+      <button class="qp-btn" id="resultCount" type="button" aria-label="Quick Pick — choose duration, effort and feel">Quick Pick</button>
       <div class="list-actions">
         <input type="search" id="searchBox" class="search-box" placeholder="Search…" aria-label="Search workouts">
         <button class="icon-btn" id="searchBtn" title="Search" aria-label="Search workouts">
@@ -5051,6 +5072,21 @@
     }
   }
   if(els.listZeroGo) els.listZeroGo.addEventListener('click', openFindModal);
+  // The Quick Pick button in the filter row (the old result-count slot). Opens
+  // the Find modal, which pre-fills from the current filters. Ignored until the
+  // library has loaded so it can't open an empty picker during boot.
+  if(els.resultCount) els.resultCount.addEventListener('click', function(){ if(filterOpts) openFindModal(); });
+  // Drop a soft shadow under the sticky filter row once the list scrolls beneath
+  // it, so the header reads as its own layer. .list-body is the scroller on both
+  // desktop and mobile.
+  (function(){
+    var body = document.querySelector('.list-body');
+    var top = document.getElementById('listTop');
+    if(!body || !top) return;
+    var sync = function(){ top.classList.toggle('is-stuck', body.scrollTop > 2); };
+    body.addEventListener('scroll', sync, {passive:true});
+    sync();
+  })();
   if(els.listZeroBrowse) els.listZeroBrowse.addEventListener('click', function(){
     // Engaging "browse all" re-renders so the detail pane opens the first
     // workout (the fresh zero-state deliberately left it blank).
@@ -5927,7 +5963,7 @@
     els.workoutCards.innerHTML = '';
     els.noResults.style.display = list.length ? 'none' : 'block';
     if(!list.length) paintEmptyState();
-    els.resultCount.textContent = String(list.length);   // just the count showing
+    els.resultCount.textContent = 'Quick Pick';   // the slot is the Quick Pick button now
 
     // Desktop renders the typographic index (wk-idx); mobile the card list.
     var desktop = !mqMobile.matches;
