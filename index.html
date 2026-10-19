@@ -1845,12 +1845,14 @@
   }
 
   /* ============================================================
-     Desktop pre-ride waiting = typographic "Ready-check" (design B).
+     Pre-ride waiting = typographic "Ready-check" (design B), desktop AND mobile.
      Reflows the shared markup into: workout header · ready-check rows
      (only what's missing, + FTP) · live sensor boxes that light green ·
      pedal prompt + actions. Count-in fires as soon as both boxes are green.
+     (min-width:1px so it applies at every width; #id specificity beats the
+     mobile base + the ≤480 override.)
      ============================================================ */
-  @media(min-width:901px){
+  @media(min-width:1px){
     #liveWaiting{justify-content:flex-start;padding:48px 30px 30px;gap:0;}
     #liveWaiting .waiting-icon{display:none;}
 
@@ -3133,6 +3135,225 @@
     /* The last stat spans the row when the count is odd, so the strip stays flush. */
     .tr-tile:last-child:nth-child(odd){grid-column:1 / -1;}
     .tr-tiles{grid-template-columns:repeat(2,1fr);}
+  }
+
+  /* ================================================================
+     MOBILE TYPOGRAPHIC RESKIN (<=900px)
+     Brings the DM-Mono minimal-mono language to the phone layout,
+     screen by screen. Appended last so it overrides the mobile base.
+     ================================================================ */
+  @media (max-width:900px){
+    /* ---------- Workouts list ---------- */
+    .list-pane{font-family:var(--display);}
+
+    /* Header: result count + search/star/sort, flat and mono. */
+    .list-pane .pane-head{background:var(--bg-list);border-bottom:1px solid var(--border-soft);}
+    .list-pane .pane-head #resultCount{font-family:var(--display);letter-spacing:.14em;font-size:12px;color:var(--text-faint);}
+    .list-pane .pane-head .list-actions .icon-btn{border:0;background:none;color:var(--text-faint);}
+    .list-pane .pane-head .list-actions .icon-btn:hover,
+    .list-pane .pane-head .list-actions .icon-btn.on{background:none;color:var(--text-strong);}
+
+    /* Cards -> flat hairline rows (no card chrome). */
+    .workout-card{
+      background:none;border:0;border-bottom:1px solid var(--border-soft);
+      border-radius:0;margin:0;padding:15px 4px;gap:14px;
+    }
+    .workout-card:hover{background:none;border-color:var(--border-soft);}
+    .workout-card.selected{background:none;border-color:var(--border-soft);box-shadow:none;}
+    .workout-card.selected .wc-name{text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;}
+
+    /* Ink (monotone) thumbnail, no frame -- same recolour as the desktop index. */
+    .card-thumb{background:none;border:0;border-radius:0;width:64px;height:38px;}
+    .card-thumb svg polygon{fill:var(--text)!important;fill-opacity:.1!important;}
+    .card-thumb svg polyline{stroke:var(--text)!important;stroke-opacity:.7!important;}
+
+    /* Zone tag -> flat swatch + small-caps label (no filled chip). */
+    .card-kind{gap:8px;}
+    .card-kind .zone-tag{
+      background:none;color:var(--text-faint);padding:0;gap:5px;
+      font-family:var(--display);font-size:9px;font-weight:400;letter-spacing:.1em;text-transform:uppercase;
+    }
+    .card-kind .zone-tag::before{display:block;width:7px;height:7px;border-radius:2px;background:var(--zc,var(--accent));}
+    .card-kind .test-tag{
+      background:none;border:1px dashed var(--c-test);color:var(--c-test);
+      font-family:var(--display);font-size:9px;letter-spacing:.1em;padding:2px 6px;
+    }
+
+    /* Name / structure / meta in DM Mono. */
+    .wc-name{font-family:var(--display);font-size:16px;font-weight:500;letter-spacing:-.01em;color:var(--text-strong);}
+    .wc-struct{font-family:var(--display);font-size:11.5px;color:var(--text-dim);letter-spacing:.01em;}
+    .wc-meta{gap:12px;}
+    .wc-meta .chillies{display:none;}   /* drop spice peppers on mobile, like the desktop index */
+    .tss-tag{font-family:var(--display);font-size:11px;color:var(--text-faint);}
+    .card-dur{font-family:var(--display);font-size:12.5px;font-weight:500;color:var(--text);letter-spacing:.02em;}
+
+    /* Filters FAB -> ink pill, DM Mono. */
+    .filters-fab{
+      background:var(--text-strong);color:var(--bg);font-family:var(--display);
+      font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;
+      border-radius:999px;box-shadow:0 6px 20px rgba(0,0,0,.22);
+    }
+    .filters-fab .fab-badge{background:var(--bg);color:var(--text-strong);}
+
+    /* Bottom tabs -> DM Mono labels, quiet ink capsule. */
+    .mtab{font-family:var(--display);font-size:9px;font-weight:400;letter-spacing:.08em;text-transform:uppercase;}
+    .mtab.on{font-weight:500;color:var(--text-strong);}
+    .mtab.on .mtab-ic{background:rgba(var(--ink-rgb),0.13);}
+
+    /* ---------- Workout detail (View tab) ---------- */
+    .detail-pane,.detail-body{font-family:var(--display);}
+    .detail-topbar{background:var(--bg);border-bottom:1px solid var(--border-soft);}
+    .detail-back{font-family:var(--display);color:var(--text-dim);text-transform:uppercase;letter-spacing:.08em;font-size:12px;font-weight:400;}
+    .detail-back:hover{color:var(--text);}
+    .detail-title h1{font-family:var(--display);font-weight:500;letter-spacing:-.01em;font-size:27px;color:var(--text-strong);}
+
+    /* Structure -> outlined tag; spice dropped. */
+    .detail-body .structure-chip{
+      background:none;color:var(--text-dim);border:1px solid var(--border);border-radius:6px;
+      font-family:var(--display);font-size:12px;font-weight:500;letter-spacing:.02em;padding:6px 11px;
+    }
+    .detail-body .structure-chip.is-test{border-style:dashed;color:var(--c-test);}
+    .detail-line .chillies{display:none;}
+    .rec-why,.purpose{font-family:var(--display);font-size:13px;color:var(--text-dim);border-top:0;padding-top:0;}
+
+    /* Stats -> borderless DM Mono big numbers (keeps the sideways scroll). */
+    .detail-body .plan-stats{border:0;background:none;border-radius:0;gap:0;}
+    .detail-body .plan-stats .cell{border:0;padding:8px 22px 8px 0;gap:6px;}
+    .detail-body .plan-stats .k{font-family:var(--display);font-size:10.5px;letter-spacing:.12em;color:var(--text-faint);opacity:1;}
+    .detail-body .plan-stats .v{font-family:var(--display);font-size:21px;font-weight:500;letter-spacing:-.01em;color:var(--text-strong);}
+    .detail-body .plan-stats .v i{font-size:12px;color:var(--text-dim);margin-left:3px;}
+
+    /* Profile -> flat A2 blocks, no white card. */
+    .detail-graph .timeline-graph{background:none;border:0;border-radius:0;}
+    .detail-graph .tl-seg{border-radius:0;box-shadow:none;background:color-mix(in srgb,var(--seg) 46%,transparent);}
+    .detail-graph .tl-seg.zone-test{background-color:color-mix(in srgb,var(--seg) 46%,transparent);}
+    .detail-graph .timeline{border-bottom:1px solid var(--border-soft);}
+
+    /* Interval table -> DM Mono, hairline rules. */
+    .detail-body table.interval-table{font-family:var(--display);}
+    .detail-body table.interval-table th{font-family:var(--display);font-weight:400;letter-spacing:.1em;color:var(--text-faint);border-bottom:1px solid var(--border);}
+    .detail-body table.interval-table td{border-bottom:1px solid var(--border-soft);}
+
+    /* Prev / Start / Next pills -> DM Mono; Start is ink. */
+    .vn-btn{font-family:var(--display);font-size:13px;font-weight:500;letter-spacing:.04em;background:var(--bg-card);border-color:var(--border);}
+    .vn-start{background:var(--text-strong);border-color:var(--text-strong);color:var(--bg);text-transform:uppercase;letter-spacing:.08em;font-size:12.5px;}
+    .vn-start:hover{background:var(--text-strong);}
+    .vn-side:hover{border-color:var(--text-strong);color:var(--text-strong);}
+
+    /* ---------- Calendar (ride log) ---------- */
+    #logModal{font-family:var(--display);}
+    #logModal .log-month{font-family:var(--display);font-size:16px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--text-strong);}
+    #logModal .log-head{border-bottom:1px solid var(--border-soft);}
+    #logModal .log-head .icon-btn{border:0;background:none;color:var(--text-faint);}
+    #logModal .log-head .icon-btn:hover{color:var(--text);}
+    #logModal .log-dow span{font-family:var(--display);letter-spacing:.1em;color:var(--text-faint);}
+    #logModal .log-date{font-family:var(--display);color:var(--text-dim);}
+    /* Today: ink ring instead of the accent colour. */
+    #logModal .log-day.today{border-color:var(--text-strong);box-shadow:inset 0 0 0 1px var(--text-strong);}
+    #logModal .log-day.today .log-date{color:var(--text-strong);font-weight:500;}
+    #logModal .log-entry b{font-family:var(--display);}
+    #logModal .log-entry i{border-radius:2px;}
+    #logModal .log-entry.planned i{background:none;border:1.5px solid var(--c);opacity:1;}
+    #logModal .log-week b,#logModal .log-week span{font-family:var(--display);}
+
+    /* Day detail + quick-log form. */
+    #logModal .dv-name,#logModal .dv-title{font-family:var(--display);font-weight:500;letter-spacing:-.01em;}
+    #logModal .dv-sub i{border-radius:2px;}
+    #logModal .dv-row span{font-family:var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);}
+    #logModal .dv-row b{font-family:var(--display);}
+    /* Activity-type chips -> outlined swatch chips (no filled pills). */
+    #logModal .log-types button{font-family:var(--display);background:none;border:1px solid var(--border);border-radius:7px;color:var(--text-dim);text-transform:none;letter-spacing:0;}
+    #logModal .log-types button.on{border-color:var(--text);color:var(--text-strong);}
+    #logModal .log-types button i{border-radius:2px;background:var(--c);}
+    #logModal .lf-hbtn,#logModal .lf-flabel,#logModal .log-form label{font-family:var(--display);}
+    /* Close: ink outline instead of red. */
+    #logModal #logCloseBtn{font-family:var(--display);background:none;border:1px solid var(--text-strong);color:var(--text-strong);text-transform:uppercase;letter-spacing:.08em;font-size:12px;font-weight:500;}
+    #logModal #logCloseBtn:hover{background:var(--text-strong);color:var(--bg);}
+
+    /* Mobile calendar dock (day detail below the grid). */
+    #logModal .dock-date b{font-family:var(--display);font-weight:500;letter-spacing:-.01em;}
+    #logModal .dock-stat,#logModal .dock-cstruct,#logModal .dock-ztag,#logModal .dock-sub,#logModal .dock-date span{font-family:var(--display);}
+    #logModal .dock-chip{background:none;border-radius:7px;}
+    #logModal .dock-chip i{border-radius:2px;}
+    #logModal .dock-target{background:none;border-radius:8px;}
+    #logModal .dock-pl-dot{border-radius:2px;}
+    #logModal .dock-ztag i{border-radius:2px;}
+    /* Ride thumbnail -> ink, no frame. */
+    #logModal .dock-thumb{background:none;border:0;border-radius:0;}
+    #logModal .dock-thumb svg polygon{fill:var(--text)!important;fill-opacity:.1!important;}
+    #logModal .dock-thumb svg polyline{stroke:var(--text)!important;stroke-opacity:.7!important;}
+
+    /* ---------- Fitness (trends) ---------- */
+    #trendsModal{font-family:var(--display);}
+    #trendsModal .trends-title{font-family:var(--display);font-size:16px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--text-strong);}
+    #trendsModal #trendsCloseBtn{font-family:var(--display);background:none;border:1px solid var(--text-strong);color:var(--text-strong);text-transform:uppercase;letter-spacing:.08em;font-size:12px;font-weight:500;}
+    #trendsModal #trendsCloseBtn:hover{background:var(--text-strong);color:var(--bg);}
+    /* Underline sub-tabs. */
+    #trendsModal .tr-subtabs{background:none;border:0;border-bottom:1px solid var(--border);border-radius:0;padding:0;gap:0;}
+    #trendsModal .tr-subtab{font-family:var(--display);font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:500;color:var(--text-faint);background:none;border:0;border-bottom:2px solid transparent;border-radius:0;padding:10px 0;margin-right:22px;margin-bottom:-1px;}
+    #trendsModal .tr-subtab.on{background:none;color:var(--text-strong);border-bottom-color:var(--text);}
+    /* Quiet range / unit toggles. */
+    #trendsModal .tr-range-btn{font-family:var(--display);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);background:none;border:0;border-radius:0;padding:4px 1px;}
+    #trendsModal .tr-range-btn.on{background:none;color:var(--text-strong);}
+    /* This-week tiles -> borderless big numbers. */
+    #trendsModal .tr-tiles{gap:20px;}
+    #trendsModal .tr-tile{background:none;border:0;border-radius:0;padding:0;}
+    #trendsModal .tr-tile b{font-family:var(--display);font-weight:500;color:var(--text-strong);}
+    #trendsModal .tr-tile span{font-family:var(--display);letter-spacing:.1em;}
+    /* Readiness card -> flat, monotone values (the word carries meaning). */
+    #trendsModal .rc-card{background:none;border:0;border-radius:0;box-shadow:none;padding:0;}
+    #trendsModal .rc-head{font-family:var(--display);letter-spacing:.14em;color:var(--text-faint);}
+    #trendsModal .rc-head svg{color:var(--text-faint);}
+    #trendsModal .rc-tile{background:none;border:1px solid var(--border-soft);}
+    #trendsModal .rc-tile .v{font-family:var(--display);font-weight:500;color:var(--text-strong);}
+    #trendsModal .rc-tile.form .v,#trendsModal .rc-tile.fatigue .v{color:var(--text-strong);}
+    #trendsModal .rc-tile .l,#trendsModal .rc-tile .u{font-family:var(--display);}
+    #trendsModal .rc-meter{background:none;border:0;padding:0;}
+    #trendsModal .rc-word{font-family:var(--display);font-weight:500;color:var(--text-strong);}
+    #trendsModal .rc-grad{background:linear-gradient(90deg,var(--text-faint),var(--text-strong));}
+    #trendsModal .tr-card-head h3{font-family:var(--display);letter-spacing:.12em;text-transform:uppercase;}
+    #trendsModal .tr-subtitle,#trendsModal .tr-fs-head span{font-family:var(--display);}
+
+    /* ---------- End-of-workout summary ---------- */
+    #summaryModal .summary-inner{font-family:var(--display);}
+    #summaryModal .summary-title{font-family:var(--display);font-size:12px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--text-faint);}
+    #summaryModal .live-segment-index{font-family:var(--display);font-size:22px;font-weight:500;letter-spacing:-.01em;color:var(--text-strong);}
+    #summaryModal .summary-chip{background:none;border:0;border-radius:0;padding:11px 0;border-bottom:1px solid var(--border-soft);display:flex;align-items:baseline;justify-content:space-between;gap:12px;text-align:left;}
+    #summaryModal .summary-chip span{font-family:var(--display);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);margin:0;}
+    #summaryModal .summary-chip b{font-family:var(--display);font-size:18px;font-weight:500;color:var(--text-strong);}
+    #summaryModal .pie-card{background:none;border:0;border-radius:0;padding:0;}
+    #summaryModal .pie-card h4{font-family:var(--display);font-size:11px;letter-spacing:.12em;color:var(--text-faint);margin:0 0 12px;}
+    #summaryModal .rpe-label{font-family:var(--display);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);}
+    #summaryModal .rpe-label em{font-family:var(--display);}
+    #summaryModal .rpe-btns button{font-family:var(--display);border-radius:7px;font-weight:500;}
+    #summaryModal .action-btn{font-family:var(--display);border-radius:8px;font-weight:500;letter-spacing:.04em;}
+    #summaryModal .action-btn.primary,#summaryModal .open-share-btn .open-share-label{letter-spacing:.08em;text-transform:uppercase;font-size:13px;}
+    #summaryModal .action-btn.danger{background:none;border:1px solid var(--c-anaerobic);color:var(--c-anaerobic);}
+    #summaryModal .fit-link{font-family:var(--display);}
+
+    /* ---------- Bottom sheets (Filters / Menu / Training) ---------- */
+    .sheet-panel{font-family:var(--display);}
+    .sheet-head h3{font-family:var(--display);font-size:14px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--text-strong);}
+    .sheet-done{background:none;border:1px solid var(--text-strong);color:var(--text-strong);font-family:var(--display);text-transform:uppercase;letter-spacing:.08em;font-weight:500;}
+    .sheet-done:hover{background:var(--text-strong);color:var(--bg);}
+    .hub-btn{font-family:var(--display);}
+    .hub-btn > svg:first-child{color:var(--text-dim);}
+    .hub-title{font-family:var(--display);font-weight:500;letter-spacing:.01em;}
+    .hub-sub{font-family:var(--display);}
+
+    /* ---------- Find (landing) ---------- */
+    .find-panel{font-family:var(--display);}
+    .find-head h3{font-family:var(--display);font-size:16px;font-weight:500;letter-spacing:.06em;color:var(--text-strong);}
+    .find-q{font-family:var(--display);letter-spacing:.1em;}
+    .find-x,.find-clear{font-family:var(--display);}
+
+    /* ---------- First-run intro / FTP ---------- */
+    .intro-card{font-family:var(--display);}
+    .intro-eyebrow{font-family:var(--display);}
+    .intro-heading{font-family:var(--display);font-weight:500;letter-spacing:-.01em;}
+    .intro-choice h3{font-family:var(--display);font-weight:500;}
+    .intro-field label{font-family:var(--display);}
+    .intro-field input{font-family:var(--display);}
   }
 </style>
 <script>
