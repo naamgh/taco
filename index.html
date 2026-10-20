@@ -2130,8 +2130,13 @@
   #livePlayer .live-end-btn{font-family:var(--display);font-size:12px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--text);color:var(--text);border-radius:7px;padding:10px 20px;}
   #livePlayer .live-end-btn:hover{background:var(--text);color:var(--bg);border-color:var(--text);}
 
-  /* metric cells: borderless, big DM-Mono numbers, small-caps labels */
-  #livePlayer .tr-cell{background:none;border:0;border-radius:0;padding:8px 2px;}
+  /* metric cells: a connected hairline grid (design A "spreadsheet") — the
+     readouts read as one instrument panel. The grid draws the top+left frame;
+     each cell draws its own right+bottom, so it holds across every rail preset
+     (2 heroes + 4 small, the even 3×2, and mobile) since cells always tile the
+     12 columns in full rows. */
+  #livePlayer .tr-grid{gap:0;border-top:1px solid var(--border);border-left:1px solid var(--border);border-radius:12px;overflow:hidden;}
+  #livePlayer .tr-cell{background:none;border:0;border-right:1px solid var(--border);border-bottom:1px solid var(--border);border-radius:0;padding:14px 16px;}
   #livePlayer .tr-label{font-family:var(--display);font-size:11px;letter-spacing:.14em;color:var(--text-faint);font-weight:400;margin-bottom:8px;}
   #livePlayer .tr-val{font-family:var(--display);font-weight:500;color:var(--text-strong);}
   #livePlayer .tr-sub,#livePlayer .tr-next{font-family:var(--display);}
@@ -2170,8 +2175,8 @@
     #livePlayer .live-segment-label{font-size:clamp(19px,5vw,24px);}
     #livePlayer .live-workout-name{font-size:13px;}
     #livePlayer .live-top{gap:8px;}
-    #livePlayer .tr-grid{gap:8px;}
-    #livePlayer .tr-cell{padding:11px 12px 12px;}
+    #livePlayer .tr-grid{gap:0;}
+    #livePlayer .tr-cell{padding:11px 12px 13px;}
     #livePlayer .tr-val{font-size:clamp(26px,7.4vw,40px);}
     #livePlayer .live-end-btn{min-height:44px;}
     #livePlayer .live-controls{gap:10px;}
@@ -4063,7 +4068,7 @@
     </div>
 
     <div class="live-controls">
-      <button class="live-btn" id="liveSkipBtn">Skip ⏭</button>
+      <button class="live-btn" id="liveSkipBtn">Skip</button>
       <button class="live-btn live-btn-primary" id="livePauseBtn">Pause</button>
     </div>
 
