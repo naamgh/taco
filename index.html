@@ -721,7 +721,11 @@
 
     /* Selected row lifts onto the page ground (no panel, no border) with space
        above and below; its thumbnail hides (its role passes to the big profile). */
-    .wk-row.sel{background:var(--bg);border-bottom:0;margin-top:22px;}
+    /* No top margin: a gap above the row shoved the just-clicked row downward,
+       which read as the card "opening upward". The card now opens purely
+       downward — the clicked row stays put and the expand grows beneath it.
+       Breathing room sits below instead (the expand's margin-bottom). */
+    .wk-row.sel{background:var(--bg);border-bottom:0;}
     .wk-row.sel:hover{background:var(--bg);}
     .wk-row.sel .wk-thumb{visibility:hidden;}
     /* The structure moves into the opened card (above the chart), so hide the
