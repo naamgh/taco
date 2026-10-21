@@ -724,19 +724,20 @@
     .wk-row.sel{background:var(--bg);border-bottom:0;margin-top:22px;}
     .wk-row.sel:hover{background:var(--bg);}
     .wk-row.sel .wk-thumb{visibility:hidden;}
+    /* The structure moves into the opened card (above the chart), so hide the
+       row's own subtitle while selected to avoid showing it twice. */
+    .wk-row.sel .wk-struct{visibility:hidden;}
     .wk-exp{background:var(--bg);margin-bottom:26px;overflow:hidden;}
-    /* Two-column spread: lead text left, profile right — the mock's composition. */
-    .wk-exp-in{display:grid;grid-template-columns:minmax(0,1fr) minmax(300px,440px);gap:46px;align-items:start;padding:6px 4px 32px;}
-    .wk-exp-lead{min-width:0;display:flex;flex-direction:column;align-items:flex-start;}
-    .wk-exp-lead .detail-line{margin:0 0 18px;}
-    .wk-exp-cue{font-family:var(--display);font-size:14px;line-height:1.6;color:var(--text-dim);max-width:46ch;margin:0 0 24px;}
-    .wk-exp-act{display:flex;align-items:center;gap:16px;margin-top:4px;}
-    .wk-exp-prof{min-width:0;}
-    .wk-exp-ph{font-family:var(--display);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);margin-bottom:12px;}
-    @media(max-width:1100px){
-      .wk-exp-in{grid-template-columns:1fr;gap:26px;}
-      .wk-exp-prof{max-width:620px;}
-    }
+    /* Profile-forward: one column — cue, the full-width profile (the hero), the
+       boxed stats grid, then Start. Name/structure/zone sit in the row above. */
+    .wk-exp-in{display:flex;flex-direction:column;align-items:stretch;padding:6px 4px 34px;}
+    .wk-exp-cue{font-family:var(--display);font-size:14px;line-height:1.6;color:var(--text-dim);max-width:70ch;margin:2px 0 22px;}
+    /* Structure label (replaces "Profile") stacked over the spice rating. */
+    .wk-exp-phrow{display:flex;flex-direction:column;align-items:flex-start;gap:9px;margin-bottom:14px;}
+    .wk-exp-struct{font-family:var(--display);font-size:13.5px;letter-spacing:.02em;color:var(--text-dim);}
+    .wk-exp-spice{display:inline-flex;align-items:center;gap:1px;}
+    .wk-exp-spice .chilli{width:15px;height:15px;}
+    .wk-exp-act{display:flex;align-items:center;gap:16px;margin-top:24px;}
 
     /* ---- opened card: typographic / monotone chrome ---- */
     .wk-exp{font-family:var(--display);}
@@ -746,12 +747,16 @@
       font-family:var(--display);font-size:12px;font-weight:500;letter-spacing:.02em;padding:6px 11px;
     }
     .wk-exp .structure-chip.is-test{border-style:dashed;color:var(--c-test);}
-    /* specs: borderless label + big number, like the mock's spec row */
-    .wk-exp .plan-stats{display:flex;gap:38px;flex-wrap:wrap;border:0;background:none;border-radius:0;overflow:visible;margin:0 0 22px;}
-    .wk-exp .plan-stats .cell{padding:0;border:0;gap:7px;}
-    .wk-exp .plan-stats .k{font-family:var(--display);font-size:11px;letter-spacing:.13em;color:var(--text-faint);opacity:1;font-weight:400;}
-    .wk-exp .plan-stats .v{font-family:var(--display);font-size:24px;font-weight:500;letter-spacing:-.01em;color:var(--text-strong);}
-    .wk-exp .plan-stats .v i{font-size:13px;color:var(--text-dim);margin-left:3px;}
+    /* Stats as a bordered grid — same connected-hairline language as the live
+       ride screen. Cells flex equally; the grid frames top+left, cells right+bottom. */
+    .wk-exp .plan-stats{display:flex;gap:0;flex-wrap:nowrap;margin:24px 0 0;max-width:none;
+      border-top:1px solid var(--border);border-left:1px solid var(--border);border-radius:10px;overflow:hidden;}
+    .wk-exp .plan-stats .cell{flex:1;min-width:0;padding:14px 16px;gap:7px;
+      border-right:1px solid var(--border);border-bottom:1px solid var(--border);}
+    .wk-exp .plan-stats .cell:last-child{border-right:1px solid var(--border);}
+    .wk-exp .plan-stats .k{font-family:var(--display);font-size:11px;letter-spacing:.11em;color:var(--text-faint);opacity:1;font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .wk-exp .plan-stats .v{font-family:var(--display);font-size:22px;font-weight:500;letter-spacing:-.01em;color:var(--text-strong);}
+    .wk-exp .plan-stats .v i{font-size:12px;color:var(--text-dim);margin-left:3px;}
     /* Start: outlined DM Mono, fills with ink on hover */
     .wk-exp .action-btn.start-btn{
       background:none;color:var(--text);border:1px solid var(--text);border-radius:6px;
@@ -5477,24 +5482,22 @@
     // about what this focus zone trains (the library carries no per-workout prose).
     var cueText = wo.purpose || (showRec && typeof wo.recommended === 'string' ? wo.recommended : '') || ZONE_BLURB[wo.zone] || '';
     var cue = cueText ? '<p class="wk-exp-cue">' + cueText + '</p>' : '';
-    // Two-column spread: lead text on the left, the profile on the right.
+    // Profile-forward: the chart is the hero (full width), with the spice on the
+    // Profile line and the stats as a bordered grid beneath — the same grid
+    // language as the live ride screen. The name + structure + zone·TSS already
+    // sit in the selected row above, so they're not repeated here.
+    var spice = wo.test ? '' : '<span class="wk-exp-spice">' + chillies(wo.spice) + '</span>';
     return '<div class="wk-exp-in">' +
-      '<div class="wk-exp-lead">' +
-        '<div class="detail-line">' +
-          '<span class="structure-chip' + (wo.test ? ' is-test' : '') + '" style="--seg:' + z.color + '">' + shortLabel(wo) + '</span>' +
-          (wo.test ? '' : chillies(wo.spice)) +
-        '</div>' +
-        cue +
-        stats +
-        '<div class="wk-exp-act">' +
-          '<button class="action-btn start-btn" data-live="' + wo.key + '">▶ Start Workout</button>' +
-          '<button class="star-btn' + (isFav(wo.key) ? ' on' : '') + '" data-star="' + wo.key + '" aria-label="Toggle favourite">' + starSvg() + '</button>' +
-        '</div>' +
-      '</div>' +
-      '<div class="wk-exp-prof">' +
-        '<div class="wk-exp-ph">Profile</div>' +
-        '<div class="detail-graph">' + renderTimeline(wo, 206) + '</div>' +
-        '<p class="wk-exp-hint">Hover for each block’s target.</p>' +
+      cue +
+      // Structure label above the chart (replaces the generic "Profile" eyebrow),
+      // with the spice rating below it.
+      '<div class="wk-exp-phrow"><span class="wk-exp-struct">' + shortLabel(wo) + '</span>' + spice + '</div>' +
+      '<div class="detail-graph">' + renderTimeline(wo, 230) + '</div>' +
+      '<p class="wk-exp-hint">Hover for each block’s target.</p>' +
+      stats +
+      '<div class="wk-exp-act">' +
+        '<button class="action-btn start-btn" data-live="' + wo.key + '">▶ Start Workout</button>' +
+        '<button class="star-btn' + (isFav(wo.key) ? ' on' : '') + '" data-star="' + wo.key + '" aria-label="Toggle favourite">' + starSvg() + '</button>' +
       '</div>' +
     '</div>';
   }
@@ -5515,35 +5518,6 @@
     row.insertAdjacentElement('afterend', exp);
     wireWorkoutButtons(exp);
     if(opts && opts.scrollIntoView && row.scrollIntoView) row.scrollIntoView({block:'nearest'});
-    travelThumb(row, exp);
-  }
-
-  // The row's shape preview flies up and grows into the opened profile — a light
-  // shared-element flourish. Fully guarded: a timeout restores the profile even
-  // if the transition is throttled (so the pane can never be left blank).
-  function travelThumb(row, exp){
-    var reduce = window.matchMedia('(prefers-reduced-motion:reduce)').matches;
-    var thumb = row.querySelector('.wk-thumb svg');
-    var prof = exp.querySelector('.wk-exp-prof .timeline-graph') || exp.querySelector('.wk-exp-prof .detail-graph');
-    if(reduce || !thumb || !prof) return;
-    var tr = thumb.getBoundingClientRect(), pr = prof.getBoundingClientRect();
-    if(!tr.width || !pr.width) return;
-    var fly = document.createElement('div');
-    fly.style.cssText = 'position:fixed;z-index:60;pointer-events:none;overflow:hidden;' +
-      'left:' + tr.left + 'px;top:' + tr.top + 'px;width:' + tr.width + 'px;height:' + tr.height + 'px;' +
-      'opacity:.85;transition:left .42s cubic-bezier(.4,0,.2,1),top .42s cubic-bezier(.4,0,.2,1),' +
-      'width .42s cubic-bezier(.4,0,.2,1),height .42s cubic-bezier(.4,0,.2,1),opacity .42s ease;';
-    var clone = thumb.cloneNode(true); clone.style.width = '100%'; clone.style.height = '100%'; clone.style.display = 'block';
-    fly.appendChild(clone);
-    document.body.appendChild(fly);
-    prof.style.opacity = '0';
-    requestAnimationFrame(function(){ requestAnimationFrame(function(){
-      fly.style.left = pr.left + 'px'; fly.style.top = pr.top + 'px';
-      fly.style.width = pr.width + 'px'; fly.style.height = pr.height + 'px'; fly.style.opacity = '0';
-    }); });
-    var done = function(){ if(fly.parentNode) fly.parentNode.removeChild(fly); prof.style.opacity = '1'; };
-    fly.addEventListener('transitionend', function(e){ if(e.propertyName === 'opacity') done(); }, {once:true});
-    setTimeout(done, 520);
   }
 
   function byKey(k){
