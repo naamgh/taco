@@ -1948,6 +1948,20 @@
     color:var(--text-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;
   }
   .live-cog-btn:hover{background:var(--bg-card-hover);color:var(--text);}
+  /* Full-screen toggle shares the cog's round-button look, but isn't hidden on
+     mobile the way the layout cog is. */
+  .live-fs-btn{
+    width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:transparent;
+    color:var(--text-dim);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;
+  }
+  .live-fs-btn:hover{background:var(--bg-card-hover);color:var(--text);}
+  .live-fs-btn .ico-fs-off{display:none;}
+  .live-fs-btn.is-fs .ico-fs-on{display:none;}
+  .live-fs-btn.is-fs .ico-fs-off{display:block;}
+  /* In full screen the player fills the display with an opaque, themed ground
+     (the scrim would sit over the browser's black backdrop otherwise). */
+  #livePlayer:fullscreen{background:var(--bg);backdrop-filter:none;}
+  #livePlayer:-webkit-full-screen{background:var(--bg);-webkit-backdrop-filter:none;}
   .live-workout-name{margin:0;font-size:15px;color:var(--text-dim);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .live-segment-index{margin:2px 0 16px;font-size:13px;color:var(--text-faint);font-family:var(--mono);letter-spacing:.04em;text-align:center;}
   .live-end-btn{background:transparent;border:1px solid var(--border);color:var(--text-dim);padding:9px 20px;border-radius:9px;font-size:15px;cursor:pointer;flex:none;}
@@ -2022,7 +2036,9 @@
     .tr-grid .tr-cell,
     .tr-grid .tr-cell.hero{order:0;grid-column:span 6;min-height:96px;}
     .tr-grid .tr-cell.hero .tr-val{font-size:clamp(24px,min(3.4vw,5vh),40px);}
-    .live-cog-btn{display:none;}
+    /* The layout cog is desktop-only, and full screen isn't needed on a phone
+       (the player is already full-bleed), so drop both here. */
+    .live-cog-btn,.live-fs-btn{display:none;}
   }
 
   .live-test-note{
@@ -2126,7 +2142,7 @@
   #livePlayer{font-family:var(--display);}
   #livePlayer .live-workout-name{font-family:var(--display);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-dim);}
   #livePlayer .live-segment-label{font-family:var(--display);font-weight:500;letter-spacing:-.01em;color:var(--text-strong);}
-  #livePlayer .live-cog-btn{border-radius:7px;}
+  #livePlayer .live-cog-btn,#livePlayer .live-fs-btn{border-radius:7px;}
   #livePlayer .live-end-btn{font-family:var(--display);font-size:12px;letter-spacing:.1em;text-transform:uppercase;border:1px solid var(--text);color:var(--text);border-radius:7px;padding:10px 20px;}
   #livePlayer .live-end-btn:hover{background:var(--text);color:var(--bg);border-color:var(--text);}
 
@@ -3987,8 +4003,12 @@
       <p class="live-workout-name" id="liveWorkoutName"></p>
       <p class="live-segment-label" id="liveSegmentLabel"></p>
       <div class="live-top-actions">
-        <button class="live-cog-btn" id="settingsBtn" type="button" aria-label="Display settings">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3.1"/><path d="M12 2.8v2.3M12 18.9v2.3M4.6 7.3l2 1.15M17.4 15.55l2 1.15M4.6 16.7l2-1.15M17.4 8.45l2-1.15" stroke-linecap="round"/></svg>
+        <button class="live-fs-btn" id="liveFullscreenBtn" type="button" aria-label="Full screen">
+          <svg class="ico-fs-on" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4H5a1 1 0 0 0-1 1v3M16 4h3a1 1 0 0 1 1 1v3M8 20H5a1 1 0 0 1-1-1v-3M16 20h3a1 1 0 0 0 1-1v-3"/></svg>
+          <svg class="ico-fs-off" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 4v3a1 1 0 0 1-1 1H4M16 4v3a1 1 0 0 0 1 1h3M8 20v-3a1 1 0 0 0-1-1H4M16 20v-3a1 1 0 0 1 1-1h3"/></svg>
+        </button>
+        <button class="live-cog-btn" id="settingsBtn" type="button" aria-label="Readout layout">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="2"/><path d="M12 4.5v15M12 12h8.5" stroke-linecap="round"/></svg>
         </button>
         <button class="live-end-btn" id="liveEndBtn">End</button>
       </div>
@@ -4472,6 +4492,7 @@
     trGrid: document.getElementById('trGrid'),
     rcLanding: document.getElementById('rcLanding'),
     settingsBtn: document.getElementById('settingsBtn'),
+    liveFullscreenBtn: document.getElementById('liveFullscreenBtn'),
     liveSettings: document.getElementById('liveSettings'),
     settingsClose: document.getElementById('settingsClose'),
     layoutOpts: document.getElementById('layoutOpts'),
@@ -7839,6 +7860,33 @@
   }
   applyRailLayout(currentRailLayout());
   if(els.settingsBtn) els.settingsBtn.addEventListener('click', function(){ els.liveSettings.hidden = false; });
+
+  // Full-screen toggle for the ride screen (the player element itself, so the
+  // chart + readouts fill the display). Falls back silently if unsupported.
+  function fsElement(){ return document.fullscreenElement || document.webkitFullscreenElement || null; }
+  function syncFsBtn(){
+    if(!els.liveFullscreenBtn) return;
+    var on = fsElement() === els.livePlayer;
+    els.liveFullscreenBtn.classList.toggle('is-fs', on);
+    els.liveFullscreenBtn.setAttribute('aria-label', on ? 'Exit full screen' : 'Full screen');
+  }
+  if(els.liveFullscreenBtn){
+    els.liveFullscreenBtn.addEventListener('click', function(){
+      var el = els.livePlayer;
+      try{
+        var p;
+        if(fsElement()){
+          p = (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        } else {
+          var req = el.requestFullscreen || el.webkitRequestFullscreen;
+          if(req) p = req.call(el);
+        }
+        if(p && p.catch) p.catch(function(){});   // rejected (blocked) — ignore
+      }catch(e){ /* unsupported / blocked — leave the modal as-is */ }
+    });
+    document.addEventListener('fullscreenchange', syncFsBtn);
+    document.addEventListener('webkitfullscreenchange', syncFsBtn);
+  }
   if(els.settingsClose) els.settingsClose.addEventListener('click', function(){ els.liveSettings.hidden = true; });
   if(els.liveSettings) els.liveSettings.addEventListener('click', function(e){ if(e.target === els.liveSettings) els.liveSettings.hidden = true; });
   if(els.layoutOpts) els.layoutOpts.addEventListener('click', function(e){
