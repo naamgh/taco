@@ -238,17 +238,29 @@
   .tb-conn .device-dot{width:7px;height:7px;}
   .tb-conn .conn-strava{color:var(--text-faint);}
 
-  /* Setup chip: device dots + FTP; opens the Numbers + Connections panel. */
-  .tb-setup{gap:11px;padding:6px 0;background:none;border:0;}
-  .tb-setup:hover .tb-setup-ftp,.tb-setup:hover .tb-setup-ftp b{color:var(--text-strong);}
-  .tb-setup-dots{display:flex;align-items:center;gap:10px;}
-  /* each connection: its icon (bike / heart / Strava) + a status dot, so a red
-     × next to an icon tells you exactly which one is missing. */
-  .tb-ind{display:flex;align-items:center;gap:4px;color:var(--text-faint);}
-  .tb-ind svg{width:14px;height:14px;display:block;}
-  .tb-ind .device-dot{width:8px;height:8px;}
-  .tb-setup-ftp{font-size:12px;letter-spacing:.04em;color:var(--text-dim);white-space:nowrap;}
-  .tb-setup-ftp b{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--text);margin-left:4px;}
+  /* Connections chip: three "ghost" icons. A device reads as off by being faint
+     (no loud red ×); when it connects the icon goes full-ink with a small dot. */
+  .tb-conns-chip{display:flex;align-items:center;gap:15px;background:none;border:0;padding:6px 2px;cursor:pointer;color:var(--text-faint);}
+  .tb-ind{position:relative;display:flex;align-items:center;color:var(--text-faint);opacity:.38;transition:opacity .18s ease,color .18s ease;}
+  .tb-ind svg{width:15px;height:15px;display:block;}
+  .tb-ind .device-dot{display:none;}                      /* off: no mark at all */
+  .tb-ind:has(.device-dot.on),
+  .tb-ind:has(.device-dot.strava){opacity:1;color:var(--text-strong);}
+  .tb-ind:has(.device-dot.on) .device-dot,
+  .tb-ind:has(.device-dot.strava) .device-dot{display:block;position:absolute;right:-3px;top:-2px;width:5px;height:5px;background:var(--ok);box-shadow:none;}
+  .tb-ind:has(.device-dot.retry){opacity:.8;color:var(--text-dim);}
+  .tb-ind:has(.device-dot.retry) .device-dot{display:block;position:absolute;right:-3px;top:-2px;width:5px;height:5px;background:var(--warn);box-shadow:none;}
+  .tb-ind:has(.device-dot.strava) .device-dot{background:#FC4C02;}   /* Strava logged-in keeps its mark colour */
+  .tb-conns-chip:hover .tb-ind{opacity:.6;}
+  .tb-conns-chip:hover .tb-ind:has(.device-dot.on),
+  .tb-conns-chip:hover .tb-ind:has(.device-dot.strava){opacity:1;}
+
+  /* FTP: its own chip — outlined, DM Mono value; opens the numbers editor. */
+  .tb-ftp-chip{display:inline-flex;align-items:baseline;gap:7px;background:none;border:1px solid var(--border);border-radius:8px;padding:6px 12px;cursor:pointer;color:var(--text-dim);}
+  .tb-ftp-chip:hover{border-color:var(--text-strong);}
+  .tb-ftp-chip .tb-ftp-l{font-family:var(--display);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);}
+  .tb-ftp-chip b{font-family:var(--display);font-size:14px;font-weight:500;color:var(--text-strong);}
+  .tb-ftp-chip:hover .tb-ftp-l{color:var(--text-dim);}
   /* Overflow button + dropdown (theme / guide / zones). */
   .tb-more{display:flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:8px;border:0;background:none;color:var(--text-faint);cursor:pointer;flex:none;margin-left:10px;}
   .tb-more:hover{background:var(--bg-card-hover);color:var(--text);}
@@ -268,10 +280,26 @@
     #sideMenu .menu-rider .ftp-chip .num-display{font-family:var(--display);font-size:20px;font-weight:500;color:var(--text-strong);}
     #sideMenu .menu-wkg{font-family:var(--display);color:var(--text-dim);}
     #sideMenu .menu-wkg b{font-family:var(--display);color:var(--text-strong);}
-    #sideMenu .conn-row{border:1px solid var(--border);border-radius:8px;background:var(--bg);}
-    #sideMenu .conn-row:hover{border-color:var(--text);background:var(--bg-card-hover);}
-    #sideMenu .cr-name{font-family:var(--display);font-size:13px;}
-    #sideMenu .cr-action{font-family:var(--display);font-size:11px;letter-spacing:.06em;text-transform:uppercase;}
+    /* Connections: a flat hairline list with ghost icons (matching the top-bar
+       connections chip) — faint when off, full-ink when connected. No boxes, no
+       loud red; the action word sits quiet on the right and brightens on hover. */
+    #sideMenu .conn-list{gap:0;}
+    #sideMenu .conn-row{border:0;border-top:1px solid var(--border-soft);border-radius:0;background:none;padding:14px 2px;}
+    #sideMenu .conn-row:first-child{border-top:0;}
+    #sideMenu .conn-row:hover{background:none;}
+    #sideMenu .cr-left{gap:12px;}
+    #sideMenu .cr-icon{color:var(--text-faint);opacity:.4;transition:opacity .15s ease,color .15s ease;}
+    #sideMenu .conn-row.on .cr-icon{opacity:1;color:var(--text-strong);}
+    #sideMenu .conn-row.on .cr-strava-mark{color:#FC4C02;opacity:1;}
+    #sideMenu .cr-name{font-family:var(--display);font-size:13px;color:var(--text);}
+    #sideMenu .conn-row.idle .cr-name{color:var(--text-dim);}
+    #sideMenu .cr-action{font-family:var(--display);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:400;}
+    #sideMenu .conn-row.idle .cr-action{color:var(--text-faint);font-weight:400;}   /* was shouty red */
+    #sideMenu .conn-row.on .cr-action{color:var(--text-faint);}                      /* "Disconnect": quiet until hover */
+    #sideMenu .conn-row.busy .cr-action{color:var(--text-dim);}
+    #sideMenu .conn-strava:not(.on) .cr-action{color:#FC4C02;font-weight:500;}        /* "Log In": the Strava action */
+    #sideMenu .conn-row:hover .cr-action{color:var(--text-strong);}
+    #sideMenu .conn-strava:not(.on):hover .cr-action{color:#FC4C02;}
 
     #keypadOverlay .keypad-panel{font-family:var(--display);border-radius:12px;}
     #keypadOverlay .kp-label{font-family:var(--display);font-size:11px;letter-spacing:.14em;color:var(--text-faint);}
@@ -1707,7 +1735,7 @@
     white-space:nowrap;letter-spacing:-0.01em;
   }
   /* Not connected shouts (red); connect / disconnect / log stay quiet. */
-  .conn-row.idle .cr-action{color:var(--c-anaerobic);font-weight:700;}
+  .conn-row.idle .cr-action{color:var(--text-dim);font-weight:600;}   /* quiet, not a red alarm */
   .conn-row.busy .cr-action{color:var(--warn);}
   .conn-strava:not(.on) .cr-action{color:#FC4C02;font-weight:650;}   /* "Log In" is the action, not an error */
 
@@ -3397,6 +3425,23 @@
     .hub-title{font-family:var(--display);font-weight:500;letter-spacing:.01em;}
     .hub-sub{font-family:var(--display);}
 
+    /* Connections (the relocated #sideMenu in the Menu sheet) — same flat
+       hairline rows + ghost icons as desktop. */
+    #sideMenu .menu-sec-h{font-family:var(--display);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);font-weight:500;}
+    #sideMenu .conn-list{gap:0;}
+    #sideMenu .conn-row{border:0;border-top:1px solid var(--border-soft);border-radius:0;background:none;padding:15px 2px;}
+    #sideMenu .conn-row:first-child{border-top:0;}
+    #sideMenu .conn-row:active{background:none;}
+    #sideMenu .cr-left{gap:12px;}
+    #sideMenu .cr-icon{color:var(--text-faint);opacity:.4;}
+    #sideMenu .conn-row.on .cr-icon{opacity:1;color:var(--text-strong);}
+    #sideMenu .conn-row.on .cr-strava-mark{color:#FC4C02;opacity:1;}
+    #sideMenu .cr-name{font-family:var(--display);font-size:14px;color:var(--text);}
+    #sideMenu .conn-row.idle .cr-name{color:var(--text-dim);}
+    #sideMenu .cr-action{font-family:var(--display);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);font-weight:400;}
+    #sideMenu .conn-row.idle .cr-action,#sideMenu .conn-row.on .cr-action{color:var(--text-faint);}
+    #sideMenu .conn-strava:not(.on) .cr-action{color:#FC4C02;font-weight:500;}
+
     /* ---------- Find (landing) ---------- */
     .find-panel{font-family:var(--display);}
     .find-head h3{font-family:var(--display);font-size:16px;font-weight:500;letter-spacing:.06em;color:var(--text-strong);}
@@ -3629,15 +3674,16 @@
   <div class="topbar" id="topBar">
     <span class="tb-page" id="tbPage">Workouts</span>
     <div class="tb-right">
-      <!-- One setup chip: a glance at device status (three dots) + your FTP.
-           Opens the combined Numbers + Connections panel. -->
-      <button class="tb-chip tb-setup" id="tbSetup" type="button" aria-label="Rider setup — numbers and connections">
-        <span class="tb-setup-dots" aria-hidden="true">
-          <span class="tb-ind"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="6" cy="16.5" r="3.1"/><circle cx="18" cy="16.5" r="3.1"/><path d="M6 16.5l3.6-7h5.2l3.2 7M12.2 16.5l2.6-7" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="device-dot" id="tbTrainerDot"></span></span>
-          <span class="tb-ind"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20S3.6 15 3.6 9.3A4.3 4.3 0 0112 7.1a4.3 4.3 0 018.4 2.2C20.4 15 12 20 12 20z" stroke-linejoin="round"/></svg><span class="device-dot" id="tbHrDot"></span></span>
-          <span class="tb-ind"><svg class="conn-strava" viewBox="0 0 24 24" width="14" height="14" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" fill="currentColor"/></svg><span class="device-dot" id="tbStravaDot"></span></span>
-        </span>
-        <span class="tb-setup-ftp">FTP <b id="tbFtp">—</b></span>
+      <!-- Device connections at a glance: ghosted icons that light (ink + a small
+           dot) when connected. Opens the Connections panel. -->
+      <button class="tb-conns-chip" id="tbConns" type="button" aria-label="Device connections">
+        <span class="tb-ind" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="6" cy="16.5" r="3.1"/><circle cx="18" cy="16.5" r="3.1"/><path d="M6 16.5l3.6-7h5.2l3.2 7M12.2 16.5l2.6-7" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="device-dot" id="tbTrainerDot"></span></span>
+        <span class="tb-ind" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20S3.6 15 3.6 9.3A4.3 4.3 0 0112 7.1a4.3 4.3 0 018.4 2.2C20.4 15 12 20 12 20z" stroke-linejoin="round"/></svg><span class="device-dot" id="tbHrDot"></span></span>
+        <span class="tb-ind tb-ind-strava" aria-hidden="true"><svg class="conn-strava" viewBox="0 0 24 24" aria-hidden="true"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" fill="currentColor"/></svg><span class="device-dot" id="tbStravaDot"></span></span>
+      </button>
+      <!-- FTP — its own chip; opens the numbers editor (FTP / Max HR / Weight). -->
+      <button class="tb-ftp-chip" id="tbFtpChip" type="button" aria-label="FTP, tap to edit">
+        <span class="tb-ftp-l">FTP</span><b id="tbFtp">—</b>
       </button>
       <!-- Overflow: theme / guide / zones (moved in by desktop-nav JS). -->
       <button class="tb-more" id="tbMore" type="button" aria-label="More" aria-haspopup="true" aria-expanded="false">
@@ -6803,7 +6849,7 @@
     if(state.busy)         return {name:fallback, action:'Connecting…',   dotClass:'retry', busy:true};
     if(state.reconnecting) return {name:fallback, action:'Reconnecting…', dotClass:'retry', reconnecting:true};
     if(state.looking)      return {name:fallback, action:'Looking…',      dotClass:'retry', looking:true};
-    return {name:fallback, action:'Not Connected', dotClass:'off', idle:true};
+    return {name:fallback, action:'Connect', dotClass:'off', idle:true};
   }
 
   function paintDeviceButton(btn, nameEl, actionEl, s, longName){
@@ -6973,8 +7019,10 @@
   // breaking indoor-ride sync.
   async function stravaValidateSession(){
     if(!stravaConnected()) return;
-    var due = !strava.accessToken || !strava.expiresAt || (strava.expiresAt - Date.now() / 1000 < 300);
-    if(!due) return;
+    // Always confirm with Strava on load — a token that still looks valid by its
+    // local expiry can have been revoked on Strava's side (or the whole app
+    // de-authorised). A refresh proves it's really live, or drops it. This is the
+    // fix for "shows connected but it isn't": the status can no longer lie.
     try{ await stravaTokenRequest({grant_type:'refresh_token', refresh_token:strava.refreshToken}); }
     catch(e){ if(e && (e.status === 400 || e.status === 401)) stravaForget(); }   // only drop a token Strava rejects, not a network blip
     updateStravaUI();
@@ -7034,7 +7082,14 @@
     if(els.stravaAction) els.stravaAction.textContent = on ? 'Log Out' : 'Log In';
     els.stravaBtn.classList.toggle('on', on);
     els.stravaBtn.title = on ? 'Logged in to Strava — tap to log out' : 'Log in with Strava';
-    els.summaryStravaBtn.style.display = on ? '' : 'none';
+    // The summary's Strava button stays visible whether or not we're connected —
+    // when disconnected it reads "Connect & sync to" and runs the connect-then-post
+    // flow. Only an already-synced ride hides it. (Gating it on connection here
+    // used to race showSummary and hide the connect button.)
+    if(!els.summaryStravaBtn.classList.contains('busy')){
+      els.summaryStravaBtn.style.display = (typeof liveState !== 'undefined' && liveState.stravaActivityId) ? 'none' : '';
+      els.summaryStravaText.textContent = on ? 'Sync to' : 'Connect & sync to';
+    }
     if(els.connStravaDot) els.connStravaDot.className = 'device-dot ' + (on ? 'on' : 'off');
     if(els.connStravaName) els.connStravaName.textContent = first || 'Strava';
     // The readiness card is gated on a Strava connection — repaint it so the
@@ -7152,10 +7207,16 @@
   }
   els.summaryStravaBtn.addEventListener('click', function(){
     if(stravaConnected()){ stravaUpload(); return; }
-    // Park the ride, go and connect; the callback brings the summary back
-    // and starts the upload.
+    // Park the ride, then connect. The consent step reloads the page, so reassure
+    // the rider first: the ride is saved and they'll land back on this screen to
+    // finish posting. A short beat so the message is read before we leave.
     stashRide(true);
-    stravaConnect();
+    els.summaryStravaBtn.disabled = true;
+    els.summaryStravaText.textContent = 'Opening Strava…';
+    els.summaryStravaStatus.classList.remove('err');
+    els.summaryStravaStatus.style.display = 'block';
+    els.summaryStravaStatus.textContent = 'Your ride is saved ✓  Taking you to Strava to connect — you’ll come straight back to this screen to post it.';
+    setTimeout(stravaConnect, 1600);
   });
 
   // ============================================================
@@ -11993,17 +12054,18 @@
       if(tbPage) tbPage.style.display = 'none';
       topBar.insertBefore(railNav, brand.nextSibling);         // nav keeps its setDeskView handler
 
-      // Setup chip → the combined Numbers + Connections panel.
-      var tbSetup = document.getElementById('tbSetup');
-      if(tbSetup && sideMenu) tbSetup.addEventListener('click', function(e){ e.stopPropagation(); if(typeof closeMore === 'function') closeMore(); openDeskMenu('setup', tbSetup); });
+      // FTP chip → the numbers editor (FTP / Max HR / Weight). The connections
+      // chip (#tbConns) opens the Connections panel, wired above.
+      var tbFtpChip = document.getElementById('tbFtpChip');
+      if(tbFtpChip && sideMenu) tbFtpChip.addEventListener('click', function(e){ e.stopPropagation(); if(typeof closeMore === 'function') closeMore(); openDeskMenu('numbers', tbFtpChip); });
       // Keypad opened from a menu number chip anchors under that chip (03 opens it).
       var menuRider = document.querySelector('.menu-rider');
       if(menuRider) menuRider.addEventListener('click', function(e){
         var chip = e.target.closest('.ftp-chip[data-num]'); if(chip) anchorKeypad(chip);
       });
-      // Clicking outside the setup panel closes it (not the chip, which toggles, nor the keypad).
+      // Clicking outside the panel closes it (not its chips, which toggle, nor the keypad).
       document.addEventListener('click', function(e){
-        if(sideMenu && !sideMenu.hidden && !e.target.closest('#sideMenu') && !e.target.closest('#tbSetup') && !e.target.closest('#keypadOverlay')){
+        if(sideMenu && !sideMenu.hidden && !e.target.closest('#sideMenu') && !e.target.closest('#tbConns') && !e.target.closest('#tbFtpChip') && !e.target.closest('#keypadOverlay')){
           sideMenu.hidden = true; sideMenu.removeAttribute('data-menumode');
         }
       });
