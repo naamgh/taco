@@ -3376,6 +3376,18 @@
     #trendsModal .tr-subtabs{background:none;border:0;border-bottom:1px solid var(--border);border-radius:0;padding:0;gap:0;}
     #trendsModal .tr-subtab{font-family:var(--display);font-size:12px;letter-spacing:.1em;text-transform:uppercase;font-weight:500;color:var(--text-faint);background:none;border:0;border-bottom:2px solid transparent;border-radius:0;padding:10px 0;margin-right:22px;margin-bottom:-1px;}
     #trendsModal .tr-subtab.on{background:none;color:var(--text-strong);border-bottom-color:var(--text);}
+    /* Sub-tabs stay pinned to the top of the scrolling charts. */
+    #trendsModal .trends-scroll{padding-top:0;}   /* the gap moves onto the tab row, so nothing scrolls through above it */
+    #trendsModal .tr-subtabs{position:sticky;top:0;z-index:3;padding-top:16px;background:var(--bg-card);transition:box-shadow .15s;}
+    #trendsModal .tr-subtabs.is-stuck{box-shadow:var(--head-shadow);}
+    /* Range (Performance only) gets its own full-width row under the tabs, so the
+       tabs keep one line and each range is a real tap target. The hairline moves
+       onto the tab list so the active-tab underline still sits on it. */
+    #trendsModal .tr-subtabs{flex-wrap:wrap;border-bottom:0;}
+    #trendsModal .tr-subtab-list{display:flex;flex:1 0 100%;border-bottom:1px solid var(--border);}
+    #trendsModal .tr-subtabs .trends-range{flex:1 0 100%;margin:0;padding:0;gap:0;background:none;border:0;border-radius:0;border-bottom:1px solid var(--border-soft);}
+    #trendsModal .tr-subtabs .tr-range-btn{flex:1;position:relative;height:40px;padding:0;font-size:12px;font-weight:500;letter-spacing:.1em;text-align:center;}
+    #trendsModal .tr-subtabs .tr-range-btn.on::after{content:"";position:absolute;left:50%;bottom:7px;width:16px;height:2px;margin-left:-8px;background:var(--text);}
     /* Quiet range / unit toggles. */
     #trendsModal .tr-range-btn{font-family:var(--display);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);background:none;border:0;border-radius:0;padding:4px 1px;}
     #trendsModal .tr-range-btn.on{background:none;color:var(--text-strong);}
@@ -10885,9 +10897,9 @@
   function drawFitness(cv, series, rangeDays, noAnim){
     var W = cv.clientWidth || 720, H = 210, ctx = setupCanvas(cv, W, H);
     var padL = 38, padR = 14, padT = 12, padB = 24;
-    var accent = cssVar('--accent') || '#6E8BFF', atlC = cssVar('--text-dim') || '#8A8A82';
+    var accent = cssVar('--accent') || '#6E8BFF';
     var faint = cssVar('--text-faint') || '#7E869E', grid = gridColor();
-    var freshFill = tint('--ok', 0.15), fatigFill = tint('--c-anaerobic', 0.14);
+    var freshFill = tint('--ok', 0.34), fatigFill = tint('--c-anaerobic', 0.30);
     if(fitAnim){ cancelAnimationFrame(fitAnim); fitAnim = null; }
     if(series.length < 2){ ctx.clearRect(0, 0, W, H); ctx.fillStyle = faint; ctx.font = '13px ' + IMG_SANS; ctx.textAlign = 'center'; ctx.fillText('Not enough history yet', W/2, H/2); return; }
     var view = rangeView(series, rangeDays);
@@ -10920,7 +10932,7 @@
         ctx.fillStyle = ((a.ctl + b.ctl) >= (a.atl + b.atl)) ? freshFill : fatigFill;
         ctx.fill();
       }
-      ctx.setLineDash([4, 3]); line('atl', atlC, 1.5); ctx.setLineDash([]);   // fatigue reads secondary
+      // no Fatigue line: the band's outer edge is Fatigue, its colour says which leads
       line('ctl', accent, 2.6);                                               // fitness, solid ink
       monthTicks(ctx, view, x, H, faint);
       ctx.restore();
@@ -11302,8 +11314,8 @@
         '<div class="tr-card tr-perf">' +
           '<div class="tr-card-head"><h3>Fitness &amp; Fatigue' +
             '<span class="tr-help"><button class="help-dot" type="button" aria-label="About Fitness and Fatigue">?</button>' +
-              '<span class="tr-help-tip">Fitness is a 42-day load average, Fatigue a 7-day; Form is the gap between them.</span></span></h3>' +
-            '<div class="tr-legend"><span class="k ctl">Fitness</span><span class="k atl">Fatigue</span><span class="k lead-fit fill">Form</span></div></div>' +
+              '<span class="tr-help-tip">Fitness (the line) is a 42-day load average, Fatigue a 7-day. The shaded band runs from Fitness to Fatigue: green when you&#39;re fresh, red when fatigue leads.</span></span></h3>' +
+            '<div class="tr-legend"><span class="k ctl">Fitness</span><span class="k fresh fill">Fresh</span><span class="k fatig fill">Fatigued</span></div></div>' +
           '<canvas class="tr-canvas" id="fitCanvas"></canvas>' +
           '<div class="tr-form-strip"><div class="tr-card-head"><h3>Form</h3>' +
             '<button class="help-dot" id="formHelp" type="button" aria-label="What the Form zones mean">?</button></div>' +
@@ -11389,10 +11401,16 @@
     trendsTab = t;
     [].forEach.call(els.trendsBody.querySelectorAll('.tr-subtab'), function(x){ x.classList.toggle('on', x.getAttribute('data-pane') === t); });
     [].forEach.call(els.trendsBody.querySelectorAll('.tr-tab'), function(x){ x.classList.toggle('on', x.getAttribute('data-pane') === t); });
+    els.trendsBody.scrollTop = 0;   // a new pane starts at its top, not mid-scroll under the sticky tabs
     drawTab(t);
     updateRangeVisibility();
     moveSubUnderline();
   });
+  // Sticky sub-tabs (mobile) lift off the charts with a shadow once scrolled.
+  els.trendsBody.addEventListener('scroll', function(){
+    var row = els.trendsBody.querySelector('.tr-subtabs');
+    if(row) row.classList.toggle('is-stuck', els.trendsBody.scrollTop > 2);
+  }, {passive:true});
   // Watts vs W/kg: a two-state switch — clicking either side flips it. Only the
   // power curve redraws, no recompute.
   els.trendsBody.addEventListener('click', function(e){
