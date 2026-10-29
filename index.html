@@ -3213,7 +3213,28 @@
     #trendsModal .tr-pr{font-family:var(--display);background:none;border:0;color:var(--text-strong);padding:0;letter-spacing:.04em;font-weight:500;}
     #trendsModal .tr-fs-head{font-family:var(--display);}
     #trendsModal .tr-fs-head span{font-family:var(--display);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);}
+
+    /* Summary top row: readiness | this week + 12-week trend, both compact. */
+    #trendsModal .tr-top{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:start;}
+    #trendsModal .tr-top .tr-card{margin:0;}
+    #trendsModal .tr-top .trs-word{font-size:32px;margin:6px 0 12px;}
+    #trendsModal .tr-top .trs-kpis{margin-top:18px;}
+    #trendsModal .tr-top .trs-kpi{padding:12px 0 12px 16px;}
+    #trendsModal .tr-top .trs-kpi:first-child{padding-left:0;}
+    #trendsModal .tr-top .trs-kpi .v{font-size:24px;}
+    #trendsModal .tr-top .trs-kpi .l{margin-top:6px;}
+    #trendsModal .tr-top .tr-card-head h3{font-size:11px;font-weight:400;letter-spacing:.16em;color:var(--text-faint);}
+    #trendsModal .tr-top .tr-wk-stats{gap:30px;margin:8px 0 14px;}
+    #trendsModal .tr-top .tr-wk-stat .v{font-size:20px;}
+    #trendsModal .tr-top .tr-wk-stat .l{margin-top:5px;}
+    #trendsModal .tr-top .wk-canvas{height:120px;}
+    #trendsModal .tr-top + .co-card{margin-top:34px;}
   }
+  /* Toggles (TSS/Hours, W/W·kg, date range): the unselected option recedes
+     further, so the active one reads at a glance. */
+  .tr-top .tr-week .wk-canvas{height:140px;}   /* mobile; the desktop row trims it to 120 */
+  #trendsModal .tr-range-btn:not(.on){opacity:.42;}
+  #trendsModal .tr-range-btn:not(.on):hover{opacity:.8;}
 
   @media (max-width:720px){
     /* The last stat spans the row when the count is odd, so the strip stays flush. */
@@ -3562,6 +3583,23 @@
   .co-btn.text{border-color:transparent;background:none;color:var(--text-faint);padding-inline:4px;}
   .co-btn.text:hover{color:var(--text-strong);}
   .co-hist-cv{height:110px;margin-top:10px;}
+  .co-beta{display:inline-block;margin-left:8px;padding:1px 5px;border:1px solid var(--text-faint);border-radius:4px;font-size:9.5px;letter-spacing:.12em;color:var(--text-faint);vertical-align:1px;}
+
+  /* FTP check · Show working */
+  .co-work{margin-top:18px;border-top:1px solid var(--border-soft);padding-top:12px;font-family:var(--display);}
+  .co-work summary{cursor:pointer;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);list-style:none;}
+  .co-work summary::-webkit-details-marker{display:none;}
+  .co-work summary::before{content:"›";display:inline-block;margin-right:8px;transition:transform .2s;}
+  .co-work[open] summary::before{transform:rotate(90deg);}
+  .co-work summary:hover{color:var(--text-strong);}
+  .co-work-h{margin:16px 0 6px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);}
+  .co-work-p{margin:0;font-size:12px;line-height:1.6;color:var(--text-dim);}
+  .co-work-scroll{overflow-x:auto;}
+  .co-work-tbl{width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums;}
+  .co-work-tbl th{text-align:left;font-weight:400;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);padding:6px 10px 6px 0;border-bottom:1px solid var(--border-soft);white-space:nowrap;}
+  .co-work-tbl td{padding:7px 10px 7px 0;border-bottom:1px solid var(--border-soft);color:var(--text);white-space:nowrap;}
+  .co-work-tbl td.nm{max-width:160px;overflow:hidden;text-overflow:ellipsis;}
+  .co-work-tbl .nil{color:var(--text-faint);}
 
   /* FTP chip hint (desktop top bar) */
   .tb-ftp-chip{position:relative;}
@@ -11418,8 +11456,7 @@
       lastCurve = curve;
       if(!hasWeight()) pcUnit = 'w';   // W/kg needs a weight
       var thisMon = mondayOf(Date.now());
-      var lastMonD = new Date(thisMon); lastMonD.setDate(lastMonD.getDate() - 7);   // DST-safe previous Monday
-      var wk = weekStats(acts, thisMon), lastWk = weekStats(acts, lastMonD.getTime());
+      var wk = weekStats(acts, thisMon);
       var today = pmc.today;
 
       var tr = pmcTrend(pmc.series);
@@ -11466,18 +11503,23 @@
         }).join('') + '<span class="tr-subunderline"></span></div></div>';
 
       var summaryPane = '<section class="tr-tab' + (trendsTab==='summary'?' on':'') + '" data-pane="summary">' +
-        status +
-        coachSummaryHTML(all, acts, pmc, chk) +
-        '<div class="tr-card tr-week">' +
-          '<div class="tr-card-head"><h3>This week</h3><span class="tr-subtitle">vs last week</span></div>' +
-          '<div class="tr-wk-stats">' +
-            '<div class="tr-wk-stat"><div class="v">' + Math.round(wk.tss) + ' ' + deltaMini(wk.tss, lastWk.tss) + '</div><span class="l">Load</span></div>' +
-            '<div class="tr-wk-stat"><div class="v">' + fmtHrs(wk.sec) + '</div><span class="l">Time</span></div>' +
-            '<div class="tr-wk-stat"><div class="v">' + wk.n + '</div><span class="l">' + (wk.n===1?'Ride':'Rides') + '</span></div>' +
+        // Readiness and the week share the top row (desktop; they stack on
+        // mobile). The week is shown plain — no "vs last week" or delta: beating
+        // last week every week isn't the goal, and the coach below says when to
+        // push and when to back off.
+        '<div class="tr-top">' + status +
+          '<div class="tr-card tr-week">' +
+            '<div class="tr-card-head"><h3>This week</h3></div>' +
+            '<div class="tr-wk-stats">' +
+              '<div class="tr-wk-stat"><div class="v">' + Math.round(wk.tss) + '</div><span class="l">Load</span></div>' +
+              '<div class="tr-wk-stat"><div class="v">' + fmtHrs(wk.sec) + '</div><span class="l">Time</span></div>' +
+              '<div class="tr-wk-stat"><div class="v">' + wk.n + '</div><span class="l">' + (wk.n===1?'Ride':'Rides') + '</span></div>' +
+            '</div>' +
+            '<div class="tr-fs-head tr-wk-head"><span>12-week ' + (weekMetric==='tss'?'load':'hours') + '</span>' + wkToggle + '</div>' +
+            '<div class="wk-plot"><canvas class="tr-canvas wk-canvas" id="wkCanvas"></canvas><div class="wk-tip" id="wkTip" hidden></div></div>' +
           '</div>' +
-          '<div class="tr-fs-head tr-wk-head"><span>12-week ' + (weekMetric==='tss'?'load':'hours') + '</span>' + wkToggle + '</div>' +
-          '<div class="wk-plot"><canvas class="tr-canvas wk-canvas" id="wkCanvas"></canvas><div class="wk-tip" id="wkTip" hidden></div></div>' +
         '</div>' +
+        coachSummaryHTML(all, acts, pmc, chk) +
       '</section>';
 
       var perfPane = '<section class="tr-tab' + (trendsTab==='performance'?' on':'') + '" data-pane="performance">' +
@@ -11526,10 +11568,6 @@
       if(lastCurve) drawPowerCurve(document.getElementById('pcCanvas'), lastCurve, pcUnit);
       if(lastHistActs) drawFtpHistory(document.getElementById('ftpHistCanvas'), lastHistActs);
     }
-  }
-  function deltaMini(now, was){
-    var d = Math.round(now - was); if(d === 0 || (!now && !was)) return '';
-    return '<em class="' + (d>0?'up':'down') + '">' + (d>0?'▲':'▼') + Math.abs(d) + '</em>';
   }
 
   // Form-zones popover, on hover — the same pattern as the sidebar Zones help.
@@ -11601,6 +11639,8 @@
     weekMetric = (weekMetric === 'tss') ? 'hours' : 'tss';
     try{ localStorage.setItem(WEEKMETRIC_KEY, weekMetric); }catch(err){}
     els.trendsBody.querySelectorAll('.wk-btn').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-wk') === weekMetric); });
+    var wkLbl = els.trendsBody.querySelector('.tr-wk-head > span');
+    if(wkLbl) wkLbl.textContent = '12-week ' + (weekMetric === 'tss' ? 'load' : 'hours');
     if(lastActs) drawWeeklyTrendLine(document.getElementById('wkCanvas'), computeWeeks(lastActs), weekMetric);
   });
   els.trendsBtn.addEventListener('click', openTrends);
@@ -12034,10 +12074,14 @@
     var atCur = recent.filter(function(a){ return a.ftp === cur; }).slice(0, 6);
     var hist = ftpHistory(acts);
     var since = hist.changedAt ? Math.max(1, Math.round((nowMs - hist.changedAt) / (7 * DAY_MS))) : null;
+    // HR-at-power groups: the last 3 weeks vs 5–12 weeks ago (any FTP — watts per beat doesn't depend on it).
+    var rH = eff.filter(function(a){ return a.effort.hr && nowMs - a.startDateMs <= 21 * DAY_MS; });
+    var bH = eff.filter(function(a){ var age = nowMs - a.startDateMs; return a.effort.hr && age >= 35 * DAY_MS && age <= 84 * DAY_MS; });
+    var working = {rides:atCur, hrRecent:rH, hrBase:bH};
 
     if(atCur.length < 3){
       var anyHr = atCur.some(function(a){ return a.effort.hr; }), anyRpe = atCur.some(function(a){ return a.rpe; });
-      return {state:'thin', cur:cur, to:cur, since:since, signals:[
+      return {state:'thin', cur:cur, to:cur, since:since, working:working, signals:[
         {dir:'na', text:'<b>' + atCur.length + '</b> sweet spot / threshold ride' + (atCur.length === 1 ? '' : 's') + ' at ' + cur + ' W in the last 6 weeks', sub:'The check needs at least 3 to compare'},
         {dir:'na', text:anyHr ? 'Heart rate recorded' : 'No heart rate on those rides', sub:anyHr ? '' : 'Connect a heart-rate strap to unlock the HR signals'},
         {dir:'na', text:anyRpe ? 'Effort ratings saved' : 'No effort ratings saved', sub:anyRpe ? '' : 'Rate rides when you finish — it sharpens the check'}
@@ -12054,8 +12098,6 @@
     else sig.push({dir:'hold', w:'strong', text:'Sweet spot / threshold ridden at <b>' + span + '</b> — about as written', sub:'Measured power vs the plan’s targets'});
 
     // 2 — HR at that power vs your own history (efficiency: watts per beat)
-    var rH = eff.filter(function(a){ return a.effort.hr && nowMs - a.startDateMs <= 21 * DAY_MS; });
-    var bH = eff.filter(function(a){ var age = nowMs - a.startDateMs; return a.effort.hr && age >= 35 * DAY_MS && age <= 84 * DAY_MS; });
     if(rH.length >= 2 && bH.length >= 2){
       var mean = function(list, k){ return list.reduce(function(t, a){ return t + a.effort[k]; }, 0) / list.length; };
       var rp = mean(rH, 'pw'), rh = mean(rH, 'hr'), bp = mean(bH, 'pw'), bh = mean(bH, 'hr');
@@ -12074,7 +12116,9 @@
     if(decs.length >= 2){
       var md = Math.round(median(decs));
       if(md <= 5) sig.push({dir:'up', w:'medium', text:'HR drift <b>' + md + '%</b> across your recent long intervals', sub:'HR held steady to the end — those efforts were well inside your limit'});
-      else if(md >= 9) sig.push({dir:'down', w:'strong', text:'HR drift <b>' + md + '%</b> on your recent sweet spot work', sub:'HR kept climbing — those efforts were near your limit'});
+      // Medium either way: the <5% benchmark comes from long steady rides, and
+      // interval sets with rests between are a looser fit.
+      else if(md >= 9) sig.push({dir:'down', w:'medium', text:'HR drift <b>' + md + '%</b> on your recent sweet spot work', sub:'HR kept climbing — those efforts were near your limit'});
       else sig.push({dir:'hold', w:'medium', text:'HR drift <b>' + md + '%</b> — working, not struggling', sub:''});
     }
     // 4 — effort ratings
@@ -12090,7 +12134,7 @@
     acts.forEach(function(a){
       if(nowMs - a.startDateMs > 42 * DAY_MS) return;
       var pc = a.pbCurve || (a.samples && a.samples.length >= 1200 ? pbCurveFor(a.samples) : null);
-      if(pc && pc[1200] > best) best = pc[1200];
+      if(pc && pc[1200] > best){ best = pc[1200]; working.best20 = {w:best, ride:a}; }
     });
     if(best){
       var est = Math.round(best * 0.95);
@@ -12108,7 +12152,40 @@
     if(state === 'down') to = Math.min(cur - 3, Math.round(cur * 0.97));
     var avail = sig.filter(function(s){ return s.dir !== 'na'; }).length;
     var agree = sig.filter(function(s){ return s.dir === state; }).length;
-    return {state:state, cur:cur, to:to, signals:sig, avail:avail, agree:agree, since:since};
+    return {state:state, cur:cur, to:to, signals:sig, avail:avail, agree:agree, since:since, working:working};
+  }
+
+  // "Show working": the numbers behind each signal, ride by ride, so the check
+  // can be sanity-read against how the rides actually felt. Beta until it has
+  // been checked against real ramp tests.
+  function shortDate(ms){ var d = new Date(ms); return WK_MONS[d.getMonth()] + ' ' + d.getDate(); }
+  function workingHTML(chk){
+    var w = chk.working; if(!w) return '';
+    var cell = function(v){ return v === null || v === undefined || v === '' ? '<span class="nil">—</span>' : v; };
+    var rows = w.rides.map(function(a){
+      var e = a.effort;
+      return '<tr><td>' + shortDate(a.startDateMs) + '</td><td class="nm">' + (a.name || '') + '</td>' +
+        '<td>' + Math.round(e.ratio * 100) + '%</td><td>' + Math.round(e.cov * 100) + '%</td>' +
+        '<td>' + cell(e.pw && e.pw + ' W') + '</td><td>' + cell(e.hr && e.hr + '') + '</td>' +
+        '<td>' + cell(e.dec !== null && e.dec !== undefined ? e.dec + '%' : null) + '</td><td>' + cell(a.rpe) + '</td></tr>';
+    }).join('');
+    var grp = function(list){
+      if(!list.length) return 'no rides with HR';
+      var p = 0, h = 0; list.forEach(function(a){ p += a.effort.pw; h += a.effort.hr; });
+      return list.length + ' ride' + (list.length === 1 ? '' : 's') + ' · ' + Math.round(p / list.length) + ' W at ' + Math.round(h / list.length) + ' bpm';
+    };
+    return '<details class="co-work"><summary>Show working</summary>' +
+      '<p class="co-work-h">Rides used — the plan’s steady 84–110% FTP work, ridden at ' + chk.cur + ' W, last 6 weeks</p>' +
+      (rows ? '<div class="co-work-scroll"><table class="co-work-tbl"><thead><tr><th>Date</th><th>Workout</th><th>Ridden</th><th>Done</th><th>Power</th><th>HR</th><th>Drift</th><th>RPE</th></tr></thead><tbody>' + rows + '</tbody></table></div>'
+            : '<p class="co-work-p">None yet.</p>') +
+      '<p class="co-work-h">HR at power</p>' +
+      '<p class="co-work-p">Last 3 weeks: ' + grp(w.hrRecent) + '<br>5–12 weeks ago: ' + grp(w.hrBase) + '</p>' +
+      (w.best20 ? '<p class="co-work-h">Best 20 min</p><p class="co-work-p">' + w.best20.w + ' W — ' + (w.best20.ride.name || 'ride') + ', ' + shortDate(w.best20.ride.startDateMs) + '</p>' : '') +
+      '<p class="co-work-h">Rules</p>' +
+      '<p class="co-work-p">Ridden ≥103% with ≥90% done counts up; ≤97% or under 80% done counts down — 60% of rides must agree. ' +
+        'Watts per heartbeat up ≥4% counts up, down ≥5% counts down. Drift ≤5% up, ≥9% down. RPE ≤5 up, ≥9 down. ' +
+        'Best 20 min × 95% only counts up. Strong signals weigh 2, medium 1; a change needs 3 on one side and at most 1 against, and moves FTP by ~3%.</p>' +
+    '</details>';
   }
 
   function ftpSnoozed(chk){
@@ -12122,7 +12199,7 @@
   var ftpUndo = null;   // {from, to} right after Update, for the Undo link
   function ftpCheckHTML(chk){
     if(!chk) return '';
-    var head = '<div class="co-head"><span class="co-lbl">FTP check</span></div>';
+    var head = '<div class="co-head"><span class="co-lbl">FTP check<span class="co-beta">Beta</span></span></div>';
     if(ftpUndo && ftpUndo.to === ftp){
       return '<div class="tr-card co-ftp">' + head + verdictHTML('var(--ok)', 'FTP updated to ' + ftp + ' W') +
         '<p class="co-why">Every workout’s targets now use ' + ftp + ' W. The check starts fresh from your next rides.</p>' +
@@ -12143,9 +12220,12 @@
     if(chk.state !== 'thin'){
       var nOn = chk.state === 'hold' ? chk.avail : chk.agree, bars = '';
       for(var i = 0; i < 5; i++) bars += '<i class="' + (i < nOn ? 'on' : '') + '"></i>';
+      // "Evidence", not "confidence": the signals overlap (an easy ride lowers
+      // HR, drift and RPE together), so the count says how much points one way,
+      // not how sure the check is.
       var word = chk.state === 'hold' ? 'Based on ' + chk.avail + ' signal' + (chk.avail === 1 ? '' : 's')
-        : (chk.agree >= 4 ? 'Strong' : chk.agree >= 3 ? 'Good' : 'Fair') + ' — ' + chk.agree + ' of ' + chk.avail + ' signals agree';
-      conf = '<div class="co-conf"><span class="co-lbl">Confidence</span><div class="bars" style="--c:' + cfg.c + '">' + bars + '</div><div class="ct">' + word + '</div></div>';
+        : chk.agree + ' of ' + chk.avail + ' signals agree';
+      conf = '<div class="co-conf"><span class="co-lbl">Evidence</span><div class="bars" style="--c:' + cfg.c + '">' + bars + '</div><div class="ct">' + word + '</div></div>';
     }
     var rows = chk.signals.map(function(s){
       var ic = s.dir === 'up' ? '▲' : s.dir === 'down' ? '▼' : '–';
@@ -12166,7 +12246,8 @@
       '<div class="co-ftp-top"><div>' + verdictHTML(cfg.c, cfg.v) +
         '<div class="co-ftp-big">' + big + '</div><span class="co-delta ' + cfg.d + '">' + delta + '</span></div>' + conf + '</div>' +
       '<div class="co-evs">' + rows + '</div>' +
-      '<div class="co-acts">' + acts + '</div></div>';
+      '<div class="co-acts">' + acts + '</div>' +
+      workingHTML(chk) + '</div>';
   }
 
   // ---- FTP history: rebuilt from the FTP saved on every ride ----
