@@ -1916,7 +1916,7 @@
      mobile base + the ≤480 override.)
      ============================================================ */
   @media(min-width:1px){
-    #liveWaiting{justify-content:flex-start;padding:48px 30px 30px;gap:0;}
+    #liveWaiting{justify-content:safe center;padding:48px 30px 30px;gap:0;}   /* safe: a tall stack (missing devices, short phone) falls back to top-aligned rather than clipping */
     #liveWaiting .waiting-icon{display:none;}
 
     /* header */
@@ -7300,6 +7300,8 @@
   // holdMs 0: the count-in begins the moment both readouts are above threshold
   // (both sensor boxes "green"), rather than after a sustained hold.
   var PEDAL_START = {cadence:20, power:20, holdMs:0, countdownSec:3};
+  var RESUME_ARM_MS = 2000;      // manual pause: how long stopped before pedal-to-resume arms
+  var COUNTDOWN_ABORT_MS = 750;  // resume countdown: how long stopped before it's called off
 
   // ---- audio cues ----
   // Synthesised rather than loaded, so the file stays self-contained. The
@@ -7470,10 +7472,16 @@
   // ---- armed start: wait for pedalling before the clock runs ----
   // Used for the initial start and for coming back from a pause, so the rider
   // is never dropped straight back into a running interval.
-  function armPedalStart(mode, reason){
+  function armPedalStart(mode, reason, armed){
     liveState.armMode = mode;                  // 'start' | 'resume'
     liveState.phase = 'waiting';
     liveState.pedalHoldMs = 0;
+    // A manual pause is often pressed with the legs still turning (pausing
+    // drops the ERG load, so spinning on is easy) — so pedal-to-resume only
+    // arms once the rider has actually stopped. Otherwise the pause would
+    // undo itself a second later. Auto-pause has already seen them stop.
+    liveState.resumeArmed = armed || !(mode === 'resume' && reason === 'manual');
+    liveState.stoppedMs = 0;
     showWaitingOverlay(mode, reason);
     if(liveState.waitTimerId) clearInterval(liveState.waitTimerId);
     liveState.waitTimerId = setInterval(pollPedalStart, 250);
@@ -7512,14 +7520,10 @@
   function refreshWaitingOverlay(){
     if(liveState.phase !== 'waiting') return;
     var hasTrainer = trainerState.connected;
-    var resuming = liveState.armMode === 'resume';
-    var reason = liveState.armReason;
     els.waitingReadouts.style.display = hasTrainer ? 'flex' : 'none';
     // The chips go green on their own, so the thresholds don't need spelling
     // out; the missing-device block below says what isn't connected.
-    els.waitingSub.textContent = resuming
-      ? (reason === 'auto' ? 'No pedalling detected. ' : '') + 'Pedal to resume, or press Resume now.'
-      : 'Or press Start now.';
+    els.waitingSub.textContent = waitingSubText();
 
     // Only the missing devices get a tile; both connected, the block goes.
     var noTrainer = !trainerState.connected, noHr = !hrState.connected;
@@ -7529,6 +7533,20 @@
     paintWaitingDevice(trainerState, els.wdTrainerBtn, els.wdTrainerText, 'Connect trainer');
     paintWaitingDevice(hrState, els.wdHrBtn, els.wdHrText, 'Connect HR');
     paintWaitingFtp();
+  }
+
+  function waitingSubText(){
+    if(liveState.armMode !== 'resume') return 'Or press Start now.';
+    if(!liveState.resumeArmed) return 'Stop pedaling or press Resume now.';
+    return (liveState.armReason === 'auto' ? 'No pedalling detected. ' : '') + 'Pedal to resume, or press Resume now.';
+  }
+
+  // Stopped = the same test auto-pause uses (≤5 W, or cadence exactly 0). With
+  // no readings at all there's nothing turning to wait out.
+  function riderStopped(){
+    var pw = liveReadouts.power, cad = liveReadouts.cadence;
+    if(pw === null && cad === null) return true;
+    return (pw !== null && pw <= AUTO_PAUSE.power) || (cad !== null && cad === 0);
   }
 
   // Design-B header (desktop): the workout name + a zone · duration · TSS line
@@ -7580,6 +7598,20 @@
     els.waitingCadence.textContent = cad !== null ? Math.round(cad) : '\u2014';
     els.waitingPower.textContent = pw !== null ? pw + ' W' : '\u2014';
 
+    // Manual pause, legs still turning: wait for a real stop (~2 s) before
+    // pedalling can bring the clock back. The chips stay unlit meanwhile —
+    // green would promise a resume that isn't armed yet.
+    if(!liveState.resumeArmed){
+      liveState.stoppedMs = riderStopped() ? (liveState.stoppedMs || 0) + 250 : 0;
+      if(liveState.stoppedMs < RESUME_ARM_MS){
+        els.waitingCadenceChip.classList.remove('met');
+        els.waitingPowerChip.classList.remove('met');
+        return;
+      }
+      liveState.resumeArmed = true;
+      els.waitingSub.textContent = waitingSubText();
+    }
+
     var cadOk = cad !== null && cad > PEDAL_START.cadence;
     var pwOk = pw !== null && pw > PEDAL_START.power;
     els.waitingCadenceChip.classList.toggle('met', cadOk);
@@ -7621,6 +7653,19 @@
     var n = PEDAL_START.countdownSec;
     els.waitingCountdown.textContent = n;
     beepTick();
+    // Resuming: stop pedalling mid-count and it's called off, back to the
+    // paused screen (already armed, since the rider has just stopped).
+    if(liveState.armMode === 'resume'){
+      var stoppedMs = 0;
+      liveState.waitTimerId = setInterval(function(){
+        if(liveState.phase !== 'countdown') return;
+        stoppedMs = riderStopped() ? stoppedMs + 250 : 0;
+        if(stoppedMs >= COUNTDOWN_ABORT_MS){
+          clearArmTimers();
+          armPedalStart('resume', liveState.armReason, true);
+        }
+      }, 250);
+    }
     liveState.countdownId = setInterval(function(){
       n--;
       if(n <= 0){
