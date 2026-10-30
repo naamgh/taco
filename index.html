@@ -3160,6 +3160,13 @@
     #trendsModal .trends-head{border-bottom:0;padding-bottom:0;}
     #trendsModal .trends-title{font-family:var(--display);font-size:15px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--text-strong);}
     #trendsModal .trends-scroll{padding-top:6px;}
+    /* The panel fits the space it's given (the window less the modal's 20px
+       padding, and less the top bar when docked), so only the panel scrolls —
+       never the page behind it. The scroller reaches into the panel's right
+       padding so its bar sits clear of the content. */
+    #trendsModal .live-inner{max-height:calc(100vh - 40px);}
+    body[data-deskview="fitness"] #trendsModal .live-inner{max-height:calc(100vh - var(--head-h,52px) - 40px);}
+    #trendsModal .trends-scroll{margin-right:-28px;padding-right:28px;}
 
     /* underline sub-tabs with a sliding indicator; range selector sits inline */
     #trendsModal .tr-subtabs{display:flex;align-items:stretch;background:none;border:0;border-bottom:1px solid var(--border);border-radius:0;padding:0;gap:0;margin:16px 0 0;}
