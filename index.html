@@ -7134,6 +7134,28 @@
   // Time-series for one activity, normalised and downsampled (~300 points) for
   // the detail-pane graph: heart rate, watts and pace (from velocity). Returns
   // null when the activity has no streams (e.g. a manual entry on Strava).
+  // Full-resolution power for one activity, as a 1-second array, for the FTP
+  // check's outdoor best efforts. (stravaFetchStreams below downsamples to ~300
+  // points for charts, which would blur 5–20 min bests.) Short recording gaps
+  // (smart recording, ≤5 s) hold the last value; longer gaps — stops — count as
+  // zero, so a best effort can't straddle a café stop. Errors carry .status
+  // (429 = Strava's app-wide rate limit) so callers can back off.
+  async function stravaFetchPowerStream(id){
+    var token = await stravaAccessToken();
+    var res = await fetch('https://www.strava.com/api/v3/activities/' + id + '/streams?keys=time,watts&key_by_type=true', {headers:{Authorization:'Bearer ' + token}});
+    if(res.status === 404) return null;
+    if(!res.ok){ var e = new Error('HTTP ' + res.status); e.status = res.status; throw e; }
+    var d = await res.json();
+    var t = (d.time && d.time.data) || [], w = (d.watts && d.watts.data) || [];
+    if(!t.length || !w.length) return null;
+    var out = [];
+    for(var i = 0; i < t.length; i++){
+      var gap = Math.max(1, Math.min(3600, (i + 1 < t.length ? t[i + 1] : t[i] + 1) - t[i])), v = w[i] || 0;
+      for(var k = 0; k < gap; k++) out.push(k < 5 ? v : 0);
+    }
+    return out;
+  }
+
   async function stravaFetchStreams(id){
     var token = await stravaAccessToken();
     var url = 'https://www.strava.com/api/v3/activities/' + id + '/streams?keys=time,heartrate,watts,velocity_smooth&key_by_type=true';
@@ -10874,6 +10896,14 @@
     // Summary heart rate, so the detail pane isn't missing HR entirely.
     if(a.average_heartrate) rec.avgHr = Math.round(a.average_heartrate);
     if(a.max_heartrate) rec.maxHr = Math.round(a.max_heartrate);
+    // For the FTP check (08f): normalised power, and whether it came from a real
+    // power meter — without one Strava *estimates* watts, which mustn't count.
+    // Virtual rides (Zwift etc.) are indoor power, so they skip the outdoor allowance.
+    if(type === 'ride'){
+      if(np) fields.np = Math.round(np);
+      rec.devWatts = !!a.device_watts;
+      rec.virtual = (a.sport_type || a.type) === 'VirtualRide' || !!a.trainer;
+    }
     return rec;
   }
   function showImportPanel(){
@@ -11864,6 +11894,70 @@
     }).catch(function(e){ console.log('effort backfill skipped:', e && e.message); });
   }
 
+  // ---- outdoor power backfills (Strava) ----
+  // 1) NP + "real power meter" flags for rides imported before the import kept
+  //    them: one activities-list read (90 days), once per device.
+  // 2) Best 5 / 8 / 20 min from full-resolution power, for recent hard rides
+  //    with a power meter: a few per app open, once per ride, stored as the
+  //    light `outBest` (syncs, so other devices don't refetch). Strava's rate
+  //    limit is shared by every user of the app, so this stays frugal and stops
+  //    on a 429. Easy (IF < 0.7) or short (< 20 min) rides are marked without a
+  //    fetch — they can't hold a useful best effort.
+  var NP_BACKFILL_KEY = 'ftpPlan_npBackfill_v1', OUT_FETCH_PER_OPEN = 6, outdoorRan = false;
+  function stravaReadable(){ return typeof stravaConnected === 'function' && stravaConnected() && typeof stravaCanRead === 'function' && stravaCanRead(); }
+  function npBackfill(){
+    try{ if(localStorage.getItem(NP_BACKFILL_KEY)) return Promise.resolve(false); }catch(e){}
+    return Promise.all([stravaFetchActivities(Date.now() - 90 * DAY_MS), rideAllRaw()]).then(function(res){
+      var byId = {}; res[0].forEach(function(a){ byId[a.id] = a; });
+      var todo = res[1].filter(function(r){ return !r.deleted && r.type === 'ride' && r.stravaActivityId && r.devWatts === undefined && byId[r.stravaActivityId]; });
+      return Promise.all(todo.map(function(r){
+        var a = byId[r.stravaActivityId];
+        r.fields = r.fields || {};
+        if(a.weighted_average_watts) r.fields.np = Math.round(a.weighted_average_watts);
+        r.devWatts = !!a.device_watts;
+        r.virtual = (a.sport_type || a.type) === 'VirtualRide' || !!a.trainer;
+        return rideSave(r);
+      })).then(function(){ try{ localStorage.setItem(NP_BACKFILL_KEY, '1'); }catch(e){} return todo.length > 0; });
+    });
+  }
+  function outdoorBestBackfill(){
+    if(!hasFtp()) return Promise.resolve(false);   // can't tell easy from hard yet — save the calls
+    return rideAllRaw().then(function(all){
+      var now = Date.now();
+      var cand = all.filter(function(r){ return !r.deleted && r.type === 'ride' && r.devWatts && r.stravaActivityId && r.outBest === undefined && now - r.startDateMs <= 42 * DAY_MS; })
+                    .sort(function(a, b){ return b.startDateMs - a.startDateMs; });
+      var skip = cand.filter(function(r){ return r.durationSec < 20 * 60 || (r.fields && r.fields.np && hasFtp() && r.fields.np / ftp < 0.7); });
+      var fetchList = cand.filter(function(r){ return skip.indexOf(r) < 0; }).slice(0, OUT_FETCH_PER_OPEN);
+      var changed = skip.length > 0;
+      var chain = Promise.all(skip.map(function(r){ r.outBest = false; return rideSave(r); }));
+      fetchList.forEach(function(r){
+        chain = chain.then(function(stop){
+          if(stop === 'stop') return 'stop';
+          return stravaFetchPowerStream(r.stravaActivityId).then(function(pw){
+            var b = false;
+            if(pw && pw.length >= 300){
+              b = {};
+              [300, 480, 1200].forEach(function(d){ var v = bestForRide(pw, d); if(v) b[d] = Math.round(v); });
+              if(!Object.keys(b).length) b = false;
+            }
+            r.outBest = b; changed = true;
+            return rideSave(r);
+          }).catch(function(e){ return 'stop'; });   // rate-limited or offline: try again next open
+        });
+      });
+      return chain.then(function(){ return changed; });
+    });
+  }
+  function outdoorBackfill(){
+    if(outdoorRan || !stravaReadable() || typeof stravaFetchPowerStream !== 'function') return;
+    outdoorRan = true;
+    npBackfill().catch(function(){ return false; }).then(function(a){
+      return outdoorBestBackfill().then(function(b){ return a || b; });
+    }).then(function(changed){
+      if(changed) rideAll().then(function(all){ paintFtpHint(ftpCheck(all.filter(function(x){ return !x.planned; }))); });
+    }).catch(function(e){ console.log('outdoor power backfill skipped:', e && e.message); });
+  }
+
   // ---- small helpers ----
   function cKey(ms){ return dayKey(ms); }
   function daysAgoKey(n){ var d = new Date(); d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - n); return dayKey(d.getTime()); }
@@ -12066,6 +12160,56 @@
   }
   function median(a){ var s = a.slice().sort(function(x, y){ return x - y; }), m = Math.floor(s.length / 2); return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; }
 
+  // ---- outdoor (and virtual) rides from Strava ----
+  // Free efforts, not ERG-capped — the evidence indoor riding can't give. Only
+  // rides with a real power meter count (Strava estimates watts otherwise), and
+  // outdoor power gets a small allowance: most riders put out a few % more
+  // outdoors (cooling, momentum, motivation) and it's often a different power
+  // source from the trainer. Virtual rides are indoor power, so no allowance.
+  // Both signals only ever argue UP: not going all-out says nothing.
+  var OUTDOOR_ALLOW = 0.97;
+  function outPw(a, w){ return a.virtual ? w : w * OUTDOOR_ALLOW; }
+  function outdoorSignals(acts, cur, nowMs, working){
+    var outs = acts.filter(function(a){ return a.type === 'ride' && a.devWatts && nowMs - a.startDateMs <= 42 * DAY_MS; })
+                   .sort(function(a, b){ return b.startDateMs - a.startDateMs; });
+    working.outdoor = outs;
+    var sig = [], where = function(a){ return a.virtual ? 'on a virtual ride' : 'outdoors'; };
+    var label = function(a){ return (a.name || 'Ride') + ', ' + shortDate(a.startDateMs); };
+    // 6 — normalised power held for 45 min+. An hour at or above FTP shouldn't be possible.
+    var long = outs.filter(function(a){ return a.durationSec >= 45 * 60 && a.fields && a.fields.np; });
+    if(long.length){
+      var top = long.slice().sort(function(a, b){ return outPw(b, b.fields.np) - outPw(a, a.fields.np); })[0];
+      var np = top.fields.np, adj = Math.round(outPw(top, np)), mins = Math.round(top.durationSec / 60), IF = Math.round(np / cur * 100) / 100;
+      var allow = top.virtual ? '' : ' · counted as ' + adj + ' W after the outdoor allowance';
+      if(adj >= cur) sig.push({dir:'up', w:'strong', text:'Held <b>NP ' + np + ' W for ' + mins + ' min</b> ' + where(top) + ' — above your FTP (IF ' + IF + ')', sub:label(top) + allow});
+      else sig.push({dir:'na', w:'weak', text:'Hardest long ride: <b>NP ' + np + ' W for ' + mins + ' min</b> (IF ' + IF + ')', sub:label(top) + ' — not an FTP-level effort, so no signal'});
+    }
+    // 7 — best 5 and 20 min from full-resolution power. Two estimates, averaged:
+    // 20 min × 95%, and critical power from the 5 + 20 min pair
+    // (CP = (P20·1200 − P5·300) / 900).
+    var bests = outs.filter(function(a){ return a.outBest; });
+    if(bests.length){
+      var b5 = null, b20 = null;
+      bests.forEach(function(a){
+        if(a.outBest[300] && (!b5 || outPw(a, a.outBest[300]) > b5.w)) b5 = {w:outPw(a, a.outBest[300]), raw:a.outBest[300], ride:a};
+        if(a.outBest[1200] && (!b20 || outPw(a, a.outBest[1200]) > b20.w)) b20 = {w:outPw(a, a.outBest[1200]), raw:a.outBest[1200], ride:a};
+      });
+      if(b20){
+        var e20 = b20.w * 0.95, cp = b5 ? (b20.w * 1200 - b5.w * 300) / 900 : null;
+        var cpOk = cp !== null && cp > 0 && cp < b20.w;
+        var est = Math.round(cpOk ? (e20 + cp) / 2 : e20);
+        working.outEst = {b5:b5, b20:b20, e20:Math.round(e20), cp:cpOk ? Math.round(cp) : null, est:est};
+        var src = function(b){ return ' (' + (b.ride.name || 'ride') + ')'; };
+        var nums = (b5 ? '5 min ' + b5.raw + ' W' + src(b5) + ' · ' : '') + '20 min ' + b20.raw + ' W' + src(b20) +
+          (cpOk ? ' → 20-min est ' + Math.round(e20) + ' W, critical power ' + Math.round(cp) + ' W' : '') +
+          ((b20.ride.virtual && (!b5 || b5.ride.virtual)) ? '' : ' · after the outdoor allowance');
+        if(est >= cur * 1.03) sig.push({dir:'up', w:cpOk ? 'strong' : 'medium', text:'Your best efforts on the road suggest <b>~' + est + ' W</b>', sub:nums});
+        else sig.push({dir:'na', w:'weak', text:'Best efforts on the road → estimate <b>' + est + ' W</b>', sub:nums + ' — no higher than your FTP, so no signal'});
+      }
+    }
+    return sig;
+  }
+
   function ftpCheck(acts){
     if(!hasFtp()) return null;
     var cur = ftp, nowMs = Date.now();
@@ -12078,14 +12222,17 @@
     var rH = eff.filter(function(a){ return a.effort.hr && nowMs - a.startDateMs <= 21 * DAY_MS; });
     var bH = eff.filter(function(a){ var age = nowMs - a.startDateMs; return a.effort.hr && age >= 35 * DAY_MS && age <= 84 * DAY_MS; });
     var working = {rides:atCur, hrRecent:rH, hrBase:bH};
+    var outSig = outdoorSignals(acts, cur, nowMs, working);
 
     if(atCur.length < 3){
+      // Not enough indoor evidence for a verdict — but the outdoor rows still
+      // show, so their estimates can be compared against a known FTP.
       var anyHr = atCur.some(function(a){ return a.effort.hr; }), anyRpe = atCur.some(function(a){ return a.rpe; });
       return {state:'thin', cur:cur, to:cur, since:since, working:working, signals:[
         {dir:'na', text:'<b>' + atCur.length + '</b> sweet spot / threshold ride' + (atCur.length === 1 ? '' : 's') + ' at ' + cur + ' W in the last 6 weeks', sub:'The check needs at least 3 to compare'},
         {dir:'na', text:anyHr ? 'Heart rate recorded' : 'No heart rate on those rides', sub:anyHr ? '' : 'Connect a heart-rate strap to unlock the HR signals'},
         {dir:'na', text:anyRpe ? 'Effort ratings saved' : 'No effort ratings saved', sub:anyRpe ? '' : 'Rate rides when you finish — it sharpens the check'}
-      ]};
+      ].concat(outSig)};
     }
 
     var sig = [], es = atCur.map(function(a){ return a.effort; }), n = es.length, need = Math.ceil(n * 0.6);
@@ -12141,6 +12288,7 @@
       if(est >= cur * 1.03) sig.push({dir:'up', w:'medium', text:'20-min best <b>' + best + ' W</b> beats what your FTP predicts (→ ' + est + ' W)', sub:'Best 20 min × 95%'});
       else sig.push({dir:'na', w:'weak', text:'20-min best <b>' + best + ' W</b> → estimate ' + est + ' W', sub:'ERG holds you to the target, so this underestimates — supporting only'});
     }
+    sig = sig.concat(outSig);   // 6 & 7 — outdoor / virtual rides
 
     var upW = 0, dnW = 0;
     sig.forEach(function(s){ if(s.dir === 'up') upW += SIG_W[s.w]; if(s.dir === 'down') dnW += SIG_W[s.w]; });
@@ -12161,7 +12309,7 @@
   function shortDate(ms){ var d = new Date(ms); return WK_MONS[d.getMonth()] + ' ' + d.getDate(); }
   function workingHTML(chk){
     var w = chk.working; if(!w) return '';
-    var cell = function(v){ return v === null || v === undefined || v === '' ? '<span class="nil">—</span>' : v; };
+    var cell = function(v){ return v === null || v === undefined || v === '' || v === false ? '<span class="nil">—</span>' : v; };
     var rows = w.rides.map(function(a){
       var e = a.effort;
       return '<tr><td>' + shortDate(a.startDateMs) + '</td><td class="nm">' + (a.name || '') + '</td>' +
@@ -12181,11 +12329,33 @@
       '<p class="co-work-h">HR at power</p>' +
       '<p class="co-work-p">Last 3 weeks: ' + grp(w.hrRecent) + '<br>5–12 weeks ago: ' + grp(w.hrBase) + '</p>' +
       (w.best20 ? '<p class="co-work-h">Best 20 min</p><p class="co-work-p">' + w.best20.w + ' W — ' + (w.best20.ride.name || 'ride') + ', ' + shortDate(w.best20.ride.startDateMs) + '</p>' : '') +
+      outdoorWorkingHTML(w, chk.cur, cell) +
       '<p class="co-work-h">Rules</p>' +
       '<p class="co-work-p">Ridden ≥103% with ≥90% done counts up; ≤97% or under 80% done counts down — 60% of rides must agree. ' +
         'Watts per heartbeat up ≥4% counts up, down ≥5% counts down. Drift ≤5% up, ≥9% down. RPE ≤5 up, ≥9 down. ' +
-        'Best 20 min × 95% only counts up. Strong signals weigh 2, medium 1; a change needs 3 on one side and at most 1 against, and moves FTP by ~3%.</p>' +
+        'Best 20 min × 95% only counts up. ' +
+        'Outdoor rides need a real power meter and are counted at 97% (the outdoor allowance; virtual rides at 100%): NP held for 45 min+ at or above FTP counts up (strong); ' +
+        'road best efforts → the average of 20 min × 95% and critical power from 5 + 20 min, counting up when ≥3% over FTP. ' +
+        'Strong signals weigh 2, medium 1; a change needs 3 on one side and at most 1 against, and moves FTP by ~3%.</p>' +
     '</details>';
+  }
+  // Outdoor / virtual rides in the last 6 weeks with a power meter: NP, IF and
+  // the fetched best efforts, so the estimates can be checked against a known FTP.
+  function outdoorWorkingHTML(w, cur, cell){
+    var outs = w.outdoor || [];
+    if(!outs.length) return '<p class="co-work-h">Outdoor &amp; virtual rides</p><p class="co-work-p">None with a power meter in the last 6 weeks (Strava-estimated power doesn’t count).</p>';
+    var rows = outs.map(function(a){
+      var np = a.fields && a.fields.np, b = a.outBest;
+      return '<tr><td>' + shortDate(a.startDateMs) + '</td><td class="nm">' + (a.name || '') + (a.virtual ? ' <span class="nil">(virtual)</span>' : '') + '</td>' +
+        '<td>' + Math.round(a.durationSec / 60) + ' min</td><td>' + cell(np && np + ' W') + '</td><td>' + cell(np && (Math.round(np / cur * 100) / 100)) + '</td>' +
+        '<td>' + cell(b && b[300] && b[300] + ' W') + '</td><td>' + cell(b && b[1200] && b[1200] + ' W') + '</td></tr>';
+    }).join('');
+    var pending = outs.filter(function(a){ return a.outBest === undefined; }).length;
+    var e = w.outEst;
+    return '<p class="co-work-h">Outdoor &amp; virtual rides — real power meter, last 6 weeks</p>' +
+      '<div class="co-work-scroll"><table class="co-work-tbl"><thead><tr><th>Date</th><th>Ride</th><th>Time</th><th>NP</th><th>IF</th><th>Best 5 min</th><th>Best 20 min</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+      (e ? '<p class="co-work-p" style="margin-top:8px">Estimate: 20 min × 95% = ' + e.e20 + ' W' + (e.cp ? ', critical power = ' + e.cp + ' W → average ' + e.est + ' W' : ' → ' + e.est + ' W') + ' (after the outdoor allowance where it applies).</p>' : '') +
+      (pending ? '<p class="co-work-p">' + pending + ' ride' + (pending === 1 ? '' : 's') + ' still to fetch best efforts for — a few are fetched from Strava each time the app opens.</p>' : '');
   }
 
   function ftpSnoozed(chk){
@@ -12219,7 +12389,7 @@
     var conf = '';
     if(chk.state !== 'thin'){
       var nOn = chk.state === 'hold' ? chk.avail : chk.agree, bars = '';
-      for(var i = 0; i < 5; i++) bars += '<i class="' + (i < nOn ? 'on' : '') + '"></i>';
+      for(var i = 0; i < Math.max(5, chk.avail); i++) bars += '<i class="' + (i < nOn ? 'on' : '') + '"></i>';
       // "Evidence", not "confidence": the signals overlap (an easy ride lowers
       // HR, drift and RPE together), so the count says how much points one way,
       // not how sure the check is.
@@ -12266,7 +12436,8 @@
       }
     });
     if(hasFtp() && (!pts.length || pts[pts.length - 1].v !== ftp)) pts.push({t:Date.now() - 60000, v:ftp, ramp:false});
-    var changedAt = pts.length > 1 ? pts[pts.length - 1].t : (pts[0] ? pts[0].t : null);
+    // When it last changed — unknown (null) when there are no rides to date it by.
+    var changedAt = pts.length > 1 ? pts[pts.length - 1].t : (rides.length ? pts[0].t : null);
     return {pts:pts, changedAt:changedAt};
   }
   function ftpHistoryHTML(){
@@ -12297,7 +12468,7 @@
     // step line
     ctx.beginPath();
     pts.forEach(function(p, i){
-      var px = x(Math.max(p.t, t0)), py = y(p.v);
+      var px = i ? x(Math.max(p.t, t0)) : padL, py = y(p.v);   // the first value runs from the left edge
       if(!i) ctx.moveTo(px, py); else { ctx.lineTo(px, y(pts[i - 1].v)); ctx.lineTo(px, py); }
     });
     ctx.lineTo(x(t1), y(pts[pts.length - 1].v));
@@ -12344,6 +12515,7 @@
   function refreshCoach(){
     if(typeof rideAll !== 'function') return;
     effortBackfill();   // no-op once done (or until the library has loaded)
+    outdoorBackfill();  // once per open, when Strava can be read
     rideAll().then(function(all){ paintFtpHint(ftpCheck(all.filter(function(a){ return !a.planned; }))); }).catch(function(){});
   }
 
