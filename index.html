@@ -3214,25 +3214,9 @@
     #trendsModal .tr-fs-head{font-family:var(--display);}
     #trendsModal .tr-fs-head span{font-family:var(--display);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint);}
 
-    /* Summary top row: readiness | this week + 12-week trend, both compact. */
-    #trendsModal .tr-top{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:start;}
-    #trendsModal .tr-top .tr-card{margin:0;}
-    #trendsModal .tr-top .trs-word{font-size:32px;margin:6px 0 12px;}
-    #trendsModal .tr-top .trs-kpis{margin-top:18px;}
-    #trendsModal .tr-top .trs-kpi{padding:12px 0 12px 16px;}
-    #trendsModal .tr-top .trs-kpi:first-child{padding-left:0;}
-    #trendsModal .tr-top .trs-kpi .v{font-size:24px;}
-    #trendsModal .tr-top .trs-kpi .l{margin-top:6px;}
-    #trendsModal .tr-top .tr-card-head h3{font-size:11px;font-weight:400;letter-spacing:.16em;color:var(--text-faint);}
-    #trendsModal .tr-top .tr-wk-stats{gap:30px;margin:8px 0 14px;}
-    #trendsModal .tr-top .tr-wk-stat .v{font-size:20px;}
-    #trendsModal .tr-top .tr-wk-stat .l{margin-top:5px;}
-    #trendsModal .tr-top .wk-canvas{height:120px;}
-    #trendsModal .tr-top + .co-card{margin-top:34px;}
   }
   /* Toggles (TSS/Hours, W/W·kg, date range): the unselected option recedes
      further, so the active one reads at a glance. */
-  .tr-top .tr-week .wk-canvas{height:140px;}   /* mobile; the desktop row trims it to 120 */
   #trendsModal .tr-range-btn:not(.on){opacity:.42;}
   #trendsModal .tr-range-btn:not(.on):hover{opacity:.8;}
 
@@ -3504,10 +3488,47 @@
   .co-why b{color:var(--text);font-weight:500;}
   .co-note{font-family:var(--display);font-size:12px;color:var(--text-dim);margin:12px 0 0;}
 
-  .co-grid{display:grid;grid-template-columns:1fr 1fr;}
-  .co-col{padding:4px 0 6px;min-width:0;}
-  .co-col:first-child{padding-right:26px;}
-  .co-col + .co-col{border-left:1px solid var(--border-soft);padding-left:26px;}
+  /* Summary: Today | the weeks — two columns, two timescales, roomy rhythm */
+  .co-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+  .co-col{min-width:0;}
+  .co-col:first-child{padding-right:48px;}
+  .co-col + .co-col{border-left:1px solid var(--border-soft);padding-left:48px;}
+  .co-sum .co-hint{margin-bottom:30px;}
+  .co-sum .co-verdict{align-items:flex-start;gap:12px;font-size:22px;margin:18px 0 12px;}
+  .co-sum .co-verdict .co-pip{width:10px;height:10px;margin-top:.42em;}
+  .co-sum .co-why{font-size:12.5px;line-height:1.75;margin:0;max-width:50ch;}
+  .co-sum .co-note{margin-top:14px;}
+  .co-blk{margin-top:34px;}
+  .co-blk > .co-head{margin-bottom:14px;}
+  .co-rword{font-family:var(--display);font-size:13px;font-weight:500;color:var(--text-strong);}
+  .co-ready .rc-grad{height:7px;margin-top:0;background:linear-gradient(90deg,var(--text-faint),var(--text-strong));}
+  .co-ready .rc-thumb{width:15px;height:15px;}
+  .co-ready .rc-ends{font-family:var(--display);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);}
+  .co-nums{display:flex;gap:44px;font-family:var(--display);}
+  .co-ready .co-nums{margin-top:24px;}
+  .co-nums > div{display:flex;flex-direction:column;}
+  .co-nums b{font-size:24px;font-weight:400;line-height:1;color:var(--text-strong);white-space:nowrap;}
+  .co-nums span{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);margin-top:9px;}
+  .co-cap{margin-top:22px;font-family:var(--display);}
+  .co-cap-t{display:flex;justify-content:space-between;gap:16px;font-size:11.5px;color:var(--text-dim);}
+  .co-cap-t b{font-weight:500;color:var(--text-strong);}
+  .co-cap-bar{position:relative;height:8px;margin-top:10px;border-radius:4px;background:var(--border-soft);overflow:hidden;}
+  .co-cap-bar i{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:var(--c-endurance);}
+  .co-sum .wk-canvas{height:168px;}
+  .co-key{display:flex;flex-wrap:wrap;gap:6px 18px;margin-top:14px;font-family:var(--display);font-size:10px;letter-spacing:.04em;color:var(--text-faint);}
+  .co-key i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:-1px;}
+  .co-key i.b{background:color-mix(in srgb,var(--text-dim) 85%,transparent);}
+  .co-key i.l{background:color-mix(in srgb,var(--text) 16%,transparent);}
+  .co-key i.e{background:var(--c-endurance);}
+  .co-key i.n{background:var(--text-strong);}
+  .co-line{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px 12px;margin-top:22px;padding-top:16px;border-top:1px solid var(--border-soft);font-family:var(--display);font-size:12px;color:var(--text-dim);}
+  .co-line + .co-line{margin-top:14px;padding-top:14px;}
+  .co-line b{font-weight:500;color:var(--text-strong);}
+  .co-line b.ok{color:var(--ok);}
+  .co-line b.warn{color:var(--warn);}
+  .co-line b.bad{color:var(--c-anaerobic);}
+  .co-line .q{font-size:10.5px;letter-spacing:.04em;color:var(--text-faint);}
+  .co-mixline .co-mixk{flex-basis:100%;}
 
   /* workout suggestions */
   .co-list{border-top:1px solid var(--border-soft);}
@@ -3518,32 +3539,14 @@
   .co-wk-t span{display:block;font-family:var(--display);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-faint);margin-top:3px;}
   .co-go{font-family:var(--display);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);white-space:nowrap;}
   .co-wk:hover .co-go{color:var(--text-strong);}
+  .co-sum .co-wk{gap:14px;padding:14px 0;}
+  .co-sum .co-wk-t b{font-size:13.5px;}
 
-  /* big-picture facts */
-  .co-facts{border-top:1px solid var(--border-soft);}
-  .co-fact{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 10px;padding:10px 0;border-bottom:1px solid var(--border-soft);font-family:var(--display);font-size:12px;}
-  .co-fact .k{color:var(--text-dim);}
-  .co-fact .val{color:var(--text-strong);font-weight:500;}
-  .co-fact .val.ok{color:var(--ok);}
-  .co-fact .val.warn{color:var(--warn);}
-  .co-fact .val.bad{color:var(--c-anaerobic);}
-  .co-ramp{grid-column:1 / -1;position:relative;height:5px;border-radius:3px;background:var(--border-soft);margin-top:2px;}
-  .co-ramp .band{position:absolute;top:0;bottom:0;background:var(--ok-soft);border-left:1px solid var(--ok);border-right:1px solid var(--ok);}
-  .co-ramp .mark{position:absolute;top:-4px;width:2px;height:13px;margin-left:-1px;background:var(--text-strong);}
-  .co-ramp-sc{grid-column:1 / -1;display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.06em;color:var(--text-faint);}
-  .co-weeks-w{display:flex;align-items:center;gap:10px;}
-  .co-weeks-w .n{color:var(--text-strong);font-weight:500;}
-  .co-weeks{display:flex;gap:4px;}
-  .co-weeks i{width:16px;height:16px;border-radius:3px;display:block;}
-  .co-weeks i.b{background:var(--text);opacity:.7;}
-  .co-weeks i.r{border:1px dashed var(--text-faint);}
-  .co-weeks i.now{border:1px solid var(--text-faint);}
+  /* intensity mix (under the 12-week bars) */
   .co-mix{display:flex;height:8px;width:150px;border-radius:2px;overflow:hidden;}
   .co-mix span{display:block;height:100%;}
   .co-mixk{grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:4px 12px;font-size:10px;letter-spacing:.04em;color:var(--text-faint);}
   .co-mixk i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:-1px;}
-  .co-plan{margin-top:14px;font-family:var(--display);font-size:12px;line-height:1.6;color:var(--text);padding:11px 13px;border-radius:8px;border:1px solid var(--border-soft);}
-  .co-plan b{font-weight:500;color:var(--text-strong);}
 
   /* the FTP check's hint at the top of Summary */
   .co-hint{display:flex;align-items:center;gap:12px;width:100%;margin:0 0 20px;padding:11px 14px;border:1px solid var(--border);border-radius:8px;background:none;font:inherit;font-family:var(--display);font-size:12px;color:var(--text-dim);text-align:left;cursor:pointer;}
@@ -3606,10 +3609,16 @@
   .tb-ftp-chip.has-hint::after{content:"";position:absolute;top:-3px;right:-3px;width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 2px var(--bg);}
   .tb-ftp-chip.has-hint.hint-down::after{background:var(--c-anaerobic);}
 
-  @media(max-width:700px){
+  /* Summary stacks Today over the weeks wherever the app is in its phone/tablet layout. */
+  @media(max-width:900px){
     .co-grid{grid-template-columns:1fr;}
     .co-col:first-child{padding-right:0;}
-    .co-col + .co-col{border-left:0;border-top:1px solid var(--border-soft);padding-left:0;margin-top:14px;padding-top:14px;}
+    .co-col + .co-col{border-left:0;border-top:1px solid var(--border-soft);padding-left:0;margin-top:34px;padding-top:30px;}
+    .co-sum .co-verdict{font-size:20px;}
+    .co-nums{gap:0;justify-content:space-between;}
+    .co-blk{margin-top:30px;}
+  }
+  @media(max-width:700px){
     .co-ftp-top{grid-template-columns:1fr;gap:12px;}
     .co-conf{text-align:left;}
     .co-conf .bars{justify-content:flex-start;}
@@ -11294,65 +11303,69 @@
     });
     return weeks;
   }
-  function drawWeeklyTrendLine(cv, weeks, metric, hoverIdx){
-    var W = cv.clientWidth || 280, H = Math.round(W * 0.72), dpr = Math.min(3, window.devicePixelRatio || 1);
-    if(cv.clientHeight > 40) H = cv.clientHeight;   // honour a CSS-set height (dashboard uses a short, wide plot)
+  // Bar shading: lighter weeks by the coach's rule (under 70% of the three
+  // before, or empty) over the 11 completed weeks, plus the build streak and —
+  // in a recovery week — the easy-week cap, both from blockState.
+  function weekChartInfo(acts){
+    var base = new Date(mondayOf(Date.now())), wk = [], light = [];
+    for(var i = 14; i >= 1; i--){ var d = new Date(base); d.setDate(d.getDate() - i * 7); wk.push(weekStats(acts, d.getTime()).tss); }
+    for(var j = 3; j < 14; j++){ var prev = (wk[j - 1] + wk[j - 2] + wk[j - 3]) / 3; light.push(wk[j] <= 0 || (prev > 0 && wk[j] < prev * 0.7)); }
+    light.push(false);   // this week, in progress
+    var bs = lastPmc ? blockState(acts, lastPmc) : null;
+    return {light:light, streak:bs ? bs.streak : 0, cap:bs && bs.easy ? bs.easyTss : null};
+  }
+  function drawWeeklyBars(cv, weeks, metric, info, hoverIdx){
+    var W = cv.clientWidth || 280, H = cv.clientHeight > 40 ? cv.clientHeight : 150, dpr = Math.min(3, window.devicePixelRatio || 1);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.height = H + 'px';
     var ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    var faint = cssVar('--text-faint') || '#7E869E', accent = cssVar('--accent') || '#6E8BFF', strong = cssVar('--text-strong') || '#fff';
-    var vals = weeks.map(function(w){ return metric === 'tss' ? w.tss : w.sec / 3600; });
-    var max = niceMax(Math.max.apply(null, vals) || (metric === 'tss' ? 100 : 1));
-    var padL = 34, padR = 10, padT = 12, padB = 22, n = 12;
-    function x(i){ return padL + i / (n - 1) * (W - padL - padR); }
-    function y(v){ return H - padB - v / max * (H - padT - padB); }
-    // Theme-aware gridlines at quarter steps (five guides, was three).
-    var gridC = gridColor();
-    ctx.font = '9px ' + IMG_MONO; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
-    [0, 0.25, 0.5, 0.75, 1].forEach(function(f){
-      var lv = max * f, gy = y(lv);
-      ctx.strokeStyle = gridC; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(padL, gy); ctx.lineTo(W - padR, gy); ctx.stroke();
-      ctx.fillStyle = faint; ctx.fillText(metric === 'tss' ? Math.round(lv) : (Math.round(lv * 10) / 10) + 'h', padL - 5, gy);
-    });
-    ctx.beginPath(); vals.forEach(function(v, i){ i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(i), y(v)); });
-    ctx.lineTo(x(n - 1), y(0)); ctx.lineTo(x(0), y(0)); ctx.closePath();
-    ctx.fillStyle = tint('--accent', 0.06);   // flat soft ink tint (no gradient — see DESIGN.md)
-    ctx.fill();
-    ctx.beginPath(); vals.forEach(function(v, i){ i ? ctx.lineTo(x(i), y(v)) : ctx.moveTo(x(i), y(v)); });
-    ctx.strokeStyle = accent; ctx.lineWidth = 2.2; ctx.lineJoin = 'round'; ctx.stroke();
+    var faint = cssVar('--text-faint') || '#7E869E', strong = cssVar('--text-strong') || '#111';
+    var buildC = tint('--text-dim', 0.85), lightC = tint('--text', 0.16), easyC = cssVar('--c-endurance') || '#3F79E8';
+    var vals = weeks.map(function(w){ return metric === 'tss' ? w.tss : w.sec / 3600; }), n = vals.length;
+    var cap = metric === 'tss' ? info.cap : null, nowC = info.cap ? easyC : strong;
+    var top = Math.max.apply(null, vals.concat([cap || 0]));
+    var max = top > 0 ? top * 1.1 : (metric === 'tss' ? 100 : 1);
+    var padT = 26, padB = 20, gap = Math.max(3, Math.round(W / 70)), bw = (W - gap * (n - 1)) / n;
+    function bx(i){ return i * (bw + gap); }
+    function y(v){ return padT + (1 - v / max) * (H - padT - padB); }
+    function fmt(v){ return metric === 'tss' ? Math.round(v) : (Math.round(v * 10) / 10) + 'h'; }
+    ctx.strokeStyle = gridColor(); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(0, y(0) + .5); ctx.lineTo(W, y(0) + .5); ctx.stroke();
     vals.forEach(function(v, i){
-      var last = i === n - 1;
-      ctx.beginPath(); ctx.arc(x(i), y(v), last ? 4 : 2.4, 0, Math.PI * 2);
-      ctx.fillStyle = last ? accent : strong; ctx.fill();
-      if(last){ ctx.strokeStyle = strong; ctx.lineWidth = 1.5; ctx.stroke(); }
+      var h = v > 0 ? Math.max(2, y(0) - y(v)) : 0; if(!h) return;
+      ctx.globalAlpha = (hoverIdx != null && hoverIdx !== i) ? 0.5 : 1;
+      ctx.fillStyle = i === n - 1 ? nowC : info.light[i] ? lightC : buildC;
+      roundRect(ctx, bx(i), y(0) - h, bw, h, 2); ctx.fill();
     });
-    var mons = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    ctx.fillStyle = faint; ctx.font = '8.5px ' + IMG_MONO; ctx.textAlign = 'center'; ctx.textBaseline = 'alphabetic';
-    [0, 6, 11].forEach(function(i){ var d = new Date(weeks[i].start); ctx.fillText(d.getDate() + ' ' + mons[d.getMonth()], x(i), H - 6); });
-    // Scrub crosshair: a dashed guide + ring on the hovered week (desktop hover).
-    if(hoverIdx != null && hoverIdx >= 0 && hoverIdx < n){
-      var hx = x(hoverIdx), hy = y(vals[hoverIdx]);
-      ctx.strokeStyle = faint; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
-      ctx.beginPath(); ctx.moveTo(hx, padT); ctx.lineTo(hx, H - padB); ctx.stroke(); ctx.setLineDash([]);
-      ctx.beginPath(); ctx.arc(hx, hy, 4.5, 0, Math.PI * 2); ctx.fillStyle = accent; ctx.fill();
-      ctx.strokeStyle = strong; ctx.lineWidth = 1.6; ctx.stroke();
+    ctx.globalAlpha = 1;
+    if(cap){   // this week's ceiling, dashed
+      ctx.strokeStyle = easyC; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+      ctx.strokeRect(bx(n - 1) + .5, y(cap) + .5, bw - 1, y(0) - y(cap) - 1); ctx.setLineDash([]);
     }
-    cv._trend = {W: W, padL: padL, padR: padR, padT: padT, n: n};
+    ctx.font = '9.5px ' + IMG_MONO; ctx.textBaseline = 'alphabetic';
+    if(info.streak >= 2){   // bracket over the build streak (the completed weeks before this one)
+      var a = bx(n - 1 - info.streak), b = bx(n - 2) + bw;
+      ctx.strokeStyle = faint; ctx.beginPath(); ctx.moveTo(a + .5, padT - 6); ctx.lineTo(a + .5, padT - 10.5); ctx.lineTo(b - .5, padT - 10.5); ctx.lineTo(b - .5, padT - 6); ctx.stroke();
+      ctx.fillStyle = faint; ctx.textAlign = 'center'; ctx.fillText(info.streak + ' build weeks', (a + b) / 2, padT - 14);
+    }
+    var lv = vals[n - 1];
+    ctx.fillStyle = strong; ctx.textAlign = 'center';
+    ctx.fillText(fmt(lv), bx(n - 1) + bw / 2, y(Math.max(lv, cap || 0)) - 5);
+    var d0 = new Date(weeks[0].start);
+    ctx.fillStyle = faint; ctx.textAlign = 'left'; ctx.fillText(d0.getDate() + ' ' + WK_MONS[d0.getMonth()], 0, H - 5);
+    ctx.textAlign = 'right'; ctx.fillText('This week', W, H - 5);
+    cv._trend = {W:W, n:n, bw:bw, gap:gap, padT:padT};
   }
-  function weeklyTrendCard(){
-    return '<div class="tr-card wk-card"><div class="tr-card-head"><h3>12-week trend</h3>' +
-        '<div class="trends-range wk-toggle">' +
-          '<button type="button" class="tr-range-btn wk-btn' + (weekMetric === 'tss' ? ' on' : '') + '" data-wk="tss">TSS</button>' +
-          '<button type="button" class="tr-range-btn wk-btn' + (weekMetric === 'hours' ? ' on' : '') + '" data-wk="hours">Hours</button>' +
-        '</div></div>' +
-        '<div class="wk-plot"><canvas class="tr-canvas wk-canvas" id="wkCanvas"></canvas><div class="wk-tip" id="wkTip" hidden></div></div>' +
-      '</div>';
+  function wkToggleHTML(){
+    return '<div class="trends-range wk-toggle">' +
+      '<button type="button" class="tr-range-btn wk-btn' + (weekMetric === 'tss' ? ' on' : '') + '" data-wk="tss">TSS</button>' +
+      '<button type="button" class="tr-range-btn wk-btn' + (weekMetric === 'hours' ? ' on' : '') + '" data-wk="hours">Hours</button></div>';
   }
   function drawWeeklyTrend(acts){
-    var cv = document.getElementById('wkCanvas');
-    drawWeeklyTrendLine(cv, computeWeeks(acts), weekMetric);
+    var cv = document.getElementById('wkCanvas'); if(!cv) return;
+    cv._info = weekChartInfo(acts);
+    drawWeeklyBars(cv, computeWeeks(acts), weekMetric, cv._info);
     wireWkHover(cv);
   }
-  // Desktop scrub: hover the trend to read the week's date + TSS/hours.
+  // Desktop scrub: hover a bar to read the week's date + TSS/hours.
   var WK_MONS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   function wireWkHover(cv){
     if(!cv || cv._wired) return; cv._wired = true;
@@ -11360,22 +11373,20 @@
     cv.addEventListener('mousemove', function(e){
       var g = cv._trend; if(!g || !lastActs || !tip) return;
       var rect = cv.getBoundingClientRect();
-      var span = g.W - g.padL - g.padR;
-      var frac = span > 0 ? (e.clientX - rect.left - g.padL) / span : 0;
-      var idx = Math.max(0, Math.min(g.n - 1, Math.round(frac * (g.n - 1))));
+      var idx = Math.max(0, Math.min(g.n - 1, Math.floor((e.clientX - rect.left) / (g.bw + g.gap))));
       var weeks = computeWeeks(lastActs);
-      drawWeeklyTrendLine(cv, weeks, weekMetric, idx);
+      drawWeeklyBars(cv, weeks, weekMetric, cv._info, idx);
       var w = weeks[idx], d = new Date(w.start);
       var val = weekMetric === 'tss' ? Math.round(w.tss) + ' TSS' : (Math.round(w.sec / 3600 * 10) / 10) + ' h';
       tip.innerHTML = '<b>Wk of ' + d.getDate() + ' ' + WK_MONS[d.getMonth()] + '</b><span>' + val + '</span>';
       tip.hidden = false;
-      var hx = g.padL + idx / (g.n - 1) * span;
+      var hx = idx * (g.bw + g.gap) + g.bw / 2;
       tip.style.left = Math.max(0, Math.min(g.W - tip.offsetWidth, hx - tip.offsetWidth / 2)) + 'px';
-      tip.style.top = g.padT + 'px';
+      tip.style.top = '0px';
     });
     cv.addEventListener('mouseleave', function(){
       if(tip) tip.hidden = true;
-      if(lastActs) drawWeeklyTrendLine(cv, computeWeeks(lastActs), weekMetric);
+      if(lastActs) drawWeeklyBars(cv, computeWeeks(lastActs), weekMetric, cv._info);
     });
   }
   function formWord(tsb){
@@ -11485,33 +11496,8 @@
       lastHistActs = acts;
       lastCurve = curve;
       if(!hasWeight()) pcUnit = 'w';   // W/kg needs a weight
-      var thisMon = mondayOf(Date.now());
-      var wk = weekStats(acts, thisMon);
       var today = pmc.today;
 
-      var tr = pmcTrend(pmc.series);
-      function arrow(d){ return d ? ' <span class="ar">' + rcArrow(d) + '</span>' : ''; }
-
-      // 1 — Today: readiness + the three PMC numbers, one band.
-      var status = today ? (
-        '<div class="tr-status">' +
-          '<div class="trs-ready">' +
-            '<div class="trs-lbl">Today’s readiness</div>' +
-            '<div class="trs-word">' + formWord(today.tsb) + '</div>' +
-            '<div class="rc-grad"><span class="rc-thumb" style="left:' + (Math.max(0, Math.min(1, (today.tsb + 45) / 75)) * 100).toFixed(1) + '%"></span></div>' +
-            '<div class="rc-ends"><span>Overloaded</span><span>Fresh</span></div>' +
-          '</div>' +
-          '<div class="trs-kpis">' +
-            '<div class="trs-kpi"><div class="v">' + today.ctl + arrow(tr.ctl) + '</div><span class="l">Fitness</span><span class="u">CTL</span></div>' +
-            '<div class="trs-kpi form"><div class="v">' + (today.tsb>0?'+':'') + today.tsb + arrow(tr.tsb) + '</div><span class="l">Form</span><span class="u">TSB</span></div>' +
-            '<div class="trs-kpi fatigue"><div class="v">' + today.atl + arrow(tr.atl) + '</div><span class="l">Fatigue</span><span class="u">ATL</span></div>' +
-          '</div>' +
-        '</div>'
-      ) : '<div class="tr-status tr-status-empty"><p>Log a ride to see your fitness.</p></div>';
-
-      var wkToggle = '<div class="trends-range wk-toggle">' +
-        '<button type="button" class="tr-range-btn wk-btn' + (weekMetric==='tss'?' on':'') + '" data-wk="tss">TSS</button>' +
-        '<button type="button" class="tr-range-btn wk-btn' + (weekMetric==='hours'?' on':'') + '" data-wk="hours">Hours</button></div>';
       var unitToggle = hasWeight()
         ? '<div class="trends-range pc-unit">' +
             '<button type="button" class="tr-range-btn pc-unit-btn' + (pcUnit==='w'?' on':'') + '" data-unit="w">W</button>' +
@@ -11532,24 +11518,12 @@
           return '<button type="button" class="tr-subtab' + (trendsTab===t[0]?' on':'') + '" data-pane="' + t[0] + '">' + t[1] + '</button>';
         }).join('') + '<span class="tr-subunderline"></span></div></div>';
 
+      // Summary: two columns, two timescales — Today (verdict, readiness, what
+      // to ride) and the weeks (block verdict, this week, 12-week bars). The
+      // week is shown plain — no "vs last week": beating last week every week
+      // isn't the goal; in a recovery week it's measured against a ceiling.
       var summaryPane = '<section class="tr-tab' + (trendsTab==='summary'?' on':'') + '" data-pane="summary">' +
-        // Readiness and the week share the top row (desktop; they stack on
-        // mobile). The week is shown plain — no "vs last week" or delta: beating
-        // last week every week isn't the goal, and the coach below says when to
-        // push and when to back off.
-        '<div class="tr-top">' + status +
-          '<div class="tr-card tr-week">' +
-            '<div class="tr-card-head"><h3>This week</h3></div>' +
-            '<div class="tr-wk-stats">' +
-              '<div class="tr-wk-stat"><div class="v">' + Math.round(wk.tss) + '</div><span class="l">Load</span></div>' +
-              '<div class="tr-wk-stat"><div class="v">' + fmtHrs(wk.sec) + '</div><span class="l">Time</span></div>' +
-              '<div class="tr-wk-stat"><div class="v">' + wk.n + '</div><span class="l">' + (wk.n===1?'Ride':'Rides') + '</span></div>' +
-            '</div>' +
-            '<div class="tr-fs-head tr-wk-head"><span>12-week ' + (weekMetric==='tss'?'load':'hours') + '</span>' + wkToggle + '</div>' +
-            '<div class="wk-plot"><canvas class="tr-canvas wk-canvas" id="wkCanvas"></canvas><div class="wk-tip" id="wkTip" hidden></div></div>' +
-          '</div>' +
-        '</div>' +
-        coachSummaryHTML(all, acts, pmc, chk) +
+        (today ? coachSummaryHTML(all, acts, pmc, chk) : '<div class="tr-status tr-status-empty"><p>Log a ride to see your fitness.</p></div>') +
       '</section>';
 
       var perfPane = '<section class="tr-tab' + (trendsTab==='performance'?' on':'') + '" data-pane="performance">' +
@@ -11669,9 +11643,7 @@
     weekMetric = (weekMetric === 'tss') ? 'hours' : 'tss';
     try{ localStorage.setItem(WEEKMETRIC_KEY, weekMetric); }catch(err){}
     els.trendsBody.querySelectorAll('.wk-btn').forEach(function(x){ x.classList.toggle('on', x.getAttribute('data-wk') === weekMetric); });
-    var wkLbl = els.trendsBody.querySelector('.tr-wk-head > span');
-    if(wkLbl) wkLbl.textContent = '12-week ' + (weekMetric === 'tss' ? 'load' : 'hours');
-    if(lastActs) drawWeeklyTrendLine(document.getElementById('wkCanvas'), computeWeeks(lastActs), weekMetric);
+    if(lastActs) drawWeeklyTrend(lastActs);
   });
   els.trendsBtn.addEventListener('click', openTrends);
   els.trendsCloseBtn.addEventListener('click', closeTrends);
@@ -11967,11 +11939,16 @@
   function hashStr(s){ var h = 0; for(var i = 0; i < s.length; i++){ h = (h * 31 + s.charCodeAt(i)) | 0; } return h >>> 0; }
   function roundTo(n, step){ return Math.round(n / step) * step; }
 
-  // Library picks for a zone: everyday lengths, not ridden in the last two
+  // Library picks for a zone: within the week's TSS cap when there is one,
+  // everyday lengths, not ridden in the last two
   // weeks, in a stable per-day order (so the card doesn't reshuffle on every
   // open, but changes day to day).
-  function pickWorkouts(zone, n, avoidKeys, seed){
+  function pickWorkouts(zone, n, avoidKeys, seed, maxTss){
     var pool = WORKOUTS.filter(function(w){ return w.zone === zone && !w.test; });
+    if(maxTss != null){
+      var fit = pool.filter(function(w){ return w.tss != null && w.tss <= maxTss; });
+      if(fit.length >= n) pool = fit;
+    }
     var mid = pool.filter(function(w){ return w.durationMin >= 40 && w.durationMin <= 80; });
     if(mid.length >= n) pool = mid;
     var fresh = pool.filter(function(w){ return avoidKeys.indexOf(w.key) < 0; });
@@ -11980,10 +11957,10 @@
   }
   function workoutRow(w){
     var meta = zLabel(w.zone) + ' · ' + w.durationMin + ' min' + (w.tss != null ? ' · TSS ' + w.tss : '');
-    return '<button type="button" class="co-wk" data-coach-start="' + w.key + '">' +
+    return '<button type="button" class="co-wk" data-coach-view="' + w.key + '">' +
       '<i style="background:' + zHex(w.zone) + '"></i>' +
       '<span class="co-wk-t"><b>' + w.name + '</b><span>' + meta + '</span></span>' +
-      '<span class="co-go">Start ›</span></button>';
+      '<span class="co-go">View ›</span></button>';
   }
   function verdictHTML(colour, text){
     return '<div class="co-verdict"><span class="co-pip" style="--c:' + colour + '"></span>' + text + '</div>';
@@ -11999,14 +11976,24 @@
     var yLoad = acts.filter(function(a){ return a.day === yk; }).reduce(function(s, a){ return s + effLoad(a); }, 0);
     var hardY = yLoad >= 80;
     var recent = acts.filter(function(a){ return a.key && a.day >= daysAgoKey(14); }).map(function(a){ return a.key; });
-    var head = '<div class="co-head"><span class="co-lbl">Today</span><span class="co-basis">Based on form' + '</span></div>';
+    var basis = 'Form ' + signed(tsb);
+    // Verdict, then the readiness gauge as its evidence, then what to ride.
+    function out(colour, verdict, why, picks, note){
+      var noteHTML = note ? '<p class="co-note">' + note + '</p>' : '';
+      return '<div class="co-head"><span class="co-lbl">Today</span><span class="co-basis">' + basis + '</span></div>' +
+        verdictHTML(colour, verdict) + '<p class="co-why">' + why + '</p>' +
+        readinessHTML(pmc.today) +
+        (picks && picks.length
+          ? '<div class="co-blk"><div class="co-head"><span class="co-lbl">Ride today</span></div><div class="co-list">' + picks.map(workoutRow).join('') + '</div>' + noteHTML + '</div>'
+          : noteHTML);
+    }
 
     // Already ridden today: nothing to suggest.
     var done = acts.filter(function(a){ return a.day === tk; });
     if(done.length){
       var d0 = done[done.length - 1], load = done.reduce(function(s, a){ return s + effLoad(a); }, 0);
-      return head + verdictHTML('var(--ok)', 'Done for today') +
-        '<p class="co-why"><b>' + (d0.name || 'Ride') + '</b>' + (load ? ' · TSS ' + Math.round(load) : '') + '. Recover well — tomorrow’s suggestion is here in the morning.</p>';
+      return out('var(--ok)', 'Done for today',
+        '<b>' + (d0.name || 'Ride') + '</b>' + (load ? ' · TSS ' + Math.round(load) : '') + '. Recover well — tomorrow’s suggestion is here in the morning.');
     }
 
     var fTxt = '<b>' + signed(tsb) + '</b>', yTxt = hardY ? ' and yesterday was hard (<b>TSS ' + Math.round(yLoad) + '</b>)' : '';
@@ -12025,40 +12012,61 @@
     } else {
       band = {c:zHex('vo2'), v:'Go hard today', zones:['vo2', 'threshold'], max:5, why:'Form is ' + fTxt + ' — your legs are fresh. Make the most of it with real intensity.'};
     }
-    var seed = tk;
+    // Recovery week (from the block card): Today works inside the same TSS
+    // cap, whatever Form says. Very low Form already gets the rest band.
+    var bs = blockState(acts, pmc);
+    if(bs && bs.easy && tsb >= -30){
+      var left = Math.max(0, bs.easyTss - bs.weekTss);
+      var wkTxt = 'Recovery week: <b>' + bs.weekTss + ' of ~' + bs.easyTss + ' TSS</b> so far';
+      band = left < 20
+        ? {c:zHex('recovery'), v:'Easy week — cap reached', zones:['recovery'], max:0, cap:left, why:wkTxt + '. That’s the week’s riding done — rest, or spin very easy.', rest:'Or take the day off — it counts as training too.'}
+        : {c:zHex('endurance'), v:'Easy week — keep it aerobic', zones:['endurance'], max:2, cap:left, why:wkTxt + ', about <b>' + left + '</b> left. Easy endurance; a few short openers are fine.'};
+      basis = 'Recovery week';
+    }
+    var seed = tk, cap = band.cap;
 
     // The calendar wins when there's a plan for today.
     var plan = all.filter(function(a){ return a.planned && a.day === tk; })[0];
     if(plan){
-      head = '<div class="co-head"><span class="co-lbl">Today</span><span class="co-basis">From your calendar</span></div>';
+      basis = 'From your calendar';
       var tgt = plan.plan && plan.plan.target;
       if(tgt === 'rest'){
-        return head + verdictHTML('var(--ok)', 'Rest day planned') +
-          '<p class="co-why">Enjoy it — recovery is when the fitness actually lands. Form is ' + fTxt + '.</p>';
+        return out('var(--ok)', 'Rest day planned', 'Enjoy it — recovery is when the fitness actually lands. Form is ' + fTxt + '.');
       }
       if(plan.type === 'indoor' && plan.zone && ZONE_RANK[plan.zone] !== undefined){
         var pz = plan.zone;
         if(ZONE_RANK[pz] <= band.max){
-          return head + verdictHTML(zHex(pz), 'On the plan: ' + zLabel(pz)) +
-            '<p class="co-why">' + band.why + ' Your planned <b>' + zLabel(pz) + '</b> fits.</p>' +
-            '<div class="co-list">' + pickWorkouts(pz, 2, recent, seed).map(workoutRow).join('') + '</div>';
+          return out(zHex(pz), 'On the plan: ' + zLabel(pz), band.why + ' Your planned <b>' + zLabel(pz) + '</b> fits.',
+            pickWorkouts(pz, 2, recent, seed, cap));
         }
         var alt = band.zones[0];
-        return head + verdictHTML('var(--warn)', 'Planned ' + zLabel(pz) + ' — consider easing off') +
-          '<p class="co-why">You planned <b>' + zLabel(pz) + '</b>, but form is ' + fTxt + yTxt + '. <b>' + zLabel(alt) + '</b> would build more today.</p>' +
-          '<div class="co-list">' + pickWorkouts(alt, 1, recent, seed).concat(pickWorkouts(pz, 1, recent, seed)).map(workoutRow).join('') + '</div>';
+        return out('var(--warn)', 'Planned ' + zLabel(pz) + ' — consider easing off',
+          'You planned <b>' + zLabel(pz) + '</b>, but ' + (cap != null
+            ? 'this is your recovery week (<b>' + bs.weekTss + ' of ~' + bs.easyTss + ' TSS</b> so far). Swap to <b>' + zLabel(alt) + '</b> and save the ' + zLabel(pz) + ' for next week.'
+            : 'form is ' + fTxt + yTxt + '. <b>' + zLabel(alt) + '</b> would build more today.'),
+          pickWorkouts(alt, 1, recent, seed, cap).concat(pickWorkouts(pz, 1, recent, seed)));
       }
       // A run, gym session or outdoor ride: say so, and steer any extra riding.
-      return head + verdictHTML(band.c, 'On the plan: ' + (plan.name || 'Session')) +
-        '<p class="co-why">' + band.why + (band.max <= 2 ? ' If you ride as well, keep it easy.' : '') + '</p>';
+      return out(band.c, 'On the plan: ' + (plan.name || 'Session'), band.why + (band.max <= 2 ? ' If you ride as well, keep it easy.' : ''));
     }
 
     var picks = [];
-    band.zones.forEach(function(z){ picks = picks.concat(pickWorkouts(z, 1, recent, seed)); });
-    return head + verdictHTML(band.c, band.v) +
-      '<p class="co-why">' + band.why + '</p>' +
-      '<div class="co-list">' + picks.map(workoutRow).join('') + '</div>' +
-      (band.rest ? '<p class="co-note">' + band.rest + '</p>' : '');
+    var per = band.zones.length === 1 ? 2 : 1;   // one zone → two choices from it
+    band.zones.forEach(function(z){ picks = picks.concat(pickWorkouts(z, per, recent, seed, cap)); });
+    return out(band.c, band.v, band.why, picks, band.rest);
+  }
+
+  // Readiness: Form on the Overloaded → Fresh gauge, plus the three numbers.
+  function readinessHTML(t){
+    var pos = (Math.max(0, Math.min(1, (t.tsb + 45) / 75)) * 100).toFixed(1);
+    return '<div class="co-blk co-ready"><div class="co-head"><span class="co-lbl">Readiness</span><span class="co-rword">' + formWord(t.tsb) + '</span></div>' +
+      '<div class="rc-grad"><span class="rc-thumb" style="left:' + pos + '%"></span></div>' +
+      '<div class="rc-ends"><span>Overloaded</span><span>Fresh</span></div>' +
+      '<div class="co-nums">' +
+        '<div><b>' + t.ctl + '</b><span>Fitness</span></div>' +
+        '<div><b>' + signed(t.tsb) + '</b><span>Form</span></div>' +
+        '<div><b>' + t.atl + '</b><span>Fatigue</span></div>' +
+      '</div></div>';
   }
 
   // ============================================================
@@ -12072,17 +12080,15 @@
     for(var k = n; k >= 1; k--){ var d = new Date(mon); d.setDate(d.getDate() - 7 * k); out.push(d.getTime()); }
     return out;   // oldest first, completed weeks only
   }
-  function coachBlock(acts, pmc){
+  // The block numbers both cards need. `easy` = this week should be a
+  // recovery week (building too fast, or 3+ build weeks in a row), so Today
+  // works inside the same TSS cap the block card prints.
+  function blockState(acts, pmc){
     var s = pmc.series;
-    var head = '<div class="co-head"><span class="co-lbl">Next 4 weeks</span><span class="co-basis">Based on last 4–6 wks</span></div>';
-    if(!pmc.today || s.length < 21){
-      return head + verdictHTML('var(--text-faint)', 'Building your picture') +
-        '<p class="co-why">The block view needs about three weeks of rides. Keep logging — it fills in on its own.</p>';
-    }
+    if(!pmc.today || s.length < 21) return null;
     var last = s[s.length - 1], bi = Math.max(0, s.length - 29), back = s[bi];
     var ramp = Math.round((last.ctl - back.ctl) / ((s.length - 1 - bi) / 7) * 10) / 10;
-
-    var starts = weekStartsBack(7), wk = starts.map(function(t){ return weekStats(acts, t).tss; });
+    var wk = weekStartsBack(7).map(function(t){ return weekStats(acts, t).tss; });
     var light = wk.map(function(v, i){
       if(i < 3) return null;
       var prev = (wk[i - 1] + wk[i - 2] + wk[i - 3]) / 3;
@@ -12091,6 +12097,26 @@
     var streak = 0;
     for(var i = wk.length - 1; i >= 3 && light[i] === false; i--) streak++;
     var recentAvg = (wk[4] + wk[5] + wk[6]) / 3;
+    var easyTss = roundTo(recentAvg * 0.6, 10);
+    return {
+      back:back, ramp:ramp, light:light, streak:streak, easyTss:easyTss,
+      buildTss:roundTo(7 * (pmc.today.ctl + 18), 10),   // ≈ +3 Fitness a week
+      easy:ramp > 7 || streak >= 3,
+      weekTss:Math.round(weekStats(acts, mondayOf(Date.now())).tss)
+    };
+  }
+
+  function coachBlock(acts, pmc){
+    var s = pmc.series;
+    var bs = blockState(acts, pmc);
+    var head = '<div class="co-head"><span class="co-lbl">Next 4 weeks</span><span class="co-basis">' + (bs ? 'Ramp ' + signed(bs.ramp) + ' / wk' : '') + '</span></div>';
+    if(!bs){
+      return head + verdictHTML('var(--text-faint)', 'Building your picture') +
+        '<p class="co-why">The block view needs about three weeks of rides. Keep logging — it fills in on its own.</p>' +
+        weekBlocksHTML(acts, null);
+    }
+    var last = s[s.length - 1], back = bs.back;
+    var ramp = bs.ramp, light = bs.light, streak = bs.streak;
 
     // Easy / moderate / hard from time in power zones over 28 days.
     var mix = [0, 0, 0], since = daysAgoKey(28);
@@ -12104,15 +12130,14 @@
 
     var rides28 = acts.filter(function(a){ return a.day >= since; }).length;
     var rides56 = acts.filter(function(a){ return a.day >= daysAgoKey(56) && a.day < since; }).length;
-    var buildTss = roundTo(7 * (pmc.today.ctl + 18), 10);   // ≈ +3 Fitness a week
-    var easyTss = roundTo(recentAvg * 0.6, 10);
+    var buildTss = bs.buildTss, easyTss = bs.easyTss;
     var c, v, why, plan;
     if(ramp > 7){
       c = 'var(--c-anaerobic)'; v = 'Building too fast — back off';
       why = 'Fitness has jumped <b>+' + ramp + '/week</b>, past the ~7/week most riders can absorb. The risk now is illness or burnout, not under-training.';
       plan = '<b>Take a recovery week now:</b> about <b>' + easyTss + ' TSS</b>, nothing above tempo. You’ll come out of it fitter.';
     } else if(streak >= 3){
-      c = 'var(--warn)'; v = 'Recovery week due';
+      c = zHex('endurance'); v = 'Recovery week due';
       why = '<b>' + streak + ' build weeks</b> in a row without a lighter one. Fitness lands when you back off.';
       plan = '<b>Make this week easy:</b> about <b>' + easyTss + ' TSS</b> (~60% of usual) with a couple of short openers, then build again.';
     } else if(ramp < -1){
@@ -12133,20 +12158,33 @@
     }
     if(mixPct && mixPct[0] < 50 && ramp <= 7) plan += ' Most of your time is moderate-to-hard — make one ride a week easy endurance.';
 
-    // Ramp bar: healthy band 2–7 on a −4…12 scale.
-    var lo = -4, hi = 12, pc = function(x){ return Math.max(0, Math.min(100, (x - lo) / (hi - lo) * 100)); };
+    // The plan reads straight on from the verdict; the ramp and intensity mix
+    // sit under the 12-week bars (which show the build streak themselves).
     var rCls = ramp > 7 ? 'bad' : ramp >= 2 ? 'ok' : 'warn';
-    var weeks = light.slice(4).map(function(l){ return '<i class="' + (l ? 'r' : 'b') + '"></i>'; }).join('') + '<i class="now"></i>';
-    return head + verdictHTML(c, v) + '<p class="co-why">' + why + '</p>' +
-      '<div class="co-facts">' +
-        '<div class="co-fact"><span class="k">Fitness ramp</span><span class="val ' + rCls + '">' + signed(ramp) + ' / week</span>' +
-          '<div class="co-ramp"><span class="band" style="left:' + pc(2) + '%;width:' + (pc(7) - pc(2)) + '%"></span><span class="mark" style="left:' + pc(ramp) + '%"></span></div>' +
-          '<div class="co-ramp-sc"><span>losing</span><span>healthy 2–7</span><span>too fast</span></div></div>' +
-        '<div class="co-fact"><span class="k">Build weeks in a row</span><span class="co-weeks-w"><span class="n">' + streak + '</span><span class="co-weeks" title="Last 3 weeks + this week">' + weeks + '</span></span></div>' +
-        (mixPct ? '<div class="co-fact"><span class="k">Intensity mix · 4 wks</span><span class="co-mix"><span style="width:' + mixPct[0] + '%;background:' + zHex('endurance') + '"></span><span style="width:' + mixPct[1] + '%;background:' + zHex('tempo') + '"></span><span style="width:' + mixPct[2] + '%;background:' + zHex('anaerobic') + '"></span></span>' +
-          '<div class="co-mixk"><span><i style="background:' + zHex('endurance') + '"></i>Easy ' + mixPct[0] + '%</span><span><i style="background:' + zHex('tempo') + '"></i>Moderate ' + mixPct[1] + '%</span><span><i style="background:' + zHex('anaerobic') + '"></i>Hard ' + mixPct[2] + '%</span></div></div>' : '') +
-      '</div>' +
-      '<div class="co-plan">' + plan + '</div>';
+    var rNote = ramp > 7 ? 'too fast · healthy is 2–7' : ramp >= 2 ? 'healthy · 2–7' : ramp >= -1 ? 'flat · healthy is 2–7' : 'losing · healthy is 2–7';
+    var extra = '<div class="co-line"><span>Fitness ramp <b class="' + rCls + '">' + signed(ramp) + ' / week</b></span><span class="q">' + rNote + '</span></div>' +
+      (mixPct ? '<div class="co-line co-mixline"><span>Intensity · 4 wks</span><span class="co-mix"><span style="width:' + mixPct[0] + '%;background:' + zHex('endurance') + '"></span><span style="width:' + mixPct[1] + '%;background:' + zHex('tempo') + '"></span><span style="width:' + mixPct[2] + '%;background:' + zHex('anaerobic') + '"></span></span>' +
+        '<div class="co-mixk"><span><i style="background:' + zHex('endurance') + '"></i>Easy ' + mixPct[0] + '%</span><span><i style="background:' + zHex('tempo') + '"></i>Moderate ' + mixPct[1] + '%</span><span><i style="background:' + zHex('anaerobic') + '"></i>Hard ' + mixPct[2] + '%</span></div></div>' : '');
+    return head + verdictHTML(c, v) + '<p class="co-why">' + why + ' ' + plan + '</p>' + weekBlocksHTML(acts, bs, extra);
+  }
+
+  // This week (against the easy-week cap when a recovery week is due) and the
+  // 12-week bars, drawn by drawWeeklyTrend once the pane is on screen.
+  function weekBlocksHTML(acts, bs, extra){
+    var wk = weekStats(acts, mondayOf(Date.now())), tss = Math.round(wk.tss), easy = !!(bs && bs.easy);
+    var capHTML = '';
+    if(easy){
+      var left = bs.easyTss - tss, pct = bs.easyTss > 0 ? Math.min(100, tss / bs.easyTss * 100) : 100;
+      capHTML = '<div class="co-cap"><div class="co-cap-t"><span><b>' + tss + '</b> of ~' + bs.easyTss + ' TSS easy-week cap</span><span>' + (left >= 20 ? left + ' left' : 'Cap reached') + '</span></div>' +
+        '<div class="co-cap-bar"><i style="width:' + pct.toFixed(1) + '%"></i></div></div>';
+    }
+    return '<div class="co-blk"><div class="co-head"><span class="co-lbl">This week</span></div>' +
+        '<div class="co-nums"><div><b>' + tss + '</b><span>Load · TSS</span></div><div><b>' + fmtHrs(wk.sec) + '</b><span>Time</span></div><div><b>' + wk.n + '</b><span>' + (wk.n === 1 ? 'Ride' : 'Rides') + '</span></div></div>' +
+        capHTML + '</div>' +
+      '<div class="co-blk"><div class="co-head"><span class="co-lbl">12 weeks</span>' + wkToggleHTML() + '</div>' +
+        '<div class="wk-plot"><canvas class="tr-canvas wk-canvas" id="wkCanvas"></canvas><div class="wk-tip" id="wkTip" hidden></div></div>' +
+        '<div class="co-key"><span><i class="b"></i>Build week</span><span><i class="l"></i>Lighter week</span><span><i class="' + (easy ? 'e' : 'n') + '"></i>This week' + (easy ? ' · cap' : '') + '</span></div>' +
+        (extra || '') + '</div>';
   }
 
   // ============================================================
@@ -12496,7 +12534,7 @@
       ? '<button type="button" class="co-hint" data-goto-power><span class="co-pip" style="--c:' + (chk.state === 'up' ? 'var(--ok)' : 'var(--c-anaerobic)') + '"></span>' +
           '<span><b>FTP check</b> · your rides suggest <b>' + chk.to + ' W</b> (' + signed(chk.to - chk.cur) + ')</span><span class="co-go">Review ›</span></button>'
       : '';
-    return '<div class="tr-card co-card">' + hint +
+    return '<div class="tr-card co-card co-sum">' + hint +
       '<div class="co-grid"><div class="co-col">' + coachToday(all, acts, pmc) + '</div><div class="co-col">' + coachBlock(acts, pmc) + '</div></div></div>';
   }
 
@@ -12519,16 +12557,30 @@
     rideAll().then(function(all){ paintFtpHint(ftpCheck(all.filter(function(a){ return !a.planned; }))); }).catch(function(){});
   }
 
+  // "View" on a suggestion: open it in the Workouts list so the rider sees the
+  // intervals before starting. The list narrows to that zone (other filters
+  // cleared, like the calendar's "Show me…") so the workout is sure to be in it.
+  function viewWorkout(key){
+    var wo = byKey(key); if(!wo) return;
+    closeTrends();
+    if(typeof closeLog === 'function') closeLog();
+    filters.zone = wo.zone; filters.duration = null; filters.spice = null; filters.shape = null;
+    filters.search = ''; filters.starredOnly = false;
+    if(els.searchBox) els.searchBox.value = '';
+    browseAll = true;
+    closeFindModal();
+    renderFilters(); renderWorkoutCards();
+    updateStarFilterUI();
+    if(mqMobile.matches){ selectWorkout(key, {scrollIntoView:true}); openDetailMobile(); return; }
+    selectWorkout(key);
+    var row = document.getElementById('workout-' + key);
+    if(row && row.scrollIntoView) row.scrollIntoView({block:'start'});   // the opened card reads down from the top
+  }
+
   // ---- actions (delegated on the Fitness body) ----
   els.trendsBody.addEventListener('click', function(e){
     var t;
-    if((t = e.target.closest('[data-coach-start]'))){
-      var key = t.getAttribute('data-coach-start');
-      closeTrends();
-      if(typeof selectWorkout === 'function') selectWorkout(key, {scrollIntoView:true});
-      startWorkout(key);
-      return;
-    }
+    if((t = e.target.closest('[data-coach-view]'))){ viewWorkout(t.getAttribute('data-coach-view')); return; }
     if(e.target.closest('[data-goto-power]')){
       var tab = els.trendsBody.querySelector('.tr-subtab[data-pane="power"]'); if(tab) tab.click();
       return;
