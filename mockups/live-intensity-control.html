@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Work / Recovery control</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#121213; --card:#1B1B1D; --elev:#202022; --border:#2C2C2F; --border-soft:#232326;
+    --text:#ECECEA; --dim:#A9A9A6; --faint:#85857F; --accent:#6E8BFF; --rec:#5B6472; --hr:#FF5D6C;
+    --sans:'Inter',system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:#E6E3DC;color:#14140F;font-family:var(--sans);-webkit-font-smoothing:antialiased;padding:38px 22px 70px;}
+  .wrap{max-width:860px;margin:0 auto;}
+  .kick{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#1E9E99;margin:0 0 9px;}
+  h1{margin:0 0 8px;font-size:27px;font-weight:700;letter-spacing:-0.02em;}
+  .lede{margin:0 0 24px;max-width:600px;color:#4A4A44;font-size:14.5px;line-height:1.55;}
+  .lede b{color:#14140F;}
+  .stage{display:flex;gap:34px;flex-wrap:wrap;align-items:flex-start;}
+
+  /* a slice of the live player (dark), the bit near the controls */
+  .player{width:390px;background:var(--bg);border:1px solid #2A2A2C;border-radius:26px;padding:16px 16px 20px;
+    box-shadow:0 26px 60px -28px rgba(0,0,0,.5);}
+  .chart{height:150px;border-radius:12px;overflow:hidden;background:#0E0E10;border:1px solid var(--border-soft);margin-bottom:14px;position:relative;}
+  .chart svg{display:block;width:100%;height:100%;}
+
+  .nowcard{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:14px;}
+  .target{display:flex;flex-direction:column;}
+  .target .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase;}
+  .target .w{font-family:var(--mono);font-size:44px;font-weight:800;line-height:1;color:var(--text);letter-spacing:-0.02em;}
+  .target .w b{color:var(--accent);font-weight:800;}
+  .target .w.rec b{color:#9BB0FF;}
+  .nowcard .seg{text-align:right;font-family:var(--mono);}
+  .seg .which{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 10px;border-radius:20px;}
+  .seg .which.work{background:rgba(110,139,255,.18);color:#AEBEFF;}
+  .seg .which.rec{background:rgba(155,170,255,.14);color:#AEBEFF;}
+  .seg .nextline{font-size:11px;color:var(--faint);margin-top:6px;}
+
+  /* ---- the control ---- */
+  .ctrl{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px;}
+  .scope{display:flex;gap:4px;background:#0E0E10;border:1px solid var(--border);border-radius:11px;padding:4px;margin-bottom:12px;}
+  .scope button{flex:1;border:none;background:transparent;color:var(--dim);cursor:pointer;font-family:var(--mono);
+    font-size:12.5px;font-weight:700;letter-spacing:.04em;padding:9px 0;border-radius:8px;transition:background .12s,color .12s;}
+  .scope button.on{background:var(--accent);color:#0B0B10;}
+  .stepper{display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .stepper .pm{width:58px;height:58px;border-radius:14px;border:1px solid var(--border);background:var(--elev);color:var(--text);
+    font-size:30px;font-weight:600;cursor:pointer;display:grid;place-items:center;line-height:1;user-select:none;}
+  .stepper .pm:active{background:#2A2A2E;}
+  .readout{flex:1;text-align:center;}
+  .readout .scopelbl{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--faint);text-transform:uppercase;}
+  .readout .val{font-family:var(--mono);font-size:34px;font-weight:800;color:var(--text);letter-spacing:-0.01em;line-height:1.1;}
+  .readout .val .bolt{color:var(--accent);font-size:22px;margin-right:4px;}
+  .pair{display:flex;justify-content:center;gap:18px;margin-top:12px;font-family:var(--mono);font-size:13px;}
+  .pair span{color:var(--faint);}
+  .pair b{font-weight:800;}
+  .pair .wk.live b{color:var(--accent);} .pair .rc.live b{color:#9BB0FF;}
+  .pair .wk b{color:var(--dim);} .pair .rc b{color:var(--dim);}
+
+  .note{max-width:380px;font-size:13.5px;color:#4A4A44;line-height:1.55;}
+  .note h3{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:#6E6B60;margin:0 0 10px;font-weight:700;}
+  .note li{margin-bottom:10px;}
+  .note code{font-family:var(--mono);font-size:12px;background:#fff;border:1px solid #DAD6CC;border-radius:5px;padding:1px 6px;}
+  .hint{font-size:12px;color:#6E6B60;margin-top:14px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kick">Live screen · work / recovery control</p>
+  <h1>Adjust efforts and recoveries, separately</h1>
+  <p class="lede">The stepper you have now, plus a small <b>scope toggle</b>. It picks what <b>+/-</b> changes: <b>Both</b> (today's behaviour), just the <b>Work</b> efforts, or just the <b>Rec</b>overies. Tap around — the chart and targets react live. Try <b>Rec</b> then <b>+</b> a few times: recoveries climb, efforts stay put.</p>
+  <div class="stage">
+    <div class="player">
+      <div class="chart" id="chart"></div>
+      <div class="nowcard">
+        <div class="target"><span class="lbl">Target now</span><span class="w rec" id="targetW"><b id="targetNum">151</b> W</span></div>
+        <div class="seg"><span class="which rec" id="segWhich">RECOVERY</span><div class="nextline" id="nextLine">Next&nbsp; Work · 4:00</div></div>
+      </div>
+      <div class="ctrl">
+        <div class="scope" id="scope">
+          <button data-s="both" class="on">Both</button>
+          <button data-s="work">Work</button>
+          <button data-s="rec">Rec</button>
+        </div>
+        <div class="stepper">
+          <button class="pm" id="minus">&minus;</button>
+          <div class="readout"><span class="scopelbl" id="scopeLbl">Overall</span>
+            <div class="val"><span class="bolt">&#9889;</span><span id="valNum">100</span>%</div></div>
+          <button class="pm" id="plus">+</button>
+        </div>
+        <div class="pair">
+          <span class="wk live">Work <b id="wkVal">100%</b></span>
+          <span class="rc">Rec <b id="rcVal">100%</b></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="note">
+      <h3>How it behaves</h3>
+      <ul>
+        <li><b>Both</b> — +/- moves Work and Rec together. Identical to the current intensity control; nothing changes for existing use.</li>
+        <li><b>Work</b> — +/- trims only the efforts. The recovery targets stay where they are.</li>
+        <li><b>Rec</b> — +/- trims only the recoveries. Your case: bump recovery watts without touching the hard intervals.</li>
+      </ul>
+      <p class="note" style="margin-top:4px">The <code>Work 100% · Rec 100%</code> line is the source of truth — both values are always visible, the active one lit. Steps are ±1%, no bounds (recovery can even exceed work).</p>
+      <p class="hint">Mock only — not wired into the app. This is the control to react to.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+var FTP=250;
+// a 4× interval set: [kind, pct, minutes]. kind: prep | work | rest
+var SEG=[['prep',55,8],['work',100,4],['rest',55,3],['work',100,4],['rest',55,3],['work',100,4],['rest',55,3],['work',100,4],['prep',50,6]];
+var CURRENT=2;           // the segment the "target now" reflects (a recovery)
+var workF=100, restF=100, scope='both';
+function fac(kind){ return kind==='rest' ? restF/100 : workF/100; }   // prep follows work
+
+function draw(){
+  var W=360,H=150, total=0,i; for(i=0;i<SEG.length;i++) total+=SEG[i][2];
+  var maxPct=130, x=0, s='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">';
+  for(i=0;i<SEG.length;i++){
+    var k=SEG[i][0], w=SEG[i][2]/total*W, h=Math.min(1,SEG[i][1]*fac(k)/maxPct)*(H-8), col;
+    if(k==='work') col='#6E8BFF'; else if(k==='rest') col='#3A4252'; else col='#2A2D36';
+    s+='<rect x="'+x.toFixed(1)+'" y="'+(H-h).toFixed(1)+'" width="'+(w-1).toFixed(1)+'" height="'+h.toFixed(1)+'" fill="'+col+'"'+(i===CURRENT?' opacity="1"':'')+'/>';
+    if(i===CURRENT){ s+='<rect x="'+x.toFixed(1)+'" y="0" width="'+(w-1).toFixed(1)+'" height="'+H+'" fill="rgba(255,255,255,0.06)"/>'; }
+    x+=w;
+  }
+  s+='</svg>';
+  document.getElementById('chart').innerHTML=s;
+}
+function render(){
+  draw();
+  // target-now (the current segment, a recovery)
+  var seg=SEG[CURRENT], tw=Math.round(FTP*seg[1]/100*fac(seg[0]));
+  document.getElementById('targetNum').textContent=tw;
+  // scope readout
+  var lbl={both:'Overall',work:'Work',rec:'Recovery'}[scope];
+  document.getElementById('scopeLbl').textContent=lbl;
+  document.getElementById('valNum').textContent = scope==='rec'? restF : workF;
+  document.getElementById('wkVal').textContent=workF+'%';
+  document.getElementById('rcVal').textContent=restF+'%';
+  document.querySelector('.pair .wk').classList.toggle('live', scope!=='rec');
+  document.querySelector('.pair .rc').classList.toggle('live', scope!=='work');
+  [].forEach.call(document.querySelectorAll('#scope button'),function(b){b.classList.toggle('on',b.getAttribute('data-s')===scope);});
+}
+document.getElementById('scope').addEventListener('click',function(e){var b=e.target.closest('[data-s]');if(!b)return;scope=b.getAttribute('data-s');render();});
+function adjust(d){ if(scope==='rec') restF+=d; else if(scope==='work') workF+=d; else { workF+=d; restF+=d; } render(); }
+document.getElementById('minus').addEventListener('click',function(){adjust(-1);});
+document.getElementById('plus').addEventListener('click',function(){adjust(1);});
+render();
+</script>
+</body>
+</html>

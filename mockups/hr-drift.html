@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HR Drift Lines</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F3EF; --bg-card:#FFFFFF; --bg-list:#FBFAF7; --border:#E7E5DD; --border-soft:#EFEDE6;
+    --text:#14140F; --text-dim:#4A4A44; --text-faint:#6E6B60; --text-strong:#14140F; --accent:#14140F;
+    --c-recovery:#8A92A8; --c-endurance:#3F79E8; --c-tempo:#1E9E99; --c-sweetspot:#E0A22F;
+    --c-threshold:#E85F2E; --c-vo2:#A65BF0; --hr:#E8395A; --ok:#1C8579;
+    --sans:'Inter',-apple-system,system-ui,sans-serif; --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;padding:38px 24px 64px;}
+  .wrap{max-width:1060px;margin:0 auto;}
+  .kicker{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--c-tempo);margin:0 0 9px;}
+  h1{margin:0 0 8px;font-size:27px;font-weight:700;letter-spacing:-0.02em;}
+  .lede{margin:0 0 10px;max-width:640px;color:var(--text-dim);font-size:14.5px;line-height:1.55;}
+  .lede b{color:var(--text-strong);}
+  .method{max-width:640px;font-size:12.5px;color:var(--text-faint);line-height:1.5;margin:0 0 26px;font-family:var(--mono);}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;}
+  @media(max-width:720px){.grid{grid-template-columns:1fr;}}
+  .card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:16px 17px 17px;}
+  .ctitle{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:3px;}
+  .ctitle h2{margin:0;font-size:16px;font-weight:700;letter-spacing:-0.01em;}
+  .ctitle .shape{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--text-faint);}
+  .csub{font-family:var(--mono);font-size:11.5px;color:var(--text-dim);margin-bottom:12px;}
+  .chart{height:128px;margin-bottom:12px;position:relative;}
+  .chart svg{display:block;width:100%;height:100%;}
+  .legend{display:flex;gap:14px;font-size:10.5px;color:var(--text-faint);margin-bottom:14px;}
+  .legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:5px;}
+  .legend .wk{width:11px;height:11px;border-radius:3px;background:rgba(20,20,15,.06);border:1px solid var(--border);}
+
+  /* the exported Strava description block */
+  .strava{background:var(--bg-list);border:1px solid var(--border-soft);border-radius:11px;padding:11px 12px;margin-bottom:13px;}
+  .strava .lbl{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--text-faint);margin-bottom:7px;display:flex;align-items:center;gap:6px;}
+  .strava .lbl svg{display:block;}
+  .strava pre{margin:0;font-family:var(--mono);font-size:12px;line-height:1.7;color:var(--text);white-space:pre-wrap;}
+  .strava .new{color:var(--hr);font-weight:600;}
+
+  .mt{display:grid;grid-template-columns:auto 1fr 1fr;gap:3px 12px;font-size:12px;align-items:center;}
+  .mt .h{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-faint);}
+  .mt .k{color:var(--text-faint);}
+  .mt .v{font-family:var(--mono);font-weight:600;color:var(--text-strong);}
+  .mt .row{display:contents;}
+  .verdict{margin-top:12px;font-size:12px;line-height:1.5;color:var(--text-dim);border-top:1px solid var(--border-soft);padding-top:11px;}
+  .verdict b{color:var(--text-strong);}
+  .pill{display:inline-block;font-family:var(--mono);font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;}
+  .pill.ok{background:rgba(28,133,121,.14);color:var(--ok);}
+  .pill.warn{background:rgba(232,57,90,.14);color:var(--hr);}
+  .pill.flat{background:rgba(20,20,15,.07);color:var(--text-dim);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kicker">Export idea &middot; dry run</p>
+  <h1>HR-drift line, across four shapes</h1>
+  <p class="lede">Each card below has a <b>simulated per-second HR trace</b> (red) over the workout's power profile. The method runs on that trace for real — so the numbers come from the picture, nothing is hand-set.</p>
+  <p class="method">method: keep work samples only (warmup / cooldown / recoveries dropped) &rarr; split into first &amp; second half by work-time &rarr; decoupling = (Pw:HR_first &minus; Pw:HR_last) / Pw:HR_first.</p>
+  <div class="grid" id="grid"></div>
+</div>
+
+<script>
+var FTP=220;
+function min(s){return Math.round(s*60);}
+// each workout = list of {w, sec, kind:'warmup'|'work'|'rest'|'cooldown'}
+function seg(w,mins,kind){return {w:w,sec:min(mins),kind:kind};}
+function reps(n,build){var o=[];for(var i=0;i<n;i++)o=o.concat(build(i));return o;}
+
+var WORKOUTS=[
+  {name:'Steady Tempo', shape:'steady', sub:'45 min @ 185 W', drift:0.145,
+   segs:[seg(130,10,'warmup'), seg(185,45,'work'), seg(100,5,'cooldown')]},
+  {name:'VO₂ 5 × 4 min', shape:'intervals', sub:'5 × 4 min @ 240 W / 3 min', drift:0.22,
+   segs:[seg(130,10,'warmup')].concat(
+     reps(5,function(i){return [seg(240,4,'work'), seg(110,3, i===4?'cooldown':'rest')];}),
+     [seg(100,4,'cooldown')])},
+  {name:'Over-Under 3 × 6', shape:'over-under', sub:'3 × [2′@195 / 1′@245] ×2 / 3 min', drift:0.13,
+   segs:[seg(130,10,'warmup')].concat(
+     reps(3,function(i){return [seg(195,2,'work'),seg(245,1,'work'),seg(195,2,'work'),seg(245,1,'work'), seg(110,3, i===2?'cooldown':'rest')];}),
+     [seg(100,3,'cooldown')])},
+  {name:'Ascending Ladder', shape:'ladder', sub:'4 min steps @ 180 → 200 → 215 → 230 W', drift:0.05,
+   segs:[seg(130,10,'warmup'),
+     seg(180,4,'work'),seg(110,2,'rest'),seg(200,4,'work'),seg(110,2,'rest'),
+     seg(215,4,'work'),seg(110,2,'rest'),seg(230,4,'work'), seg(100,5,'cooldown')]}
+];
+
+function zoneColor(w){
+  var p=w/FTP;
+  if(p<0.56) return getV('--c-recovery');
+  if(p<0.76) return getV('--c-endurance');
+  if(p<0.88) return getV('--c-tempo');
+  if(p<0.95) return getV('--c-sweetspot');
+  if(p<1.06) return getV('--c-threshold');
+  return getV('--c-vo2');
+}
+function getV(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+function tintHex(hex,a){hex=hex.replace('#','');var r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);return 'rgba('+r+','+g+','+b+','+a+')';}
+
+// ---- simulate a per-second ride from the profile ----
+function simulate(wk){
+  var s=[], hr=95, cumWork=0;
+  var tau=0.024;                       // HR lag (~42 s time constant)
+  wk.segs.forEach(function(g){
+    for(var i=0;i<g.sec;i++){
+      var work = g.kind==='work';
+      if(work) cumWork++;
+      var target = 72 + 0.40*g.w;       // steady-state HR for this power
+      target += wk.drift * (cumWork/60); // slow cardiac drift, accrued over work time
+      hr += (target - hr)*tau + (Math.random()-0.5)*0.5;
+      s.push({w:g.w, hr:hr, work:work});
+    }
+  });
+  return s;
+}
+function metrics(samples){
+  var work = samples.filter(function(x){return x.work;});
+  var half = Math.floor(work.length/2);
+  function avg(arr,key){var t=0;arr.forEach(function(x){t+=x[key];});return t/arr.length;}
+  var a=work.slice(0,half), b=work.slice(half);
+  var p1=avg(a,'w'), h1=avg(a,'hr'), p2=avg(b,'w'), h2=avg(b,'hr');
+  var r1=p1/h1, r2=p2/h2;
+  return {
+    p1:Math.round(p1), h1:Math.round(h1), p2:Math.round(p2), h2:Math.round(h2),
+    r1:r1, r2:r2,
+    decouple:(r1-r2)/r1*100,
+    rawDrift:Math.round(h2-h1),
+    powerShift:(p2-p1)/p1*100,
+    workMin:Math.round(work.length/60),
+    splitAt:samples.reduce(function(acc,x,idx){ if(acc.done) return acc; acc.wk += x.work?1:0; if(acc.wk>=half && !acc.done){acc.i=idx;acc.done=true;} return acc; },{wk:0,i:0,done:false}).i,
+    total:samples.length
+  };
+}
+
+// ---- draw the profile + HR overlay ----
+function chartSVG(samples,m){
+  var W=340,H=128, n=samples.length, dx=W/n;
+  var maxW=0; samples.forEach(function(x){if(x.w>maxW)maxW=x.w;});
+  var hrs=samples.map(function(x){return x.hr;});
+  var hrMin=Math.min.apply(null,hrs)-4, hrMax=Math.max.apply(null,hrs)+4;
+  function py(w){return H - (w/maxW)*(H-10);}
+  function hy(hr){return H-6 - (hr-hrMin)/(hrMax-hrMin)*(H-30);}
+  var s='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">';
+  // power blocks + work shading
+  var i=0;
+  while(i<n){
+    var j=i; while(j<n && samples[j].w===samples[i].w && samples[j].work===samples[i].work) j++;
+    var x=i*dx, w=(j-i)*dx, top=py(samples[i].w), col=zoneColor(samples[i].w);
+    if(samples[i].work) s+='<rect x="'+x+'" y="0" width="'+w+'" height="'+H+'" fill="rgba(20,20,15,0.05)"/>';
+    s+='<rect x="'+x+'" y="'+top+'" width="'+w+'" height="'+(H-top)+'" fill="'+tintHex(col,0.45)+'"/>';
+    i=j;
+  }
+  // work-half split line
+  if(m.splitAt){var sx=m.splitAt*dx; s+='<line x1="'+sx+'" y1="0" x2="'+sx+'" y2="'+H+'" stroke="'+getV('--accent')+'" stroke-width="1.2" stroke-dasharray="3 3" opacity="0.55"/>';}
+  // HR line
+  var d=''; samples.forEach(function(x,idx){ d+=(idx?'L':'M')+(idx*dx).toFixed(1)+' '+hy(x.hr).toFixed(1)+' '; });
+  s+='<path d="'+d+'" fill="none" stroke="'+getV('--hr')+'" stroke-width="2"/>';
+  s+='</svg>';
+  return s;
+}
+
+function fmtLine(wk,m){
+  var ladderish = Math.abs(m.powerShift) > 5;   // halves at different power → hide raw bpm
+  var dec = (m.decouple>=0?'+':'')+m.decouple.toFixed(1)+'%';
+  if(ladderish){
+    return 'HR decoupling '+dec+'  (work power '+m.p1+'→'+m.p2+' W)';
+  }
+  return 'HR '+m.h1+'→'+m.h2+' bpm  ·  decoupling '+dec;
+}
+function verdict(wk,m){
+  var ladderish = Math.abs(m.powerShift) > 5;
+  if(ladderish){
+    return '<span class="pill flat">rising intensity</span> Work power climbs '+m.p1+'→'+m.p2+' W, so the +'+m.rawDrift+' bpm just <b>follows the prescribed step-up</b>; decoupling even goes negative (HR rose <i>less</i> than power). Neither number reads as fatigue here — cleanest call is to <b>skip the line for ascending / mixed-intensity shapes</b>.';
+  }
+  if(m.decouple>=5) return '<span class="pill warn">notable drift</span> HR crept up '+m.rawDrift+' bpm on flat power — real cardiac drift (fatigue / heat / fuelling).';
+  if(m.decouple>=3) return '<span class="pill ok">normal</span> A '+m.decouple.toFixed(1)+'% creep is typical aerobic drift for this length.';
+  return '<span class="pill ok">well coupled</span> Barely drifted ('+m.decouple.toFixed(1)+'%) — HR held steady against the effort.';
+}
+
+var STRAVA_MARK='<svg viewBox="0 0 24 24" width="12" height="12"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066M12.825 10.2l1.46 2.874h-2.92l1.46-2.874" fill="#FC4C02"/></svg>';
+
+var grid=document.getElementById('grid');
+WORKOUTS.forEach(function(wk){
+  var samples=simulate(wk), m=metrics(samples);
+  var existing = wk.sub.split(' / ')[0].replace(/×/g,'×');
+  var card=document.createElement('div'); card.className='card';
+  card.innerHTML=
+    '<div class="ctitle"><h2>'+wk.name+'</h2><span class="shape">'+wk.shape+'</span></div>'+
+    '<div class="csub">'+wk.sub+'</div>'+
+    '<div class="chart">'+chartSVG(samples,m)+'</div>'+
+    '<div class="legend"><span><i style="background:var(--hr)"></i>Heart rate</span><span><i style="background:var(--c-tempo);opacity:.55"></i>Power</span><span><span class="wk"></span> Work (counted)</span></div>'+
+    '<div class="strava"><div class="lbl">'+STRAVA_MARK+' Strava description</div>'+
+      '<pre>'+wk.sub.split(' / ')[0]+' · TSS '+estTss(samples)+'\n'+
+      '<span class="new">'+fmtLine(wk,m)+'</span></pre></div>'+
+    '<div class="mt">'+
+      '<span class="h"></span><span class="h">First half</span><span class="h">Second half</span>'+
+      '<span class="k">Work power</span><span class="v">'+m.p1+' W</span><span class="v">'+m.p2+' W</span>'+
+      '<span class="k">Avg HR</span><span class="v">'+m.h1+' bpm</span><span class="v">'+m.h2+' bpm</span>'+
+      '<span class="k">Pw : HR</span><span class="v">'+m.r1.toFixed(3)+'</span><span class="v">'+m.r2.toFixed(3)+'</span>'+
+    '</div>'+
+    '<div class="verdict">'+verdict(wk,m)+'</div>';
+  grid.appendChild(card);
+});
+function estTss(samples){
+  var t=0; samples.forEach(function(x){var r=x.w/FTP; t+=r*r;}); return Math.round(t/3600*100);
+}
+</script>
+</body>
+</html>

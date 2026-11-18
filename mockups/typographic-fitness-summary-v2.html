@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fitness summary — v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{ --bg:#F4F3EF; --elev:#FFFFFF; --strong:#14140F; --fg:#14140F; --dim:#4A4A44; --faint:#6E6B60; --rule:#E2E0D8; --hair:#ECEAE3; --ok:#1C8579; --warn:#B07A12; --easy:#3F79E8; --ss:#E0A22F; --thr:#E85F2E; --endu:#3F79E8; --bar:#5E5D56; --barLight:#DCD9CF; }
+  :root[data-theme="dark"]{ --bg:#121213; --elev:#1B1B1D; --strong:#F6F6F5; --fg:#ECECEA; --dim:#A9A9A6; --faint:#85857F; --rule:#2C2C2F; --hair:#232326; --ok:#5CCDC1; --warn:#E7B84E; --easy:#6E9BEF; --ss:#E8B24D; --thr:#F2764A; --endu:#6E9BEF; --bar:#9C9C97; --barLight:#3A3A3D; }
+  :root{ --mono:'DM Mono',ui-monospace,"SF Mono",Consolas,monospace; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);-webkit-font-smoothing:antialiased;font-size:14px;}
+  b{font-weight:500;}
+
+  .chrome{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px 18px;padding:12px 22px;background:var(--bg);border-bottom:1px solid var(--rule);flex-wrap:wrap;}
+  .chrome .t{font-size:12px;letter-spacing:.16em;text-transform:uppercase;}
+  .seg{display:flex;gap:4px;flex-wrap:wrap;}
+  .seg button{font:inherit;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);background:none;border:1px solid var(--rule);border-radius:7px;padding:6px 11px;cursor:pointer;}
+  .seg button.on{color:var(--bg);background:var(--fg);border-color:var(--fg);}
+  .sp{flex:1;}
+  .stage{max-width:1060px;margin:0 auto;padding:24px 22px 80px;}
+  .stage.phone{max-width:410px;}
+  .cap{font-size:12px;color:var(--dim);margin:0 0 18px;line-height:1.65;max-width:780px;}
+  .cap b{color:var(--strong);}
+  .cap ul{margin:8px 0 0;padding-left:18px;} .cap li{margin:3px 0;}
+
+  .modal{container-type:inline-size;background:var(--elev);border:1px solid var(--rule);border-radius:14px;padding:22px 30px 40px;}
+  .mhead{display:flex;align-items:center;justify-content:space-between;}
+  .mhead h1{margin:0;font-size:15px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--strong);}
+  .close{font:inherit;font-size:12px;font-weight:500;border:0;background:#E8395A;color:#fff;border-radius:8px;padding:9px 14px;}
+  .tabs{display:flex;gap:24px;border-bottom:1px solid var(--rule);margin:20px 0 34px;}
+  .tabs span{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:10px 0;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .tabs span.on{color:var(--strong);border-bottom-color:var(--fg);}
+
+  .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);}
+  .meta{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
+
+  /* two columns, two timescales */
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+  .col{padding-right:48px;}
+  .col + .col{padding:0 0 0 48px;border-left:1px solid var(--hair);}
+  .hd{display:flex;justify-content:space-between;align-items:baseline;}
+
+  .vd{display:flex;gap:12px;font-size:22px;font-weight:500;color:var(--strong);margin:18px 0 12px;line-height:1.25;letter-spacing:-.005em;}
+  .pip{width:10px;height:10px;border-radius:50%;flex:none;margin-top:.42em;background:var(--c);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 20%,transparent);}
+  .why{font-size:12.5px;line-height:1.75;color:var(--dim);margin:0;max-width:46ch;}
+  .why b{color:var(--strong);}
+
+  .blk{margin-top:34px;}
+  .blk > .hd{margin-bottom:14px;}
+
+  /* readiness */
+  .rword{font-size:13px;color:var(--strong);font-weight:500;letter-spacing:.02em;}
+  .slider{position:relative;height:7px;border-radius:4px;background:linear-gradient(90deg,var(--faint),var(--strong));}
+  .slider .th{position:absolute;top:50%;width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border-radius:50%;background:var(--elev);border:2px solid var(--strong);}
+  .ends{display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:9px;}
+  .nums{display:flex;gap:44px;margin-top:24px;}
+  .num .v{font-size:24px;color:var(--strong);line-height:1;}
+  .num .l{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:9px;}
+
+  /* workouts */
+  .wrows{border-top:1px solid var(--hair);}
+  .wrow{display:grid;grid-template-columns:10px 1fr auto;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid var(--hair);cursor:pointer;}
+  .wrow .sw{width:10px;height:10px;border-radius:2px;background:var(--zc);}
+  .wrow .n{font-size:13.5px;color:var(--strong);}
+  .wrow .m{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-top:4px;}
+  .wrow .go{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);white-space:nowrap;}
+  .wrow:hover .go{color:var(--strong);}
+  .hint{font-size:11px;color:var(--faint);margin-top:12px;line-height:1.6;}
+
+  /* this week */
+  .wk3{display:flex;gap:44px;}
+  .wk3 .v{font-size:24px;color:var(--strong);line-height:1;}
+  .wk3 .v small{font-size:13px;color:var(--dim);margin-left:2px;}
+  .wk3 .l{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:9px;}
+  .capbar{margin-top:22px;}
+  .cb-top{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;color:var(--dim);}
+  .cb-top b{color:var(--strong);}
+  .bar{position:relative;height:8px;background:var(--hair);border-radius:4px;margin:10px 0 0;overflow:hidden;}
+  .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--easy);border-radius:4px;}
+
+  /* chart */
+  .tgl{display:flex;gap:14px;}
+  .tgl button{font:inherit;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);opacity:.45;background:none;border:0;padding:0;cursor:pointer;}
+  .tgl button.on{color:var(--strong);opacity:1;font-weight:500;}
+  .chart{width:100%;}
+  .chart svg{display:block;overflow:visible;}
+  .chart text{font-family:var(--mono);}
+  .key{display:flex;gap:18px;font-size:10px;color:var(--faint);letter-spacing:.04em;margin-top:14px;flex-wrap:wrap;}
+  .key i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:-1px;}
+
+  .ramp{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--dim);padding-top:16px;margin-top:22px;border-top:1px solid var(--hair);}
+  .ramp b{color:var(--strong);}
+  .ramp .q{font-size:10.5px;color:var(--faint);letter-spacing:.04em;}
+
+  @container (max-width:680px){
+    .grid{grid-template-columns:1fr;}
+    .col{padding-right:0;}
+    .col + .col{border-left:0;padding:34px 0 0;margin-top:38px;border-top:1px solid var(--rule);}
+    .vd{font-size:20px;}
+    .nums,.wk3{gap:0;justify-content:space-between;}
+  }
+
+  .note{margin-top:22px;font-size:11.5px;line-height:1.65;color:var(--faint);max-width:780px;}
+  .note b{color:var(--dim);}
+</style>
+</head>
+<body>
+<div class="chrome">
+  <span class="t">Fitness · Summary v2</span>
+  <div class="seg" id="sSeg"><button data-s="rec" class="on">Recovery week</button><button data-s="build">Build week</button></div>
+  <span class="sp"></span>
+  <div class="seg" id="wSeg"><button data-w="desk" class="on">Desktop</button><button data-w="phone">Phone</button></div>
+  <div class="seg" id="tSeg"><button data-t="light" class="on">Light</button><button data-t="dark">Dark</button></div>
+</div>
+
+<div class="stage" id="stage">
+  <div class="cap"><b>B’s layout with A’s room.</b> Left is today, right is the weeks — but every block now has a 34px gap above it, bigger verdicts, wider columns and a softer divider, so nothing is stacked tight.<ul>
+    <li><b>Today follows the recovery week</b> (now live in the code): easy endurance under the week’s cap, not sweet spot.</li>
+    <li>Workouts say <b>View ›</b> — opens the Workouts list with that card expanded, so you see the intervals before starting.</li>
+    <li>12-week chart is bars, with the TSS / Hours toggle. Try both states up top: the cap bar only appears in a recovery week.</li></ul></div>
+  <div class="modal">
+    <div class="mhead"><h1>Fitness</h1><button class="close">Close</button></div>
+    <div class="tabs"><span class="on">Summary</span><span>Performance</span><span>Power</span></div>
+    <div id="body"></div>
+  </div>
+  <div class="note"><b>Removed vs today’s screen:</b> “Based on…” notes, the boxed Fitness/Form/Fatigue cells and their arrows, the build-week squares (now in the chart), the ramp gauge (now one line), the boxed plan note (now the cap bar), and the second “Building” headline.</div>
+</div>
+
+<script>
+var WEEKS = ['10 Aug','17 Aug','24 Aug','31 Aug','7 Sep','14 Sep','21 Sep','28 Sep','5 Oct','12 Oct','19 Oct','26 Oct'];
+var S = {
+  rec: {
+    tss:[470,520,610,300,450,500,280,480,530,590,610,275], hrs:[6.1,6.6,7.8,3.9,5.8,6.4,3.6,6.2,6.8,7.5,7.8,3.8],
+    light:{3:1,6:1}, streak:[7,10], cap:330,
+    today:{c:'var(--endu)', meta:'Recovery week', v:'Easy week — keep it aerobic', why:'Recovery week: <b>275 of ~330 TSS</b> so far, about <b>55</b> left. Easy endurance; a few short openers are fine.',
+      ready:'Building', pos:37, n:[64,'−18',71],
+      picks:[['Tidewater','endurance','Endurance · 75 min · TSS 46'],['Thousand Acres','endurance','Endurance · 45 min · TSS 36']]},
+    block:{c:'var(--easy)', v:'Recovery week due', why:'<b>4 build weeks</b> in a row without a lighter one. Fitness lands when you back off — about <b>330 TSS</b> this week, then build again.', ramp:'+0.9', rq:'flat · healthy is 2–7'}
+  },
+  build: {
+    tss:[470,520,610,300,450,500,560,280,480,530,560,240], hrs:[6.1,6.6,7.8,3.9,5.8,6.4,7.2,3.6,6.2,6.8,7.2,3.1],
+    light:{3:1,7:1}, streak:[8,10], cap:null,
+    today:{c:'var(--thr)', meta:'Form −7', v:'Ready for quality work', why:'Form is <b>−7</b> — balanced. A good day for threshold or sweet spot.',
+      ready:'Balanced', pos:52, n:[62,'−7',66],
+      picks:[['Hard Border','thr','Threshold · 45 min · TSS 53'],['Warmhearth','ss','Sweet spot · 45 min · TSS 44']]},
+    block:{c:'var(--ok)', v:'Productive build — keep going', why:'Fitness is climbing <b>+3.2 / week</b> — a healthy rate you’re absorbing. <b>One more build week</b> at about 560 TSS, then a recovery week.', ramp:'+3.2', rq:'healthy · 2–7'}
+  }
+};
+var st = 'rec', unit = 'tss';
+function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+function barChart(el){
+  var d = S[st], vals = unit === 'tss' ? d.tss : d.hrs, n = vals.length;
+  var W = el.clientWidth, H = 168, pt = 26, pb = 22, gap = Math.max(4, Math.round(W / 70)), bw = (W - gap * (n - 1)) / n;
+  var max = unit === 'tss' ? 700 : 9, last = n - 1;
+  var y = function(v){ return pt + (1 - v / max) * (H - pt - pb); };
+  var s = '<svg width="' + W + '" height="' + H + '">';
+  vals.forEach(function(v, i){
+    var x = i * (bw + gap);
+    if(i === last){
+      if(d.cap && unit === 'tss') s += '<rect x="' + x + '" y="' + y(d.cap) + '" width="' + bw + '" height="' + (y(0) - y(d.cap)) + '" rx="2" fill="none" stroke="' + css('--easy') + '" stroke-dasharray="3 3"/>';
+      s += '<rect x="' + x + '" y="' + y(v) + '" width="' + bw + '" height="' + (y(0) - y(v)) + '" rx="2" fill="' + (d.cap ? css('--easy') : css('--strong')) + '"/>';
+    } else {
+      s += '<rect x="' + x + '" y="' + y(v) + '" width="' + bw + '" height="' + (y(0) - y(v)) + '" rx="2" fill="' + (d.light[i] ? css('--barLight') : css('--bar')) + '"/>';
+    }
+  });
+  var a = d.streak[0] * (bw + gap), b = d.streak[1] * (bw + gap) + bw, k = d.streak[1] - d.streak[0] + 1;
+  s += '<path d="M' + a + ' ' + (pt - 6) + ' V' + (pt - 10) + ' H' + b + ' V' + (pt - 6) + '" fill="none" stroke="' + css('--faint') + '"/>';
+  s += '<text x="' + ((a + b) / 2) + '" y="' + (pt - 14) + '" font-size="9.5" text-anchor="middle" fill="' + css('--faint') + '">' + k + ' build weeks</text>';
+  var lv = vals[last];
+  s += '<text x="' + (last * (bw + gap) + bw / 2) + '" y="' + (y(Math.max(lv, d.cap && unit === 'tss' ? d.cap : 0)) - 6) + '" font-size="9.5" text-anchor="middle" fill="' + css('--strong') + '">' + (unit === 'tss' ? lv : lv + 'h') + '</text>';
+  s += '<text x="0" y="' + (H - 4) + '" font-size="9.5" fill="' + css('--faint') + '">' + WEEKS[0] + '</text>';
+  s += '<text x="' + W + '" y="' + (H - 4) + '" font-size="9.5" text-anchor="end" fill="' + css('--faint') + '">this week</text>';
+  el.innerHTML = s + '</svg>';
+}
+
+function render(){
+  var d = S[st], t = d.today, b = d.block;
+  var zc = {endurance:'var(--endu)', thr:'var(--thr)', ss:'var(--ss)'};
+  var picks = t.picks.map(function(p){ return '<div class="wrow"><span class="sw" style="--zc:' + zc[p[1]] + '"></span><div><span class="n">' + p[0] + '</span><span class="m">' + p[2] + '</span></div><span class="go">View ›</span></div>'; }).join('');
+  var week = d.cap
+    ? '<div class="wk3"><div><div class="v">275</div><div class="l">Load · TSS</div></div><div><div class="v">3<small>h</small> 49<small>m</small></div><div class="l">Time</div></div><div><div class="v">4</div><div class="l">Rides</div></div></div>'
+      + '<div class="capbar"><div class="cb-top"><span><b>275</b> of ~330 TSS easy-week cap</span><span>55 left</span></div><div class="bar"><i style="width:83%"></i></div></div>'
+    : '<div class="wk3"><div><div class="v">240</div><div class="l">Load · TSS</div></div><div><div class="v">3<small>h</small> 06<small>m</small></div><div class="l">Time</div></div><div><div class="v">3</div><div class="l">Rides</div></div></div>';
+  document.getElementById('body').innerHTML = '<div class="grid">'
+    + '<div class="col">'
+    +   '<div class="hd"><span class="lbl">Today</span><span class="meta">' + t.meta + '</span></div>'
+    +   '<div class="vd"><span class="pip" style="--c:' + t.c + '"></span><span>' + t.v + '</span></div>'
+    +   '<p class="why">' + t.why + '</p>'
+    +   '<div class="blk"><div class="hd"><span class="lbl">Readiness</span><span class="rword">' + t.ready + '</span></div>'
+    +     '<div class="slider"><span class="th" style="left:' + t.pos + '%"></span></div><div class="ends"><span>Overloaded</span><span>Fresh</span></div>'
+    +     '<div class="nums"><div class="num"><div class="v">' + t.n[0] + '</div><div class="l">Fitness</div></div><div class="num"><div class="v">' + t.n[1] + '</div><div class="l">Form</div></div><div class="num"><div class="v">' + t.n[2] + '</div><div class="l">Fatigue</div></div></div></div>'
+    +   '<div class="blk"><div class="hd"><span class="lbl">Ride today</span></div><div class="wrows">' + picks + '</div><div class="hint">View opens the workout in your list so you can see the intervals first.</div></div>'
+    + '</div>'
+    + '<div class="col">'
+    +   '<div class="hd"><span class="lbl">Next 4 weeks</span><span class="meta">Ramp ' + b.ramp + ' / wk</span></div>'
+    +   '<div class="vd"><span class="pip" style="--c:' + b.c + '"></span><span>' + b.v + '</span></div>'
+    +   '<p class="why">' + b.why + '</p>'
+    +   '<div class="blk"><div class="hd"><span class="lbl">This week</span></div>' + week + '</div>'
+    +   '<div class="blk"><div class="hd"><span class="lbl">12 weeks</span><span class="tgl"><button data-u="tss"' + (unit === 'tss' ? ' class="on"' : '') + '>TSS</button><button data-u="hrs"' + (unit === 'hrs' ? ' class="on"' : '') + '>Hours</button></span></div>'
+    +     '<div class="chart"></div>'
+    +     '<div class="key"><span><i style="background:var(--bar)"></i>build week</span><span><i style="background:var(--barLight)"></i>lighter week</span><span><i style="background:' + (d.cap ? 'var(--easy)' : 'var(--strong)') + '"></i>this week' + (d.cap ? ' · cap' : '') + '</span></div>'
+    +     '<div class="ramp"><span>Fitness ramp <b>' + b.ramp + ' / week</b></span><span class="q">' + b.rq + '</span></div></div>'
+    + '</div></div>';
+  document.querySelectorAll('.chart').forEach(barChart);
+}
+document.getElementById('body').addEventListener('click', function(e){
+  var u = e.target.closest('[data-u]'); if(u){ unit = u.dataset.u; render(); }
+});
+function seg(id, attr, fn){
+  document.getElementById(id).addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
+    fn(b.dataset[attr]);
+  });
+}
+seg('sSeg', 's', function(v){ st = v; render(); });
+seg('wSeg', 'w', function(w){ document.getElementById('stage').classList.toggle('phone', w === 'phone'); setTimeout(render, 30); });
+seg('tSeg', 't', function(t){ document.documentElement.dataset.theme = t; render(); });
+window.addEventListener('resize', render);
+render();
+</script>
+</body>
+</html>

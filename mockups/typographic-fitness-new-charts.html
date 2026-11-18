@@ -1,0 +1,324 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fitness — new charts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{ --bg:#F4F3EF; --elev:#FFFFFF; --strong:#14140F; --fg:#14140F; --dim:#4A4A44; --faint:#6E6B60; --rule:#E2E0D8; --hair:#ECEAE3; --ok:#1C8579; --okSoft:rgba(28,133,121,.10); --bad:#D9455F; --badSoft:rgba(217,69,95,.10); --warn:#B07A12; --ink-rgb:20,20,15; }
+  :root[data-theme="dark"]{ --bg:#121213; --elev:#1B1B1D; --strong:#F6F6F5; --fg:#ECECEA; --dim:#A9A9A6; --faint:#85857F; --rule:#2C2C2F; --hair:#232326; --ok:#5CCDC1; --okSoft:rgba(92,205,193,.10); --bad:#FF5D75; --badSoft:rgba(255,93,117,.12); --warn:#E7B84E; --ink-rgb:236,236,234; }
+  :root{ --mono:'DM Mono',ui-monospace,"SF Mono",Consolas,monospace; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);-webkit-font-smoothing:antialiased;font-size:14px;}
+  b{font-weight:500;}
+
+  .chrome{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px 18px;padding:12px 22px;background:var(--bg);border-bottom:1px solid var(--rule);flex-wrap:wrap;}
+  .chrome .t{font-size:12px;letter-spacing:.16em;text-transform:uppercase;}
+  .seg{display:flex;gap:4px;flex-wrap:wrap;}
+  .seg button{font:inherit;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);background:none;border:1px solid var(--rule);border-radius:7px;padding:6px 11px;cursor:pointer;}
+  .seg button.on{color:var(--bg);background:var(--fg);border-color:var(--fg);}
+  .sp{flex:1;}
+  .stage{max-width:1060px;margin:0 auto;padding:24px 22px 80px;}
+  .stage.phone{max-width:410px;}
+  .cap{font-size:12px;color:var(--dim);margin:0 0 26px;line-height:1.65;max-width:780px;}
+  .cap b{color:var(--strong);}
+
+  .where{display:flex;align-items:baseline;gap:12px;margin:44px 0 12px;}
+  .where:first-of-type{margin-top:0;}
+  .where .n{font-size:22px;color:var(--strong);font-weight:500;}
+  .where .w{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);}
+  .where .w b{color:var(--strong);}
+
+  .modal{container-type:inline-size;background:var(--elev);border:1px solid var(--rule);border-radius:14px;padding:22px 40px 36px;}
+  .tabs{display:flex;gap:24px;border-bottom:1px solid var(--rule);margin:0 0 30px;}
+  .tabs span{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:10px 0;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .tabs span.on{color:var(--strong);border-bottom-color:var(--fg);}
+  .ctx{font-size:11px;color:var(--faint);letter-spacing:.04em;border:1px dashed var(--rule);border-radius:8px;padding:10px 14px;margin-bottom:30px;}
+
+  .hd{display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap;}
+  .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);}
+  .meta{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
+  .tgl{display:flex;gap:14px;}
+  .tgl button{font:inherit;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);opacity:.45;background:none;border:0;padding:0;cursor:pointer;}
+  .tgl button.on{color:var(--strong);opacity:1;font-weight:500;}
+
+  .big{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;margin:16px 0 8px;}
+  .big .v{font-size:34px;font-weight:500;color:var(--strong);line-height:1;letter-spacing:-.01em;}
+  .big .v.txt{font-size:22px;letter-spacing:-.005em;line-height:1.25;}
+  .big .v small{font-size:14px;color:var(--dim);font-weight:400;margin-left:6px;}
+  .delta{font-size:12px;font-weight:500;padding:3px 8px;border-radius:5px;}
+  .delta.up{color:var(--ok);background:var(--okSoft);}
+  .delta.down{color:var(--bad);background:var(--badSoft);}
+  .why{font-size:12.5px;line-height:1.75;color:var(--dim);margin:0 0 22px;max-width:62ch;}
+  .why b{color:var(--strong);}
+
+  .chart{width:100%;}
+  .chart svg{display:block;overflow:visible;}
+  .chart text{font-family:var(--mono);}
+  .key{display:flex;gap:18px;font-size:10px;color:var(--faint);letter-spacing:.04em;margin-top:12px;flex-wrap:wrap;align-items:center;}
+  .key i{display:inline-block;width:14px;height:0;border-top:2px solid var(--strong);margin-right:7px;vertical-align:3px;}
+  .key i.dash{border-top:2px dashed var(--faint);}
+  .key i.dot{width:8px;height:8px;border:0;border-radius:50%;background:var(--dim);opacity:.55;vertical-align:0;}
+  .key i.sq{width:10px;height:10px;border:0;border-radius:2px;vertical-align:-1px;}
+  .note{font-size:11px;color:var(--faint);line-height:1.6;margin-top:16px;max-width:70ch;}
+
+  .sub{margin-top:30px;padding-top:22px;border-top:1px solid var(--hair);}
+
+  /* power curve table */
+  .pct{width:100%;border-collapse:collapse;margin-top:24px;font-size:12px;font-variant-numeric:tabular-nums;}
+  .pct th{font-weight:400;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);text-align:right;padding:0 0 8px;border-bottom:1px solid var(--hair);}
+  .pct th:first-child,.pct td:first-child{text-align:left;}
+  .pct td{text-align:right;padding:10px 0;border-bottom:1px solid var(--hair);color:var(--fg);}
+  .pct td.now{color:var(--strong);font-weight:500;}
+  .pct td.was{color:var(--faint);}
+  .pct td .up{color:var(--ok);} .pct td .down{color:var(--bad);} .pct td .flat{color:var(--faint);}
+  .pct-wrap{overflow-x:auto;}
+
+  /* consistency */
+  .stats{display:flex;gap:44px;margin:18px 0 24px;flex-wrap:wrap;}
+  .stat .v{font-size:24px;color:var(--strong);line-height:1;}
+  .stat .v small{font-size:13px;color:var(--dim);margin-left:3px;}
+  .stat .l{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:9px;}
+  .heat-key{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--faint);letter-spacing:.04em;}
+  .heat-key i{width:11px;height:11px;border-radius:2px;display:inline-block;}
+
+  @container (max-width:600px){
+    .pct .w{display:none;}
+    .stats{gap:0;justify-content:space-between;}
+    .big .v{font-size:28px;}
+  }
+  .stage.phone .modal{padding:18px 18px 26px;}
+</style>
+</head>
+<body>
+<div class="chrome">
+  <span class="t">Fitness · new charts</span>
+  <span class="sp"></span>
+  <div class="seg" id="wSeg"><button data-w="desk" class="on">Desktop</button><button data-w="phone">Phone</button></div>
+  <div class="seg" id="tSeg"><button data-t="light" class="on">Light</button><button data-t="dark">Dark</button></div>
+</div>
+
+<div class="stage" id="stage">
+  <div class="cap"><b>Three charts, made from data every ride already stores.</b> Same type, rules and greys as the new Summary. Each sits in the tab named above it, under what’s there today. Numbers are made up.</div>
+
+  <div class="where"><span class="n">1</span><span class="w">Aerobic efficiency · <b>Performance</b> tab, under Fitness &amp; Fatigue</span></div>
+  <div class="modal">
+    <div class="tabs"><span>Summary</span><span class="on">Performance</span><span>Power</span></div>
+    <div class="ctx">↑ Fitness &amp; Fatigue and Form charts as now</div>
+    <div class="hd"><span class="lbl">Aerobic efficiency</span><span class="meta">Steady rides · last 12 weeks</span></div>
+    <div class="big"><span class="v">1.52<small>W per heartbeat</small></span><span class="delta up">+6% since Aug</span></div>
+    <p class="why">At the same heart rate you’re making <b>6% more power</b> than 12 weeks ago — your aerobic engine is growing, even between FTP tests.</p>
+    <div class="chart" id="effChart"></div>
+    <div class="key"><span><i class="dot"></i>A steady ride</span><span><i></i>Trend</span></div>
+    <div class="sub">
+      <div class="hd"><span class="lbl">Heart-rate drift</span><span class="meta" id="driftMeta"></span></div>
+      <div class="chart" id="driftChart" style="margin-top:14px"></div>
+    </div>
+    <div class="note">Counts rides with 20+ minutes of steady endurance-to-tempo work and a heart-rate strap. Intervals are left out — they’d swamp the signal.</div>
+  </div>
+
+  <div class="where"><span class="n">2</span><span class="w">Power curve, then vs now · <b>Power</b> tab, replaces Power Records</span></div>
+  <div class="modal">
+    <div class="tabs"><span>Summary</span><span>Performance</span><span class="on">Power</span></div>
+    <div class="ctx">↑ FTP check and FTP history as now</div>
+    <div class="hd"><span class="lbl">Power curve</span><span class="tgl" id="pcTgl"><button data-c="prev" class="on">vs 6 wks before</button><button data-c="all">vs all-time</button></span></div>
+    <div class="big"><span class="v txt" id="pcHead">Better from 30 s to 60 min</span></div>
+    <p class="why" id="pcWhy"></p>
+    <div class="hd" style="justify-content:flex-end;margin-bottom:10px"><span class="tgl" id="pcView"><button data-v="change" class="on">Change</button><button data-v="curve">Curve</button></span></div>
+    <div class="chart" id="pcChart"></div>
+    <div class="key" id="pcKey"></div>
+    <div class="pct-wrap"><table class="pct" id="pcTable"></table></div>
+    <div class="note">★ marks an all-time best set in the last 6 weeks. W / W·kg toggle carries over from today’s Power Records.</div>
+  </div>
+
+  <div class="where"><span class="n">4</span><span class="w">Consistency · bottom of <b>Summary</b>, full width under both columns</span></div>
+  <div class="modal">
+    <div class="tabs"><span class="on">Summary</span><span>Performance</span><span>Power</span></div>
+    <div class="ctx">↑ Today | Next 4 weeks, as built</div>
+    <div class="hd"><span class="lbl">Consistency</span><span class="heat-key">Less <i data-l="0"></i><i data-l="1"></i><i data-l="2"></i><i data-l="3"></i><i data-l="4"></i> More</span></div>
+    <div class="stats">
+      <div class="stat"><div class="v" id="cRides">0</div><div class="l">Rides · 12 mo</div></div>
+      <div class="stat"><div class="v" id="cWeeks">0</div><div class="l">Weeks ridden</div></div>
+      <div class="stat"><div class="v" id="cStreak">0<small>wks</small></div><div class="l">Current run</div></div>
+    </div>
+    <div class="chart" id="heat"></div>
+    <div class="note">A square per day, shaded by that day’s load. “Weeks ridden” and the run count any week with a ride — a rest week still counts if you turned up once, so it never punishes a recovery week.</div>
+  </div>
+</div>
+
+<script>
+function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function ink(a){ return 'rgba(' + css('--ink-rgb') + ',' + a + ')'; }
+var seed = 7; function rnd(){ seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
+var MONS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var TODAY = new Date(2026, 9, 30);
+
+/* ---------- 1 · efficiency ---------- */
+var EFF = [];
+(function(){ for(var d = 83; d >= 0; d -= 2 + Math.floor(rnd() * 3)){ var t = (83 - d) / 83; EFF.push({d:d, v:1.43 + t * 0.09 + (rnd() - 0.5) * 0.06, drift:Math.max(1.2, 7.5 - t * 3.5 + (rnd() - 0.5) * 3.2)}); } })();
+function dateOf(daysAgo){ var x = new Date(TODAY); x.setDate(x.getDate() - daysAgo); return x; }
+function drawEff(){
+  var el = document.getElementById('effChart'), W = el.clientWidth, H = 190, pl = 34, pr = 6, pt = 10, pb = 22;
+  var lo = 1.37, hi = 1.57, x = function(d){ return pl + (1 - d / 84) * (W - pl - pr); }, y = function(v){ return pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb); };
+  var s = '<svg width="' + W + '" height="' + H + '">';
+  [1.4, 1.45, 1.5, 1.55].forEach(function(g){ s += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="' + ink(.08) + '"/><text x="' + (pl - 7) + '" y="' + (y(g) + 3) + '" font-size="9.5" text-anchor="end" fill="' + css('--faint') + '">' + g.toFixed(2) + '</text>'; });
+  EFF.forEach(function(p){ s += '<circle cx="' + x(p.d) + '" cy="' + y(p.v) + '" r="3.2" fill="' + css('--dim') + '" fill-opacity=".45"/>'; });
+  // least-squares trend
+  var n = EFF.length, sx = 0, sy = 0, sxy = 0, sxx = 0;
+  EFF.forEach(function(p){ var t = 84 - p.d; sx += t; sy += p.v; sxy += t * p.v; sxx += t * t; });
+  var m = (n * sxy - sx * sy) / (n * sxx - sx * sx), b = (sy - m * sx) / n;
+  s += '<line x1="' + x(84) + '" y1="' + y(b) + '" x2="' + x(0) + '" y2="' + y(b + m * 84) + '" stroke="' + css('--strong') + '" stroke-width="2"/>';
+  s += '<circle cx="' + x(0) + '" cy="' + y(b + m * 84) + '" r="4.5" fill="' + css('--strong') + '"/>';
+  [84, 42, 0].forEach(function(d, i){ var dt = dateOf(d); s += '<text x="' + x(d) + '" y="' + (H - 5) + '" font-size="9.5" text-anchor="' + ['start','middle','end'][i] + '" fill="' + css('--faint') + '">' + (d ? dt.getDate() + ' ' + MONS[dt.getMonth()] : 'Today') + '</text>'; });
+  el.innerHTML = s + '</svg>';
+}
+function drawDrift(){
+  var el = document.getElementById('driftChart'), W = el.clientWidth, H = 74, pl = 34, pr = 6, pb = 4;
+  var x = function(d){ return pl + (1 - d / 84) * (W - pl - pr); }, max = 10, y = function(v){ return (1 - v / max) * (H - pb); };
+  var s = '<svg width="' + W + '" height="' + H + '">';
+  s += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(5) + '" y2="' + y(5) + '" stroke="' + css('--faint') + '" stroke-dasharray="3 3"/>';
+  s += '<text x="' + (pl - 7) + '" y="' + (y(5) + 3) + '" font-size="9.5" text-anchor="end" fill="' + css('--faint') + '">5%</text>';
+  var bw = Math.max(3, (W - pl - pr) / 60);
+  EFF.forEach(function(p){ var h = y(0) - y(Math.min(max, p.drift)); s += '<rect x="' + (x(p.d) - bw / 2) + '" y="' + (y(0) - h) + '" width="' + bw + '" height="' + h + '" rx="1.5" fill="' + (p.drift > 5 ? ink(.55) : ink(.16)) + '"/>'; });
+  el.innerHTML = s + '</svg>';
+  var ds = EFF.map(function(p){ return p.drift; }).sort(function(a, b){ return a - b; }), med = ds[Math.floor(ds.length / 2)];
+  var recent = EFF.slice(-10).map(function(p){ return p.drift; }).sort(function(a, b){ return a - b; })[5];
+  document.getElementById('driftMeta').textContent = 'Last 10 rides · median ' + recent.toFixed(1) + '% · under 5% is well-paced';
+}
+
+/* ---------- 2 · power curve ---------- */
+var DUR = [5, 15, 30, 60, 120, 300, 480, 1200, 1800, 3600];
+var LBL = {5:'5 s', 15:'15 s', 30:'30 s', 60:'1 min', 120:'2 min', 300:'5 min', 480:'8 min', 1200:'20 min', 1800:'30 min', 3600:'60 min'};
+var NOW = [905, 735, 572, 398, 336, 286, 266, 241, 229, 214];
+var PREV = [930, 742, 556, 381, 322, 274, 258, 230, 216, 199];
+var ALL = [960, 770, 580, 401, 340, 286, 270, 247, 232, 214];
+var cmp = 'prev', pcView = 'change';
+// Change view: one bar per duration, up = gained, down = lost (% of the comparison).
+function drawPCChange(B){
+  var el = document.getElementById('pcChart'), W = el.clientWidth, H = 200, pt = 20, pb = 22, n = DUR.length;
+  var pct = NOW.map(function(v, i){ return (v - B[i]) / B[i] * 100; });
+  var up = Math.max(3, Math.max.apply(null, pct) + 1.5), dn = Math.max(2, -Math.min.apply(null, pct) + 1.5);
+  var gap = Math.max(6, W / 50), bw = (W - gap * (n - 1)) / n, span = H - pt - pb, mid = pt + span * up / (up + dn);
+  var y = function(v){ return mid - v / (up + dn) * span; };
+  var s = '<svg width="' + W + '" height="' + H + '">';
+  s += '<line x1="0" x2="' + W + '" y1="' + mid + '" y2="' + mid + '" stroke="' + css('--faint') + '"/>';
+  pct.forEach(function(p, i){
+    var x = i * (bw + gap), top = Math.min(y(p), mid), h = Math.max(1.5, Math.abs(y(p) - mid));
+    var col = p > 0.4 ? css('--ok') : p < -0.4 ? css('--bad') : css('--faint');
+    s += '<rect x="' + x + '" y="' + top + '" width="' + bw + '" height="' + h + '" rx="2" fill="' + col + '" fill-opacity="' + (Math.abs(p) > 0.4 ? .85 : .5) + '"/>';
+    var ty = p >= 0 ? top - 6 : top + h + 12;
+    s += '<text x="' + (x + bw / 2) + '" y="' + ty + '" font-size="9.5" text-anchor="middle" fill="' + col + '">' + (p > 0 ? '+' : p < 0 ? '−' : '') + Math.abs(p).toFixed(1) + '%</text>';
+    s += '<text x="' + (x + bw / 2) + '" y="' + (H - 5) + '" font-size="9" text-anchor="middle" fill="' + css('--faint') + '">' + LBL[DUR[i]].replace(' min', 'm').replace(' s', 's') + '</text>';
+  });
+  el.innerHTML = s + '</svg>';
+  document.getElementById('pcKey').innerHTML = '<span><i class="sq" style="background:var(--ok)"></i>Higher than ' + (cmp === 'prev' ? '6 weeks before' : 'your all-time best') + '</span><span><i class="sq" style="background:var(--bad)"></i>Lower</span>';
+}
+function drawPC(){
+  var B = cmp === 'prev' ? PREV : ALL;
+  if(pcView === 'change'){ drawPCChange(B); drawPCText(B); return; }
+  document.getElementById('pcKey').innerHTML = '<span><i></i>Last 6 weeks</span><span><i class="dash"></i>' + (cmp === 'prev' ? '6 weeks before' : 'All-time best') + '</span><span><i class="sq" style="background:var(--okSoft);border:1px solid var(--ok)"></i>Gained</span>';
+  var el = document.getElementById('pcChart'), W = el.clientWidth, H = 230, pl = 38, pr = 8, pt = 10, pb = 22;
+  var lx0 = Math.log(5), lx1 = Math.log(3600), x = function(d){ return pl + (Math.log(d) - lx0) / (lx1 - lx0) * (W - pl - pr); };
+  var lo = 150, hi = 1000, y = function(v){ return pt + (1 - (v - lo) / (hi - lo)) * (H - pt - pb); };
+  var s = '<svg width="' + W + '" height="' + H + '">';
+  [200, 400, 600, 800, 1000].forEach(function(g){ s += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="' + ink(.08) + '"/><text x="' + (pl - 7) + '" y="' + (y(g) + 3) + '" font-size="9.5" text-anchor="end" fill="' + css('--faint') + '">' + g + '</text>'; });
+  // gain bands between the curves where now > before
+  for(var i = 0; i < DUR.length - 1; i++){
+    var a = NOW[i] - B[i], b = NOW[i + 1] - B[i + 1];
+    if(a > 0 || b > 0){
+      s += '<path d="M' + x(DUR[i]) + ' ' + y(Math.max(NOW[i], B[i])) + ' L' + x(DUR[i + 1]) + ' ' + y(Math.max(NOW[i + 1], B[i + 1])) + ' L' + x(DUR[i + 1]) + ' ' + y(B[i + 1]) + ' L' + x(DUR[i]) + ' ' + y(B[i]) + 'Z" fill="' + css('--okSoft') + '"/>';
+    }
+  }
+  function line(arr, dash, col, w){ return '<path d="' + arr.map(function(v, i){ return (i ? 'L' : 'M') + x(DUR[i]).toFixed(1) + ' ' + y(v).toFixed(1); }).join(' ') + '" fill="none" stroke="' + col + '" stroke-width="' + w + '"' + (dash ? ' stroke-dasharray="4 4"' : '') + ' stroke-linejoin="round"/>'; }
+  s += line(B, true, css('--faint'), 1.6) + line(NOW, false, css('--strong'), 2.2);
+  NOW.forEach(function(v, i){ s += '<circle cx="' + x(DUR[i]) + '" cy="' + y(v) + '" r="2.6" fill="' + css('--strong') + '"/>'; });
+  [5, 60, 300, 1200, 3600].forEach(function(d, i){ s += '<text x="' + x(d) + '" y="' + (H - 5) + '" font-size="9.5" text-anchor="' + (i === 0 ? 'start' : i === 4 ? 'end' : 'middle') + '" fill="' + css('--faint') + '">' + LBL[d] + '</text>'; });
+  el.innerHTML = s + '</svg>';
+  drawPCText(B);
+}
+function drawPCText(B){
+  // table
+  var rows = '<tr><th>Duration</th><th>Now</th><th>' + (cmp === 'prev' ? 'Before' : 'Best') + '</th><th>Change</th></tr>';
+  [15, 60, 300, 1200, 3600].forEach(function(d){
+    var i = DUR.indexOf(d), dv = NOW[i] - B[i], pct = Math.round(dv / B[i] * 1000) / 10;
+    var pb = NOW[i] >= ALL[i] ? ' ★' : '';
+    var cls = dv > 0 ? 'up' : dv < 0 ? 'down' : 'flat';
+    rows += '<tr><td>' + LBL[d] + '</td><td class="now">' + NOW[i] + ' W' + pb + '</td><td class="was">' + B[i] + ' W</td><td><span class="' + cls + '">' + '<span class="w">' + (dv > 0 ? '+' : dv < 0 ? '−' : '±') + Math.abs(dv) + ' W' + (dv ? ' · ' : '') + '</span>' + (dv ? (dv > 0 ? '+' : '−') + Math.abs(pct) + '%' : '') + '</span></td></tr>';
+  });
+  document.getElementById('pcTable').innerHTML = rows;
+  document.getElementById('pcHead').innerHTML = cmp === 'prev' ? 'Better from 30 s to 60 min' : 'Two all-time bests this block';
+  document.getElementById('pcWhy').innerHTML = cmp === 'prev'
+    ? 'Your long efforts moved most: <b>+15 W at 60 min</b> and <b>+11 W at 20 min</b>. Sprint power slipped a little — expected in a block of sweet spot and endurance.'
+    : 'You matched your best <b>5 min</b> and set a new <b>60 min</b> best. Sprints are <b>55 W</b> off your peak — fine unless they matter to you.';
+}
+
+/* ---------- 4 · consistency ---------- */
+var DAYS = [];
+(function(){
+  for(var i = 364; i >= 0; i--){
+    var d = dateOf(i), dow = (d.getDay() + 6) % 7, wk = Math.floor(i / 7);
+    var holiday = (wk >= 30 && wk <= 32) || wk === 18;          // a couple of breaks
+    var p = holiday ? 0.05 : ([0.55, 0.15, 0.6, 0.15, 0.3, 0.65, 0.45][dow]) * (i < 120 ? 1.1 : 0.85);
+    var load = rnd() < p ? 30 + rnd() * 110 : 0;
+    DAYS.push({d:d, load:load});
+  }
+})();
+function lvl(l){ return !l ? 0 : l < 50 ? 1 : l < 80 ? 2 : l < 110 ? 3 : 4; }
+function lvlCol(n){ return n === 0 ? ink(.06) : ink([0, .22, .42, .65, .9][n]); }
+function drawHeat(){
+  var el = document.getElementById('heat'), W = el.clientWidth;
+  var gap = 3, labelW = 26, cell = Math.max(9, Math.min(14, Math.floor((W - labelW) / 53) - gap));
+  var nWeeks = Math.min(53, Math.floor((W - labelW + gap) / (cell + gap)));
+  var H = 7 * (cell + gap) + 18;
+  // align columns to Monday weeks, newest on the right
+  var last = DAYS[DAYS.length - 1].d, lastDow = (last.getDay() + 6) % 7;
+  var s = '<svg width="' + W + '" height="' + H + '">';
+  ['Mon', '', 'Wed', '', 'Fri', '', ''].forEach(function(t, r){ if(t) s += '<text x="0" y="' + (16 + r * (cell + gap) + cell - 2) + '" font-size="9" fill="' + css('--faint') + '">' + t + '</text>'; });
+  var prevMon = -1;
+  for(var c = 0; c < nWeeks; c++){
+    var colX = labelW + c * (cell + gap), wkBack = nWeeks - 1 - c;
+    for(var r = 0; r < 7; r++){
+      var back = wkBack * 7 + (lastDow - r); if(back < 0) continue;
+      var di = DAYS.length - 1 - back; if(di < 0) continue;
+      var day = DAYS[di];
+      s += '<rect x="' + colX + '" y="' + (16 + r * (cell + gap)) + '" width="' + cell + '" height="' + cell + '" rx="2" fill="' + lvlCol(lvl(day.load)) + '"><title>' + day.d.getDate() + ' ' + MONS[day.d.getMonth()] + (day.load ? ' · TSS ' + Math.round(day.load) : ' · rest') + '</title></rect>';
+      if(r === 0 && day.d.getDate() <= 7 && day.d.getMonth() !== prevMon){ prevMon = day.d.getMonth(); s += '<text x="' + colX + '" y="10" font-size="9" fill="' + css('--faint') + '">' + MONS[prevMon] + '</text>'; }
+    }
+  }
+  el.innerHTML = s + '</svg>';
+  // stats
+  var rides = DAYS.filter(function(d){ return d.load; }).length, weeks = [], run = 0;
+  for(var w = 0; w < 52; w++){ var any = false; for(var k = 0; k < 7; k++){ var dd = DAYS[DAYS.length - 1 - (w * 7 + k)]; if(dd && dd.load) any = true; } weeks.push(any); }
+  for(var q = 0; q < weeks.length && weeks[q]; q++) run++;
+  document.getElementById('cRides').textContent = rides;
+  document.getElementById('cWeeks').innerHTML = weeks.filter(Boolean).length + '<small>/ 52</small>';
+  document.getElementById('cStreak').innerHTML = run + '<small>wks</small>';
+  document.querySelectorAll('.heat-key i').forEach(function(i){ i.style.background = lvlCol(+i.dataset.l); });
+}
+
+function drawAll(){ drawEff(); drawDrift(); drawPC(); drawHeat(); }
+document.getElementById('pcView').addEventListener('click', function(e){
+  var b = e.target.closest('button'); if(!b) return;
+  pcView = b.dataset.v; this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); }); drawPC();
+});
+document.getElementById('pcTgl').addEventListener('click', function(e){
+  var b = e.target.closest('button'); if(!b) return;
+  cmp = b.dataset.c; this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); }); drawPC();
+});
+function seg(id, attr, fn){
+  document.getElementById(id).addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
+    fn(b.dataset[attr]);
+  });
+}
+seg('wSeg', 'w', function(w){ document.getElementById('stage').classList.toggle('phone', w === 'phone'); setTimeout(drawAll, 30); });
+seg('tSeg', 't', function(t){ document.documentElement.dataset.theme = t; drawAll(); });
+window.addEventListener('resize', drawAll);
+drawAll();
+</script>
+</body>
+</html>

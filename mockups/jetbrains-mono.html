@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JetBrains Mono — exploration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F3EF; --bg-elev:#FFFFFF; --bg-card:#FFFFFF; --bg-card-hover:#ECEAE3;
+    --border:#E7E5DD; --border-soft:#EFEDE6;
+    --text:#14140F; --text-dim:#4A4A44; --text-faint:#6E6B60; --text-strong:#14140F;
+    --accent:#14140F; --on-accent:#F4F3EF;
+    --bg-list:#FBFAF7; --bg-card-list:#FFFFFF;
+    --ok:#1C8579; --warn:#8A6410; --star:#D99A00;
+    --line-power:#E0A400; --line-cadence:#55554E;
+    --c-recovery:#8A92A8; --c-endurance:#3F79E8; --c-tempo:#1E9E99; --c-sweetspot:#E0A22F;
+    --c-threshold:#E85F2E; --c-vo2:#A65BF0; --c-anaerobic:#E8395A;
+    --zt-tempo:#CDE6E1; --zt-sweetspot:#F1E3C6; --zt-vo2:#E9D9F5; --zt-threshold:#F5D6C6;
+    --zt-endurance:#CFDAF0; --zt-anaerobic:#F8D2D6;
+    --heat-1:#E8B23A; --heat-3:#E8792E; --heat-5:#E8395A;
+    --sans:'Inter',-apple-system,system-ui,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;padding:40px 24px 64px;
+  }
+  .wrap{max-width:1140px;margin:0 auto;}
+  .head{margin-bottom:34px;}
+  .kicker{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:0.14em;
+    text-transform:uppercase;color:var(--c-tempo);margin:0 0 10px;}
+  .head h1{margin:0 0 10px;font-size:30px;font-weight:700;letter-spacing:-0.02em;}
+  .head h1 .m{font-family:var(--mono);font-weight:700;}
+  .head p{margin:0;max-width:640px;color:var(--text-dim);font-size:15px;line-height:1.55;}
+  .legend{display:flex;flex-wrap:wrap;gap:8px 18px;margin-top:16px;font-size:12.5px;color:var(--text-faint);}
+  .legend b{font-family:var(--mono);font-weight:600;color:var(--text);}
+  .swatch{display:inline-block;width:22px;height:12px;border-radius:3px;vertical-align:middle;
+    margin-right:7px;border:1px solid var(--border);}
+
+  .board{display:flex;flex-wrap:wrap;gap:30px;align-items:flex-start;}
+  .col{flex:1 1 320px;max-width:340px;}
+  .col > .label{font-family:var(--mono);font-size:11.5px;font-weight:600;letter-spacing:0.06em;
+    text-transform:uppercase;color:var(--text-faint);margin:0 0 12px 4px;}
+
+  /* phone frame */
+  .phone{background:#fff;border:1px solid var(--border);border-radius:30px;padding:10px;
+    box-shadow:0 24px 60px -30px rgba(20,20,15,0.35),0 2px 6px rgba(20,20,15,0.04);}
+  .screen{background:var(--bg-list);border-radius:22px;overflow:hidden;height:600px;
+    display:flex;flex-direction:column;}
+  .sb{height:26px;display:flex;align-items:center;justify-content:space-between;
+    padding:0 16px;font-family:var(--mono);font-size:10.5px;font-weight:600;color:var(--text-faint);}
+  .body{flex:1;overflow:hidden;padding:0 12px;}
+
+  /* ---- generic mono helpers ---- */
+  .mono{font-family:var(--mono);}
+
+  /* ===== SCREEN A — workout list ===== */
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 4px 12px;}
+  .count{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:0.05em;color:var(--text-faint);}
+  .tb-ico{display:flex;gap:8px;color:var(--text-faint);}
+  .tb-ico span{width:22px;height:22px;border-radius:7px;border:1px solid var(--border);
+    display:grid;place-items:center;font-size:11px;}
+
+  .card{display:flex;align-items:center;gap:11px;background:var(--bg-card-list);
+    border:1px solid var(--border-soft);border-radius:11px;margin-bottom:8px;padding:10px 12px;}
+  .card.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+  .kind{display:flex;flex-direction:column;align-items:center;gap:6px;flex:none;}
+  .thumb{width:64px;height:38px;border-radius:6px;border:1px solid var(--border-soft);
+    overflow:hidden;background:var(--bg-elev);}
+  .thumb svg{display:block;width:100%;height:100%;}
+  .ztag{font-family:var(--mono);font-size:9px;font-weight:600;padding:3px 9px;border-radius:20px;
+    color:var(--text);white-space:nowrap;}
+  .cbody{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:4px;}
+  .cname{font-size:15px;font-weight:600;letter-spacing:-0.005em;color:var(--text-strong);}
+  .cstruct{font-family:var(--mono);font-size:11.5px;color:var(--text-dim);white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;max-width:100%;}
+  .cmeta{display:flex;align-items:center;gap:9px;}
+  .tss{font-family:var(--mono);font-size:11px;color:var(--text-faint);}
+  .chil{display:inline-flex;gap:1px;}
+  .chil svg{width:13px;height:13px;}
+  .cside{flex:none;align-self:flex-start;display:flex;align-items:center;gap:8px;}
+  .cdur{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--text);}
+  .star{color:var(--text-faint);font-size:15px;}
+
+  /* ===== SCREEN B — live player ===== */
+  .live{display:flex;flex-direction:column;height:100%;padding:6px 4px 4px;}
+  .live-top{display:flex;align-items:center;justify-content:space-between;padding:4px 6px 10px;}
+  .seg-name{font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:0.03em;color:var(--c-sweetspot);}
+  .seg-idx{font-family:var(--mono);font-size:11px;color:var(--text-faint);}
+  .timer{text-align:center;font-family:var(--mono);font-size:52px;font-weight:700;letter-spacing:-0.02em;
+    line-height:1;color:var(--text-strong);margin:2px 0 4px;}
+  .timer .u{font-size:20px;color:var(--text-faint);font-weight:500;}
+  .live-chart{height:96px;margin:8px 4px 12px;border-radius:10px;overflow:hidden;
+    background:var(--bg-card);border:1px solid var(--border-soft);}
+  .live-chart svg{display:block;width:100%;height:100%;}
+  .rail{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 4px;}
+  .cell{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;
+    padding:11px 12px;display:flex;flex-direction:column;gap:3px;}
+  .cell.hero{grid-column:span 2;padding:14px 14px;}
+  .cell.ink{background:var(--accent);border-color:var(--accent);}
+  .cell .k{font-family:var(--mono);font-size:9.5px;font-weight:600;letter-spacing:0.1em;
+    text-transform:uppercase;color:var(--text-faint);}
+  .cell.ink .k{color:rgba(244,243,239,0.65);}
+  .cell .v{font-family:var(--mono);font-weight:700;letter-spacing:-0.01em;color:var(--text-strong);}
+  .cell.ink .v{color:var(--on-accent);}
+  .cell .v .u{font-size:0.5em;font-weight:500;color:var(--text-faint);margin-left:3px;}
+  .cell.ink .v .u{color:rgba(244,243,239,0.6);}
+  .hero .v{font-size:38px;}
+  .cell .v{font-size:24px;}
+  .cue{display:flex;align-items:center;justify-content:space-between;padding:12px 8px 6px;
+    font-family:var(--mono);font-size:11px;color:var(--text-faint);}
+  .cue b{color:var(--text-dim);font-weight:600;}
+  .controls{display:flex;gap:8px;padding:4px 4px 2px;}
+  .btn{flex:1;text-align:center;padding:12px;border-radius:12px;font-size:13px;font-weight:600;
+    font-family:var(--sans);border:1px solid var(--border);color:var(--text-dim);background:var(--bg-card);}
+  .btn.primary{background:var(--accent);color:var(--on-accent);border-color:var(--accent);}
+
+  /* ===== SCREEN C — trends ===== */
+  .tr-head{padding:12px 6px 6px;}
+  .tr-head .t{font-size:19px;font-weight:700;letter-spacing:-0.01em;}
+  .tr-head .s{font-family:var(--mono);font-size:11px;color:var(--text-faint);margin-top:3px;letter-spacing:0.04em;}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 2px;}
+  .tile{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;
+    padding:12px 10px;text-align:center;}
+  .tile .k{font-family:var(--mono);font-size:9px;font-weight:600;letter-spacing:0.1em;
+    text-transform:uppercase;color:var(--text-faint);}
+  .tile .v{font-family:var(--mono);font-size:26px;font-weight:700;letter-spacing:-0.01em;margin-top:5px;}
+  .tile .d{font-family:var(--mono);font-size:10px;margin-top:3px;}
+  .up{color:var(--ok);} .dn{color:var(--c-threshold);}
+  .panel{background:var(--bg-card);border:1px solid var(--border-soft);border-radius:12px;
+    padding:12px 14px;margin:0 2px 10px;}
+  .panel .ph{font-family:var(--mono);font-size:10px;font-weight:600;letter-spacing:0.08em;
+    text-transform:uppercase;color:var(--text-faint);margin-bottom:10px;}
+  .chart2{height:74px;margin-bottom:4px;}
+  .chart2 svg{display:block;width:100%;height:100%;}
+  .pcrow{display:flex;align-items:center;justify-content:space-between;padding:7px 0;
+    border-top:1px solid var(--border-soft);}
+  .pcrow:first-of-type{border-top:0;}
+  .pcrow .dur{font-family:var(--mono);font-size:12px;color:var(--text-dim);width:46px;}
+  .pcrow .bar{flex:1;height:7px;border-radius:4px;background:var(--zt-endurance);margin:0 10px;position:relative;overflow:hidden;}
+  .pcrow .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--c-endurance);border-radius:4px;}
+  .pcrow .w{font-family:var(--mono);font-size:12.5px;font-weight:600;color:var(--text-strong);width:52px;text-align:right;}
+  .pcrow .w .u{font-size:0.8em;font-weight:400;color:var(--text-faint);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <p class="kicker">Type exploration</p>
+    <h1>The instrument panel in <span class="m">JetBrains&nbsp;Mono</span></h1>
+    <p>Every number, code, unit and label below is set in JetBrains Mono &mdash; durations, watts, TSS,
+      cadence, timers, zone tags, axis ticks. Workout and screen names stay in Inter, so prose still reads
+      like prose and the data reads like an instrument. Same tokens, same layout as the live app; only the
+      typeface on the data changed.</p>
+    <div class="legend">
+      <span><span class="swatch" style="background:var(--mono-demo,#14140F)"></span></span>
+      <span><b>JetBrains&nbsp;Mono</b> &rarr; all figures, units, tags, codes</span>
+      <span style="color:var(--text-dim)">Inter &rarr; workout names, buttons, sentences</span>
+    </div>
+  </div>
+
+  <div class="board">
+
+    <!-- ===================== SCREEN A ===================== -->
+    <div class="col">
+      <p class="label">1 &middot; Workout list</p>
+      <div class="phone"><div class="screen">
+        <div class="sb"><span>9:41</span><span>5G &nbsp; 100%</span></div>
+        <div class="body">
+          <div class="topbar">
+            <span class="count">522 WORKOUTS</span>
+            <span class="tb-ico"><span>&#9906;</span><span>&#9733;</span><span>&#8645;</span></span>
+          </div>
+
+          <!-- card 1 selected -->
+          <div class="card sel">
+            <div class="kind">
+              <div class="thumb">__THUMB_TEMPO__</div>
+              <span class="ztag" style="background:var(--zt-tempo)">Tempo</span>
+            </div>
+            <div class="cbody">
+              <div class="cname">Anvil Light</div>
+              <div class="cstruct">2 &times; 12 min @ 191w</div>
+              <div class="cmeta"><span class="tss">TSS 54</span><span class="chil">__CH4__</span></div>
+            </div>
+            <div class="cside"><span class="cdur">60 min</span><span class="star">&#9733;</span></div>
+          </div>
+
+          <!-- card 2 -->
+          <div class="card">
+            <div class="kind">
+              <div class="thumb">__THUMB_SS__</div>
+              <span class="ztag" style="background:var(--zt-sweetspot)">Sweet Spot</span>
+            </div>
+            <div class="cbody">
+              <div class="cname">Ashbank</div>
+              <div class="cstruct">6 &times; 6 min @ 205w / 2&#39; rest</div>
+              <div class="cmeta"><span class="tss">TSS 80</span><span class="chil">__CH3__</span></div>
+            </div>
+            <div class="cside"><span class="cdur">75 min</span><span class="star">&#9734;</span></div>
+          </div>
+
+          <!-- card 3 -->
+          <div class="card">
+            <div class="kind">
+              <div class="thumb">__THUMB_VO2__</div>
+              <span class="ztag" style="background:var(--zt-vo2)">VO2 Max</span>
+            </div>
+            <div class="cbody">
+              <div class="cname">Icebite</div>
+              <div class="cstruct">3 &times; 5 &times; 30/30s @ 232w</div>
+              <div class="cmeta"><span class="tss">TSS 48</span><span class="chil">__CH5__</span></div>
+            </div>
+            <div class="cside"><span class="cdur">60 min</span><span class="star">&#9734;</span></div>
+          </div>
+
+          <!-- card 4 -->
+          <div class="card">
+            <div class="kind">
+              <div class="thumb">__THUMB_THR__</div>
+              <span class="ztag" style="background:var(--zt-threshold)">Threshold</span>
+            </div>
+            <div class="cbody">
+              <div class="cname">Trigger</div>
+              <div class="cstruct">2 &times; 20 min @ 214w</div>
+              <div class="cmeta"><span class="tss">TSS 92</span><span class="chil">__CH4__</span></div>
+            </div>
+            <div class="cside"><span class="cdur">75 min</span><span class="star">&#9734;</span></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ===================== SCREEN B ===================== -->
+    <div class="col">
+      <p class="label">2 &middot; Live workout</p>
+      <div class="phone"><div class="screen">
+        <div class="sb"><span>9:41</span><span>5G &nbsp; 100%</span></div>
+        <div class="live">
+          <div class="live-top">
+            <span class="seg-name">SWEET SPOT</span>
+            <span class="seg-idx">3 of 6</span>
+          </div>
+          <div class="timer">04:12<span class="u"> left</span></div>
+          <div class="live-chart">__LIVECHART__</div>
+          <div class="rail">
+            <div class="cell ink hero">
+              <span class="k">Cadence</span>
+              <span class="v">92<span class="u">rpm</span></span>
+            </div>
+            <div class="cell">
+              <span class="k">Power</span>
+              <span class="v">208<span class="u">w</span></span>
+            </div>
+            <div class="cell">
+              <span class="k">Heart rate</span>
+              <span class="v">147<span class="u">bpm</span></span>
+            </div>
+            <div class="cell">
+              <span class="k">Target</span>
+              <span class="v">205<span class="u">w</span></span>
+            </div>
+            <div class="cell">
+              <span class="k">Elapsed</span>
+              <span class="v">28:44</span>
+            </div>
+          </div>
+          <div class="cue"><span>Next&nbsp; <b>Recovery &middot; 2:00 @ 120w</b></span><span>&#9889; 100%</span></div>
+          <div class="controls">
+            <div class="btn">Skip</div>
+            <div class="btn primary">Pause</div>
+            <div class="btn">End</div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <!-- ===================== SCREEN C ===================== -->
+    <div class="col">
+      <p class="label">3 &middot; Fitness trends</p>
+      <div class="phone"><div class="screen">
+        <div class="sb"><span>9:41</span><span>5G &nbsp; 100%</span></div>
+        <div class="body">
+          <div class="tr-head">
+            <div class="t">Form &amp; fitness</div>
+            <div class="s">LAST 90 DAYS &middot; UPDATED TODAY</div>
+          </div>
+          <div class="tiles">
+            <div class="tile"><div class="k">CTL</div><div class="v">68</div><div class="d up">&#9650; 3</div></div>
+            <div class="tile"><div class="k">ATL</div><div class="v">74</div><div class="d dn">&#9650; 9</div></div>
+            <div class="tile"><div class="k">TSB</div><div class="v">&minus;6</div><div class="d up">&#9660; 2</div></div>
+          </div>
+          <div class="panel">
+            <div class="ph">Fitness &middot; fatigue</div>
+            <div class="chart2">__TRENDCHART__</div>
+          </div>
+          <div class="panel">
+            <div class="ph">Power curve &middot; best watts</div>
+            <div class="pcrow"><span class="dur">5 s</span><span class="bar"><i style="width:96%"></i></span><span class="w">742<span class="u">w</span></span></div>
+            <div class="pcrow"><span class="dur">1 min</span><span class="bar"><i style="width:60%"></i></span><span class="w">418<span class="u">w</span></span></div>
+            <div class="pcrow"><span class="dur">5 min</span><span class="bar"><i style="width:44%"></i></span><span class="w">305<span class="u">w</span></span></div>
+            <div class="pcrow"><span class="dur">20 min</span><span class="bar"><i style="width:35%"></i></span><span class="w">248<span class="u">w</span></span></div>
+            <div class="pcrow"><span class="dur">60 min</span><span class="bar"><i style="width:31%"></i></span><span class="w">221<span class="u">w</span></span></div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ---- tiny SVG helpers so the mock stays self-contained ----
+  function bars(spec, tint, line){
+    // spec: array of heights 0..1
+    var w=64, h=38, n=spec.length, bw=w/n;
+    var s='<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">';
+    for(var i=0;i<n;i++){
+      var bh=Math.max(3, spec[i]*(h-4));
+      s+='<rect x="'+(i*bw+0.6)+'" y="'+(h-bh)+'" width="'+(bw-1.2)+'" height="'+bh+'" rx="1" fill="'+tint+'"/>';
+    }
+    s+='</svg>';
+    return s;
+  }
+  function chilli(c){
+    return '<svg viewBox="0 0 24 24"><path d="M6 3c5 1 7 4.5 7 9 0 5-4.5 9-10 9 3.4-2.2 4.6-5 4.6-8.4 0-4.2-2.6-7.6-1.6-9.6z" fill="'+c+'"/></svg>';
+  }
+  function chillies(n){
+    var heat = n<=2 ? getVar('--heat-1') : n<=4 ? getVar('--heat-3') : getVar('--heat-5');
+    var out=''; for(var i=0;i<n;i++) out+=chilli(heat); return out;
+  }
+  function getVar(v){ return getComputedStyle(document.documentElement).getPropertyValue(v).trim(); }
+
+  var css = getComputedStyle(document.documentElement);
+  var tTempo=getVar('--c-tempo'), tSS=getVar('--c-sweetspot'), tVO2=getVar('--c-vo2'), tThr=getVar('--c-threshold');
+
+  document.body.innerHTML = document.body.innerHTML
+    .replace('__THUMB_TEMPO__', bars([.3,.32,.7,.7,.32,.7,.7,.3], tTempo))
+    .replace('__THUMB_SS__',    bars([.35,.75,.4,.75,.4,.75,.4,.75,.4,.75,.4,.35], tSS))
+    .replace('__THUMB_VO2__',   bars([.3,.9,.3,.9,.3,.9,.3,.9,.3,.9,.3,.9], tVO2))
+    .replace('__THUMB_THR__',   bars([.3,.34,.82,.82,.82,.82,.34,.34,.82,.82,.34], tThr))
+    .replace(/__CH5__/g, chillies(5))
+    .replace(/__CH4__/g, chillies(4))
+    .replace(/__CH3__/g, chillies(3));
+
+  // live chart — stepped power blocks + moving trace
+  (function(){
+    var el=document.querySelectorAll('.live-chart');
+    if(!el.length) return;
+    var w=300,h=96;
+    var blocks=[.35,.35,.82,.82,.35,.82,.82,.35];
+    var s='<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">';
+    var n=blocks.length, bw=w/n;
+    for(var i=0;i<n;i++){
+      var bh=blocks[i]*(h-8);
+      s+='<rect x="'+(i*bw)+'" y="'+(h-bh)+'" width="'+bw+'" height="'+bh+'" fill="'+hex(tSS,0.16)+'"/>';
+      s+='<rect x="'+(i*bw)+'" y="'+(h-bh)+'" width="'+bw+'" height="2" fill="'+hex(tSS,0.5)+'"/>';
+    }
+    // power trace
+    var pts='', pw=getVar('--line-power');
+    for(var x=0;x<=w;x+=6){
+      var seg=Math.floor(x/bw); var base=blocks[Math.min(seg,n-1)];
+      var y=h-(base*(h-8))+ (Math.sin(x/7)*3);
+      pts+=(x===0?'M':'L')+x+' '+y+' ';
+    }
+    s+='<path d="'+pts+'" fill="none" stroke="'+pw+'" stroke-width="2.2"/>';
+    // now marker
+    s+='<line x1="150" y1="0" x2="150" y2="'+h+'" stroke="'+getVar('--accent')+'" stroke-width="1.4" opacity="0.5"/>';
+    s+='</svg>';
+    el.forEach(function(c){ c.innerHTML=s; });
+  })();
+
+  // trend chart — CTL curve + ATL curve + form shading
+  (function(){
+    var el=document.querySelector('.chart2');
+    if(!el) return;
+    var w=290,h=74;
+    function curve(seed,amp,off){ var p='';for(var x=0;x<=w;x+=8){var y=h-off-Math.sin(x/34+seed)*amp-x*0.06;p+=(x===0?'M':'L')+x+' '+y+' ';}return p; }
+    var ctl=curve(0.4,7,26), atl=curve(1.2,11,20);
+    var s='<svg viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none">';
+    s+='<path d="'+ctl+' L'+w+' '+h+' L0 '+h+' Z" fill="'+hex(getVar('--c-endurance'),0.10)+'"/>';
+    s+='<path d="'+atl+'" fill="none" stroke="'+getVar('--c-threshold')+'" stroke-width="2" opacity="0.85"/>';
+    s+='<path d="'+ctl+'" fill="none" stroke="'+getVar('--c-endurance')+'" stroke-width="2.2"/>';
+    s+='</svg>';
+    el.innerHTML=s;
+  })();
+
+  function hex(c,a){
+    c=c.replace('#',''); if(c.length===3)c=c.split('').map(function(x){return x+x;}).join('');
+    var r=parseInt(c.substr(0,2),16),g=parseInt(c.substr(2,2),16),b=parseInt(c.substr(4,2),16);
+    return 'rgba('+r+','+g+','+b+','+a+')';
+  }
+</script>
+</body>
+</html>

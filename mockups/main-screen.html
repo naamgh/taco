@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Main - minimal mock</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+  .app{display:grid;grid-template-columns:320px 400px 1fr;height:100vh;max-width:1400px;margin:0 auto;}
+  .pane{height:100vh;overflow:auto;}
+  .side{padding:26px 24px;display:flex;flex-direction:column;gap:26px;border-right:1.5px solid var(--line);}
+  .side-top{display:flex;align-items:center;gap:14px;}
+  .side-top .name{font-weight:700;font-size:16px;letter-spacing:.02em;}
+  .devs{display:flex;flex-direction:column;gap:10px;}
+  .dev{display:flex;align-items:center;gap:12px;padding:14px 16px;border:1.5px solid var(--line-2);border-radius:14px;font-size:13.5px;font-weight:600;color:var(--ink-soft);}
+  .dev.on{border-color:var(--ink);color:var(--ink);}
+  .dev .st{margin-left:auto;font-size:11.5px;color:var(--muted);font-weight:600;letter-spacing:.04em;}
+  .dev.on .st{color:var(--d-tempo);}
+  .dev svg{width:22px;height:22px;flex:none;color:var(--ink);}
+  .fgroup{display:flex;flex-direction:column;gap:2px;}
+  .fhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px;}
+  .fhead .v{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--ink);}
+  .fhead .v.any{color:var(--faint);font-weight:500;}
+  .shape{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;}
+  .stile{border:1.5px solid var(--line-2);border-radius:12px;padding:12px 6px 9px;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:11.5px;font-weight:600;color:var(--muted);}
+  .stile.on{border-color:var(--ink);color:var(--ink);background:var(--active);}
+  .stile svg{width:34px;height:20px;}
+  .side-foot{margin-top:auto;display:flex;gap:12px;padding-top:6px;}
+  .side-foot .pill-out{flex:1;justify-content:center;}
+  .reset{align-self:flex-start;background:none;border:0;color:var(--muted);font-family:inherit;font-size:12.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;padding:4px 0;}
+
+  .list{background:var(--card-2);border-right:1.5px solid var(--line);}
+  .list-head{position:sticky;top:0;background:var(--card-2);padding:24px 22px 16px;display:flex;flex-direction:column;gap:16px;border-bottom:1.5px solid var(--line);}
+  .list-head .row{display:flex;align-items:center;gap:12px;}
+  .list-head h2{font-size:15px;font-weight:700;letter-spacing:.02em;}
+  .list-head h2 b{color:var(--muted);font-weight:600;}
+  .list-tools{margin-left:auto;display:flex;gap:10px;align-items:center;}
+  .cards{padding:18px 22px 40px;display:flex;flex-direction:column;gap:14px;}
+  .wcard{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;}
+  .wcard.sel{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink);}
+  .wcard:hover{border-color:var(--line-2);}
+  .wcard .glyph{width:60px;height:40px;flex:none;display:flex;align-items:flex-end;}
+  .wcard .mid{flex:1;min-width:0;}
+  .wcard .nm{font-size:16px;font-weight:600;letter-spacing:-.01em;margin-bottom:7px;display:flex;align-items:center;gap:10px;}
+  .wcard .desc{font-size:12.5px;color:var(--muted);}
+  .wcard .num{text-align:right;flex:none;}
+  .wcard .num .d{font-family:var(--mono);font-size:15px;font-weight:600;}
+  .wcard .num .t{font-family:var(--mono);font-size:11.5px;color:var(--faint);margin-top:3px;}
+  .wcard .num .chilli{margin-top:8px;justify-content:flex-end;}
+  .rec{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--rec);}
+  .rec b{width:6px;height:6px;border-radius:50%;background:var(--d-sweetspot);}
+
+  .detail{padding:32px 34px 40px;}
+  .d-top{display:flex;align-items:flex-start;gap:20px;margin-bottom:8px;}
+  .d-top h1{font-size:30px;font-weight:600;letter-spacing:-.015em;line-height:1.05;}
+  .d-top .startw{margin-left:auto;flex:none;}
+  .d-type{margin-top:12px;display:flex;gap:12px;align-items:center;}
+  .d-desc{margin:20px 0 26px;font-size:15px;line-height:1.6;color:var(--ink-soft);max-width:60ch;}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px;}
+  .stat{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:16px 18px;}
+  .stat .k{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:9px;}
+  .stat .v{font-family:var(--mono);font-size:26px;font-weight:600;}
+  .stat .v small{font-size:.5em;color:var(--muted);margin-left:2px;}
+  .prof{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:16px 16px 8px;margin-bottom:24px;}
+  .prof .m-label{margin-bottom:12px;display:block;}
+  table.iv{width:100%;border-collapse:collapse;}
+  table.iv th{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600;text-align:left;padding:0 0 12px;}
+  table.iv th:last-child,table.iv td:last-child{text-align:right;}
+  table.iv td{font-size:14px;padding:11px 0;border-top:1.5px solid var(--line);font-variant-numeric:tabular-nums;}
+  table.iv td.nm{font-weight:600;}
+  table.iv td .mono{font-family:var(--mono);color:var(--ink-soft);}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="pane side">
+    <div class="side-top">
+      <button class="icobtn" aria-label="Menu"><svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <span class="name">Indoor Training</span>
+    </div>
+
+    <div class="devs">
+      <div class="dev on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="16.5" r="3.4"/><circle cx="18" cy="16.5" r="3.4"/><path d="M6 16.5l3.6-7h5.2l3.2 7M12.2 16.5l2.6-7" stroke-linecap="round" stroke-linejoin="round"/></svg>Trainer<span class="st">KICKR</span></div>
+      <div class="dev on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 20S4 15 4 9.3A4.3 4.3 0 0112 7a4.3 4.3 0 018 2.3C20 15 12 20 12 20z" stroke-linejoin="round"/></svg>Heart rate<span class="st">TICKR</span></div>
+      <div class="dev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8 3l5 9h3l-4 8-5-9H4z" stroke-linejoin="round"/></svg>Strava<span class="st">Log in</span></div>
+    </div>
+
+    <div class="fgroup">
+      <div class="fhead"><span class="m-label">Time</span><span class="v any">Any</span></div>
+      <div class="mslider"><div class="track"><span class="fill" style="width:0"></span></div><div class="knob" style="left:6%"></div></div>
+      <div class="segrow"><span>Any</span><span>30</span><span>45</span><span>60</span><span>90</span><span>120</span></div>
+    </div>
+
+    <div class="fgroup">
+      <div class="fhead"><span class="m-label">Zone</span><span class="v">Sweet spot</span></div>
+      <div class="mslider">
+        <div class="track">
+          <span class="zoneseg" style="background:var(--line)"></span>
+          <span class="zoneseg" style="background:var(--z-endurance)"></span>
+          <span class="zoneseg" style="background:var(--z-tempo)"></span>
+          <span class="zoneseg" style="background:var(--z-sweetspot)"></span>
+          <span class="zoneseg" style="background:var(--z-threshold)"></span>
+          <span class="zoneseg" style="background:var(--z-vo2)"></span>
+          <span class="zoneseg" style="background:var(--z-anaerobic)"></span>
+        </div>
+        <div class="knob" style="left:50%"></div>
+      </div>
+      <div class="segrow"><span>Any</span><span>Z2</span><span>Z3</span><span>SS</span><span>Z4</span><span>Z5</span><span>Z6</span></div>
+    </div>
+
+    <div class="fgroup">
+      <div class="fhead"><span class="m-label">Spice</span><span class="v any">Any</span></div>
+      <div class="mslider"><div class="track"><span class="fill" style="width:0"></span></div><div class="knob" style="left:6%"></div></div>
+      <div class="segrow"><span>Any</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+    </div>
+
+    <div class="fgroup">
+      <div class="fhead"><span class="m-label">Shape</span><span class="v any">Any</span></div>
+      <div class="shape">
+        <div class="stile on"><svg viewBox="0 0 40 20"><rect x="2" y="8" width="5" height="12" fill="#C9C6BE"/><rect x="10" y="4" width="5" height="16" fill="#C9C6BE"/><rect x="18" y="8" width="5" height="12" fill="#C9C6BE"/><rect x="26" y="4" width="5" height="16" fill="#C9C6BE"/><rect x="34" y="8" width="4" height="12" fill="#C9C6BE"/></svg>Intervals</div>
+        <div class="stile"><svg viewBox="0 0 40 20"><rect x="2" y="6" width="16" height="14" fill="#C9C6BE"/><rect x="22" y="6" width="16" height="14" fill="#C9C6BE"/></svg>Long</div>
+        <div class="stile"><svg viewBox="0 0 40 20"><rect x="2" y="4" width="9" height="16" fill="#C9C6BE"/><rect x="12" y="11" width="9" height="9" fill="#C9C6BE"/><rect x="22" y="4" width="9" height="16" fill="#C9C6BE"/><rect x="32" y="11" width="6" height="9" fill="#C9C6BE"/></svg>Over/under</div>
+        <div class="stile"><svg viewBox="0 0 40 20"><rect x="2" y="7" width="2.5" height="13" fill="#C9C6BE"/><rect x="6" y="7" width="2.5" height="13" fill="#C9C6BE"/><rect x="10" y="7" width="2.5" height="13" fill="#C9C6BE"/><rect x="14" y="7" width="2.5" height="13" fill="#C9C6BE"/><rect x="18" y="7" width="2.5" height="13" fill="#C9C6BE"/><rect x="22" y="7" width="2.5" height="13" fill="#C9C6BE"/></svg>Micro</div>
+        <div class="stile"><svg viewBox="0 0 40 20"><rect x="2" y="14" width="6" height="6" fill="#C9C6BE"/><rect x="10" y="10" width="6" height="10" fill="#C9C6BE"/><rect x="18" y="6" width="6" height="14" fill="#C9C6BE"/><rect x="26" y="3" width="6" height="17" fill="#C9C6BE"/></svg>Ladder</div>
+        <div class="stile"><svg viewBox="0 0 40 20"><rect x="2" y="8" width="36" height="12" fill="#C9C6BE"/></svg>Steady</div>
+      </div>
+    </div>
+
+    <button class="reset">Reset filters</button>
+
+    <div class="side-foot">
+      <button class="pill-out">Calendar</button>
+      <button class="pill-out">Charts</button>
+    </div>
+  </aside>
+
+  <!-- LIST -->
+  <main class="pane list">
+    <div class="list-head">
+      <div class="row">
+        <h2>522 <b>workouts</b></h2>
+        <div class="list-tools">
+          <button class="icobtn" style="width:40px;height:40px" aria-label="Search"><svg viewBox="0 0 24 24" width="17" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5" stroke-linecap="round"/></svg></button>
+          <button class="pill-out on" style="padding:9px 16px">Rec</button>
+          <button class="icobtn" style="width:40px;height:40px" aria-label="Starred"><svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 4l2.5 5 5.5.8-4 3.9 1 5.5L12 16.5 7 19.2l1-5.5-4-3.9 5.5-.8z" stroke-linejoin="round"/></svg></button>
+          <button class="icobtn" style="width:40px;height:40px" aria-label="Sort"><svg viewBox="0 0 24 24" width="17" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M7 5v14M7 19l-3-3M7 19l3-3M17 19V5M17 5l-3 3M17 5l3 3"/></svg></button>
+        </div>
+      </div>
+    </div>
+    <div class="cards">
+
+      <div class="wcard sel">
+        <div class="glyph"><svg viewBox="0 0 60 40" width="60" height="40"><rect x="0" y="26" width="9" height="14" fill="var(--z-recovery)"/><rect x="10" y="20" width="9" height="20" fill="var(--z-endurance)"/><rect x="20" y="8" width="9" height="32" fill="var(--z-sweetspot)"/><rect x="30" y="26" width="9" height="14" fill="var(--z-recovery)"/><rect x="40" y="8" width="9" height="32" fill="var(--z-sweetspot)"/><rect x="50" y="20" width="9" height="20" fill="var(--z-endurance)"/></svg></div>
+        <div class="mid">
+          <div class="nm">Brazier <span class="rec"><b></b>Recommended</span></div>
+          <div class="desc">2 × 15 min @ 91% · sweet-spot builder</div>
+        </div>
+        <div class="num"><div class="d">60 min</div><div class="t">TSS 63</div><div class="chilli"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div></div>
+      </div>
+
+      <div class="wcard">
+        <div class="glyph"><svg viewBox="0 0 60 40" width="60" height="40"><rect x="0" y="24" width="7" height="16" fill="var(--z-endurance)"/><rect x="9" y="6" width="7" height="34" fill="var(--z-vo2)"/><rect x="18" y="24" width="7" height="16" fill="var(--z-recovery)"/><rect x="27" y="6" width="7" height="34" fill="var(--z-vo2)"/><rect x="36" y="24" width="7" height="16" fill="var(--z-recovery)"/><rect x="45" y="6" width="7" height="34" fill="var(--z-vo2)"/></svg></div>
+        <div class="mid">
+          <div class="nm">Coldlash</div>
+          <div class="desc">3 × 5 × 30/30s @ 114% · VO₂ max</div>
+        </div>
+        <div class="num"><div class="d">60 min</div><div class="t">TSS 51</div><div class="chilli"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i></div></div>
+      </div>
+
+      <div class="wcard">
+        <div class="glyph"><svg viewBox="0 0 60 40" width="60" height="40"><rect x="0" y="22" width="9" height="18" fill="var(--z-endurance)"/><rect x="10" y="12" width="9" height="28" fill="var(--z-threshold)"/><rect x="20" y="22" width="9" height="18" fill="var(--z-recovery)"/><rect x="30" y="12" width="9" height="28" fill="var(--z-threshold)"/><rect x="40" y="22" width="9" height="18" fill="var(--z-recovery)"/><rect x="50" y="12" width="9" height="28" fill="var(--z-threshold)"/></svg></div>
+        <div class="mid">
+          <div class="nm">Endline</div>
+          <div class="desc">2 × 15 min - 3′@96% / 2′@106% · threshold</div>
+        </div>
+        <div class="num"><div class="d">75 min</div><div class="t">TSS 88</div><div class="chilli"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div></div>
+      </div>
+
+      <div class="wcard">
+        <div class="glyph"><svg viewBox="0 0 60 40" width="60" height="40"><rect x="0" y="28" width="60" height="12" fill="var(--z-endurance)"/></svg></div>
+        <div class="mid">
+          <div class="nm">Flatwater</div>
+          <div class="desc">60 min @ 68% · endurance</div>
+        </div>
+        <div class="num"><div class="d">60 min</div><div class="t">TSS 55</div><div class="chilli"><i class="on"></i><i></i><i></i><i></i><i></i></div></div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- DETAIL -->
+  <section class="pane detail">
+    <div class="d-top">
+      <div>
+        <h1>Brazier</h1>
+        <div class="d-type">
+          <span class="ztag" style="background:var(--z-sweetspot)"><span class="zdot" style="background:var(--d-sweetspot)"></span>Sweet spot</span>
+          <span class="chilli"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span>
+        </div>
+      </div>
+      <button class="btn btn-primary startw"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"><path d="M6 5l13 7-13 7z"/></svg>Start workout</button>
+    </div>
+
+    <p class="d-desc">The classic 15-minute sweet-spot blocks - the most time-efficient way to build sustainable power. Hold the target and let the trainer do the rest.</p>
+
+    <div class="stats">
+      <div class="stat"><div class="k">Duration</div><div class="v">60<small>min</small></div></div>
+      <div class="stat"><div class="k">In zone</div><div class="v">30<small>min</small></div></div>
+      <div class="stat"><div class="k">TSS</div><div class="v">63</div></div>
+      <div class="stat"><div class="k">Avg power</div><div class="v">198<small>w</small></div></div>
+    </div>
+
+    <div class="prof">
+      <span class="m-label">Profile</span>
+      <svg viewBox="0 0 600 150" width="100%" height="150" preserveAspectRatio="none">
+        <rect x="0" y="105" width="80" height="45" fill="var(--z-recovery)"/>
+        <rect x="80" y="80" width="80" height="70" fill="var(--z-endurance)"/>
+        <rect x="160" y="30" width="150" height="120" fill="var(--z-sweetspot)"/>
+        <rect x="310" y="105" width="50" height="45" fill="var(--z-recovery)"/>
+        <rect x="360" y="30" width="150" height="120" fill="var(--z-sweetspot)"/>
+        <rect x="510" y="90" width="90" height="60" fill="var(--z-endurance)"/>
+      </svg>
+    </div>
+
+    <table class="iv">
+      <thead><tr><th>Segment</th><th>Duration</th><th>% FTP</th><th>Target</th></tr></thead>
+      <tbody>
+        <tr><td class="nm">Warm-up</td><td><span class="mono">8 min</span></td><td><span class="mono">45 → 68%</span></td><td><span class="mono">-</span></td></tr>
+        <tr><td class="nm">Sweet spot</td><td><span class="mono">15 min</span></td><td><span class="mono">91%</span></td><td><span class="mono">228 w</span></td></tr>
+        <tr><td class="nm">Recovery</td><td><span class="mono">3 min</span></td><td><span class="mono">55%</span></td><td><span class="mono">138 w</span></td></tr>
+        <tr><td class="nm">Sweet spot</td><td><span class="mono">15 min</span></td><td><span class="mono">91%</span></td><td><span class="mono">228 w</span></td></tr>
+        <tr><td class="nm">Cool-down</td><td><span class="mono">9 min</span></td><td><span class="mono">50%</span></td><td><span class="mono">125 w</span></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pre-ride — mocks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{ --bg:#F4F3EF; --elev:#FFFFFF; --fg:#14140F; --dim:#6E6B60; --faint:#A8A496; --rule:#E2E0D8; --hair:#ECEAE3; --ok:#1C8579; --warn:#E8395A; }
+  :root[data-theme="dark"]{ --bg:#121213; --elev:#1E1E20; --fg:#ECECEA; --dim:#9A9A93; --faint:#6A6A62; --rule:#2A2A2C; --hair:#202022; --ok:#5CCDC1; --warn:#FF6A7E; }
+  :root{ --mono:'DM Mono',ui-monospace,monospace; --vo2:#A65BF0; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);-webkit-font-smoothing:antialiased;font-size:14px;}
+  .chrome{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:16px;padding:14px 22px;background:var(--bg);border-bottom:1px solid var(--rule);}
+  .chrome .t{font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--fg);}
+  .seg{display:flex;gap:4px;margin-left:8px;}
+  .seg button{font:inherit;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);background:none;border:1px solid var(--rule);border-radius:7px;padding:6px 12px;cursor:pointer;}
+  .seg button.on{color:var(--bg);background:var(--fg);border-color:var(--fg);}
+  .chrome .tgl{margin-left:auto;font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);background:none;border:0;cursor:pointer;}
+  .stage{max-width:1120px;margin:0 auto;padding:26px 22px 60px;}
+  .cap{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0 0 12px;}
+
+  /* a framed "live screen" */
+  .screen{position:relative;border:1px solid var(--rule);border-radius:18px;background:var(--bg);overflow:hidden;min-height:560px;display:flex;flex-direction:column;}
+  .screen .topline{display:flex;align-items:center;gap:10px;padding:16px 22px;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);border-bottom:1px solid var(--hair);}
+  .screen .topline .z{display:flex;align-items:center;gap:8px;color:var(--fg);}
+  .screen .topline .z i{width:9px;height:9px;border-radius:2px;background:var(--vo2);}
+  .screen .topline .x{margin-left:auto;color:var(--faint);}
+  .body{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:30px;gap:0;}
+  .hide{display:none!important;}
+
+  /* shared bits */
+  .ro-row{display:flex;gap:46px;margin:30px 0;}
+  .ro{display:flex;flex-direction:column;align-items:center;gap:7px;}
+  .ro .rl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);}
+  .ro .rv{font-size:40px;font-weight:500;letter-spacing:-.02em;line-height:1;}
+  .ro .rv u{text-decoration:none;font-size:.4em;color:var(--dim);margin-left:3px;}
+  .acts{display:flex;gap:14px;margin-top:8px;}
+  .btn{font:inherit;font-size:13px;letter-spacing:.12em;text-transform:uppercase;padding:13px 30px;border-radius:8px;cursor:pointer;background:none;}
+  .btn.go{border:1px solid var(--fg);color:var(--fg);}
+  .btn.go:hover{background:var(--fg);color:var(--bg);}
+  .btn.ghost{border:0;color:var(--faint);}
+  .btn.ghost:hover{color:var(--fg);}
+  .foot-ftp{margin-top:26px;font-size:12px;letter-spacing:.06em;color:var(--dim);}
+  .foot-ftp b{color:var(--fg);}
+  .dot{width:8px;height:8px;border-radius:50%;display:inline-block;}
+  .dot.on{background:var(--ok);} .dot.off{background:var(--warn);}
+
+  /* ---------- A: minimal launch ---------- */
+  .a .big{font-size:54px;font-weight:500;letter-spacing:-.02em;margin:0;line-height:1;}
+  .a .sub{font-size:13px;color:var(--dim);margin:16px 0 0;}
+  .a .status{display:flex;gap:22px;margin-top:30px;font-size:12px;letter-spacing:.04em;color:var(--dim);}
+  .a .status span{display:flex;align-items:center;gap:7px;}
+  .a .pulse{width:52px;height:52px;border-radius:50%;border:2px solid var(--vo2);display:grid;place-items:center;margin-bottom:26px;animation:pulse 1.6s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:.7}}
+  .a .pulse svg{width:24px;height:24px;color:var(--vo2);}
+
+  /* ---------- B: ready check ---------- */
+  .b .body{justify-content:flex-start;padding-top:40px;}
+  .b .wk-name{font-size:34px;font-weight:500;letter-spacing:-.01em;margin:0;}
+  .b .wk-meta{font-size:12px;letter-spacing:.06em;color:var(--dim);margin:8px 0 26px;}
+  .b .check{width:100%;max-width:460px;border-top:1px solid var(--rule);}
+  .b .crow{display:flex;align-items:center;gap:12px;padding:15px 2px;border-bottom:1px solid var(--rule);text-align:left;}
+  .b .crow .ci{color:var(--dim);display:flex;}
+  .b .crow .cn{flex:1;font-size:14px;}
+  .b .crow .cs{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ok);}
+  .b .crow.miss .cs{color:var(--warn);}
+  .b .crow .fix{font:inherit;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);background:none;border:1px solid var(--rule);border-radius:6px;padding:5px 10px;cursor:pointer;}
+  /* live sensor boxes — light green when data registers */
+  .b .sense{display:flex;gap:16px;margin-top:30px;width:100%;max-width:460px;justify-content:center;}
+  .b .sbox{flex:1;max-width:214px;display:flex;flex-direction:column;align-items:center;gap:8px;padding:18px 16px 15px;border:1px dashed var(--rule);border-radius:13px;transition:border-color .35s,background .35s,box-shadow .35s;}
+  .b .sbox .sl{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);}
+  .b .sbox .sv{font-size:38px;font-weight:500;letter-spacing:-.02em;line-height:1;color:var(--faint);transition:color .35s;}
+  .b .sbox .sv u{text-decoration:none;font-size:.36em;color:var(--dim);margin-left:3px;}
+  .b .sbox .sstat{display:flex;align-items:center;gap:7px;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);}
+  .b .sbox .sdot{width:7px;height:7px;border-radius:50%;background:var(--faint);}
+  .b .sbox.live{border-style:solid;border-color:var(--ok);background:color-mix(in srgb,var(--ok) 11%,transparent);box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 9%,transparent);animation:lit .5s ease-out;}
+  .b .sbox.live .sv{color:var(--fg);}
+  .b .sbox.live .sstat{color:var(--ok);}
+  .b .sbox.live .sdot{background:var(--ok);animation:beat 1.3s ease-in-out infinite;}
+  @keyframes lit{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--ok) 32%,transparent);}100%{box-shadow:0 0 0 3px color-mix(in srgb,var(--ok) 9%,transparent);}}
+  @keyframes beat{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.5);opacity:.55}}
+  .b .go-row{margin-top:28px;display:flex;flex-direction:column;align-items:center;gap:12px;}
+  .b .prompt{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);transition:color .3s;}
+  .b .prompt.good{color:var(--ok);}
+  .b .countin{font-size:66px;font-weight:500;line-height:1;letter-spacing:-.03em;color:var(--fg);}
+  .b .dstate{display:flex;gap:6px;margin-top:30px;}
+  .b .dstate button{font:inherit;font-size:11px;color:var(--faint);background:none;border:1px solid var(--rule);border-radius:6px;padding:5px 11px;cursor:pointer;}
+  .b .dstate button.on{color:var(--fg);border-color:var(--fg);}
+
+  /* ---------- C: spin-up / countdown ---------- */
+  .c .body{gap:0;}
+  .c .count{font-size:150px;font-weight:500;line-height:1;letter-spacing:-.04em;}
+  .c .count.small{font-size:40px;color:var(--faint);}
+  .c .live{display:flex;gap:50px;margin-top:34px;}
+  .c .live .rv{font-size:34px;}
+  .c .hint{margin-top:34px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);}
+  .c .bars{position:absolute;left:0;right:0;bottom:0;height:120px;display:flex;align-items:flex-end;gap:3px;padding:0 22px 22px;opacity:.5;}
+  .c .bars i{flex:1;background:var(--fg);opacity:.14;border-radius:3px 3px 0 0;}
+  .cstate{display:flex;gap:6px;margin-top:30px;}
+  .cstate button{font:inherit;font-size:11px;color:var(--faint);background:none;border:1px solid var(--rule);border-radius:6px;padding:5px 11px;cursor:pointer;}
+  .cstate button.on{color:var(--fg);border-color:var(--fg);}
+</style>
+</head>
+<body>
+  <div class="chrome">
+    <span class="t">Pre-ride · waiting</span>
+    <span class="seg" id="seg">
+      <button data-d="a" class="on">A · Minimal</button>
+      <button data-d="b">B · Ready-check</button>
+      <button data-d="c">C · Spin-up</button>
+    </span>
+    <button class="tgl" id="theme">Dark</button>
+  </div>
+  <div class="stage">
+    <p class="cap" id="cap">Design A — Minimal launch</p>
+
+    <!-- A -->
+    <div class="screen a" data-d="a">
+      <div class="topline"><span class="z"><i></i>Ashglow · VO2 Max</span><span>60 min · TSS 82</span><span class="x">End</span></div>
+      <div class="body">
+        <div class="pulse"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><path d="M6 17l4-8h5l3 8M10 9h5"/></svg></div>
+        <h1 class="big">Pedal to begin</h1>
+        <p class="sub">The clock starts after a 3 · 2 · 1 — or press start now.</p>
+        <div class="ro-row">
+          <div class="ro"><span class="rl">Cadence</span><span class="rv">84<u>rpm</u></span></div>
+          <div class="ro"><span class="rl">Power</span><span class="rv">182<u>w</u></span></div>
+        </div>
+        <div class="status">
+          <span><i class="dot on"></i>Trainer</span>
+          <span><i class="dot on"></i>Heart rate</span>
+          <span><i class="dot off"></i>Strava</span>
+        </div>
+        <div class="acts">
+          <button class="btn go">▶ Start now</button>
+          <button class="btn ghost">Cancel</button>
+        </div>
+        <div class="foot-ftp">FTP <b>250</b> W</div>
+      </div>
+    </div>
+
+    <!-- B -->
+    <div class="screen b hide" data-d="b">
+      <div class="topline"><span class="z"><i></i>VO2 Max</span><span>3 × 9 min @ 300 W</span><span class="x">End</span></div>
+      <div class="body">
+        <h1 class="wk-name">Ashglow</h1>
+        <p class="wk-meta">60 min · TSS 82 · Norm 232 W</p>
+        <div class="check">
+          <div class="crow">
+            <span class="ci"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="6" cy="16.5" r="3.1"/><circle cx="18" cy="16.5" r="3.1"/><path d="M6 16.5l3.6-7h5.2l3.2 7M12.2 16.5l2.6-7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+            <span class="cn">Trainer — KICKR CORE</span><span class="cs">Connected</span>
+          </div>
+          <div class="crow">
+            <span class="ci"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20S3.6 15 3.6 9.3A4.3 4.3 0 0112 7.1a4.3 4.3 0 018.4 2.2C20.4 15 12 20 12 20z" stroke-linejoin="round"/></svg></span>
+            <span class="cn">Heart rate — TICKR</span><span class="cs">Connected</span>
+          </div>
+          <div class="crow miss">
+            <span class="ci"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h4l2-3h4l2 3h4v12H4zM12 17a3.5 3.5 0 100-7 3.5 3.5 0 000 7z"/></svg></span>
+            <span class="cn">FTP — not set</span><span class="cs">Needed</span>
+            <button class="fix">Set</button>
+          </div>
+        </div>
+        <div class="sense">
+          <div class="sbox" data-s="cad">
+            <span class="sl">Cadence</span>
+            <span class="sv" data-v>—</span>
+            <span class="sstat"><i class="sdot"></i><span data-st>Waiting</span></span>
+          </div>
+          <div class="sbox" data-s="pow">
+            <span class="sl">Power</span>
+            <span class="sv" data-v>—</span>
+            <span class="sstat"><i class="sdot"></i><span data-st>Waiting</span></span>
+          </div>
+        </div>
+        <div class="go-row">
+          <span class="prompt" id="bPrompt">Waiting for signal</span>
+          <div class="acts">
+            <button class="btn go">▶ Start now</button>
+            <button class="btn ghost">Cancel</button>
+          </div>
+        </div>
+        <div class="dstate" id="bState">
+          <button data-b="none" class="on">No signal</button>
+          <button data-b="cad">Cadence only</button>
+          <button data-b="both">Both live → counts in</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- C -->
+    <div class="screen c hide" data-d="c">
+      <div class="topline"><span class="z"><i></i>Ashglow · VO2 Max</span><span>60 min · TSS 82</span><span class="x">End</span></div>
+      <div class="body">
+        <div class="count small" id="cCount">Pedal to begin</div>
+        <div class="live">
+          <div class="ro"><span class="rl">Cadence</span><span class="rv">84<u>rpm</u></span></div>
+          <div class="ro"><span class="rl">Power</span><span class="rv">182<u>w</u></span></div>
+        </div>
+        <div class="hint">Keep pedalling — it counts you in</div>
+        <div class="cstate">
+          <button data-c="idle" class="on">Idle</button>
+          <button data-c="3">3</button>
+          <button data-c="2">2</button>
+          <button data-c="1">1</button>
+        </div>
+      </div>
+      <div class="bars" id="cBars"></div>
+    </div>
+  </div>
+<script>
+  // profile bars for C
+  var bars=document.getElementById('cBars'); var seq=[30,42,46,55,55,42,74,74,36,74,74,36,70,70,36,55,55,42,52,52,40,38,30,28];
+  bars.innerHTML=seq.map(function(h){return '<i style="height:'+h+'%"></i>';}).join('');
+  var CAP={a:'Design A — Minimal launch',b:'Design B — Ready-check',c:'Design C — Spin-up / count-in'};
+  document.getElementById('seg').addEventListener('click',function(e){var b=e.target.closest('button[data-d]');if(!b)return;var d=b.getAttribute('data-d');[].forEach.call(this.children,function(x){x.classList.toggle('on',x===b);});[].forEach.call(document.querySelectorAll('.screen'),function(s){s.classList.toggle('hide',s.getAttribute('data-d')!==d);});document.getElementById('cap').textContent=CAP[d];});
+  // B — live sensor registering states
+  var bBox={cad:document.querySelector('.b .sbox[data-s=cad]'),pow:document.querySelector('.b .sbox[data-s=pow]')};
+  var bPrompt=document.getElementById('bPrompt');
+  function setBox(box,live,val,unit){
+    box.classList.toggle('live',live);
+    box.querySelector('[data-v]').innerHTML=live?(val+'<u>'+unit+'</u>'):'—';
+    box.querySelector('[data-st]').textContent=live?'Registering':'Waiting';
+  }
+  var bSeq=0;  // token: cancels a running count-in if the state changes
+  function countIn(){
+    var my=++bSeq, n=3;
+    bPrompt.className='prompt good';
+    (function step(){
+      if(my!==bSeq) return;
+      if(n>0){ bPrompt.innerHTML='<span class="countin">'+n+'</span>'; n--; setTimeout(step,800); }
+      else { bPrompt.innerHTML='<span class="countin">Ride on</span>'; }
+    })();
+  }
+  var bStates={
+    none:function(){setBox(bBox.cad,false);setBox(bBox.pow,false);bPrompt.className='prompt';bPrompt.textContent='Waiting for signal';},
+    cad:function(){setBox(bBox.cad,true,88,'rpm');setBox(bBox.pow,false);bPrompt.className='prompt';bPrompt.textContent='Getting signal — keep pedalling';},
+    both:function(){setBox(bBox.cad,true,90,'rpm');setBox(bBox.pow,true,208,'w');bPrompt.className='prompt good';bPrompt.textContent='Signal good — counting you in';setTimeout(countIn,650);}
+  };
+  document.getElementById('bState').addEventListener('click',function(e){var b=e.target.closest('button[data-b]');if(!b)return;[].forEach.call(this.children,function(x){x.classList.toggle('on',x===b);});bSeq++;bStates[b.getAttribute('data-b')]();});
+  bStates.none();
+
+  // C state switch
+  document.querySelector('.c .cstate').addEventListener('click',function(e){var b=e.target.closest('button[data-c]');if(!b)return;[].forEach.call(this.children,function(x){x.classList.toggle('on',x===b);});var v=b.getAttribute('data-c');var el=document.getElementById('cCount');if(v==='idle'){el.textContent='Pedal to begin';el.classList.add('small');}else{el.textContent=v;el.classList.remove('small');}});
+  document.getElementById('theme').addEventListener('click',function(){var d=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',d);this.textContent=d==='light'?'Dark':'Light';});
+</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+:root{
+  --page:#F4F3EF; --card:#FFFFFF; --card-2:#FBFAF7;
+  --ink:#14140F; --ink-soft:#4A4A44; --muted:#6C6B62; --faint:#6E6B60; --ok:#1C8579;
+  --line:#E7E5DD; --line-2:#CFCCC3;
+  --sans:"Segoe UI",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Consolas,monospace;
+  --r:18px; --r-sm:12px;
+  /* light zone tints (fills) + saturated dots */
+  --z-recovery:#DADCE0;   --d-recovery:#8C93A6;
+  --z-endurance:#CFDAF0;  --d-endurance:#5B8DEF;
+  --z-tempo:#CDE6E1;      --d-tempo:#3FB6AE;
+  --z-sweetspot:#F1E3C6;  --d-sweetspot:#E0A32E;
+  --z-threshold:#F5D6C6;  --d-threshold:#F2764A;
+  --z-vo2:#E9D9F5;        --d-vo2:#C77DFF;
+  --z-anaerobic:#F8D2D6;  --d-anaerobic:#FF5D75;
+  --plot-power:#E0A400; --plot-hr:#E23B3B; --plot-cad:#55554E;
+  --hover:#ECEAE3; --active:#F0EEE7; --rec:#8A6410;
+}
+:root.dark{
+  --page:#141310; --card:#1E1C16; --card-2:#191712;
+  --ink:#F4F3EF; --ink-soft:#CBC8BE; --muted:#A39F93; --faint:#8B8879;
+  --line:#2D2A22; --line-2:#474433;
+  --z-recovery:#3A3C40; --z-endurance:#2B3A57; --z-tempo:#224743;
+  --z-sweetspot:#574524; --z-threshold:#5B3323; --z-vo2:#4D355D; --z-anaerobic:#5F2B30;
+  --plot-power:#F5C518; --plot-hr:#FF5C5C; --plot-cad:#C9C6BC;
+  --hover:#26241C; --active:#2B2920; --rec:#E7B84E; --ok:#5CCDC1;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{background:var(--page);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;}
+::selection{background:var(--ink);color:var(--page);}
+
+.m-label{font-size:12px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);}
+.m-card{background:var(--card);border:1.5px solid var(--line);border-radius:var(--r);}
+
+.pill{background:var(--ink);color:var(--page);border-radius:24px;padding:11px 26px;font-size:13.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;border:0;display:inline-flex;align-items:center;gap:9px;cursor:pointer;font-family:inherit;}
+.pill-out{background:transparent;color:var(--ink);border:1.5px solid var(--line-2);border-radius:24px;padding:11px 22px;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:8px;}
+.pill-out:hover{background:var(--hover);}
+.pill-out.on{background:var(--ink);color:var(--page);border-color:var(--ink);}
+
+.icobtn{width:44px;height:44px;border:1.5px solid var(--line-2);border-radius:50%;background:transparent;color:var(--ink);display:flex;align-items:center;justify-content:center;cursor:pointer;flex:none;}
+.icobtn:hover{background:var(--hover);}
+
+.btn{border:1.5px solid var(--line-2);border-radius:26px;background:transparent;color:var(--ink);font-family:inherit;font-size:15px;font-weight:600;letter-spacing:.04em;padding:16px 24px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:10px;}
+.btn:hover{background:var(--hover);}
+.btn-primary{background:var(--ink);border-color:var(--ink);color:var(--page);}
+.btn-primary:hover{background:#000;}
+
+/* zone tag: pale tint + saturated dot + ink text */
+.ztag{display:inline-flex;align-items:center;gap:8px;padding:6px 13px;border-radius:20px;font-size:12.5px;font-weight:600;color:var(--ink);}
+.zdot{width:9px;height:9px;border-radius:50%;flex:none;}
+
+/* chilli */
+.chilli{display:inline-flex;gap:3px;}
+.chilli i{width:12px;height:12px;border-radius:50%;background:var(--line-2);}
+.chilli i.on{background:var(--d-threshold);}
+
+/* minimal slider */
+.mslider{position:relative;height:12px;margin:16px 2px 8px;}
+.mslider .track{position:absolute;inset:4px 0;border-radius:4px;background:var(--line);display:flex;overflow:hidden;}
+.mslider .track .fill{background:var(--ink);}
+.mslider .track .zoneseg{flex:1;}
+.mslider .knob{position:absolute;top:-4px;width:20px;height:20px;border-radius:50%;background:var(--card);border:2.5px solid var(--ink);transform:translateX(-50%);box-shadow:0 1px 3px rgba(0,0,0,.14);}
+.segrow{display:flex;justify-content:space-between;font-size:11.5px;color:var(--faint);font-family:var(--mono);margin-top:2px;}
+
+/* segmented tick bar */
+.ticks{display:flex;gap:5px;}
+.ticks i{flex:1;height:7px;border-radius:4px;border:1.5px solid var(--line-2);}
+.ticks i.on{background:var(--ink);border-color:var(--ink);}
+
+/* scrollbars, calm */
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:6px;border:3px solid var(--page);}

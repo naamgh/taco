@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Readiness meter — options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{
+    --bg:#F4F3EF; --bg-elev:#FFFFFF; --bg-card:#FFFFFF; --border:#E7E5DD; --border-soft:#EFEDE6;
+    --text:#14140F; --text-dim:#4A4A44; --text-faint:#6E6B60; --accent:#14140F;
+    --ok:#1C8579; --warn:#8A6410; --star:#D99A00; --track:#ECEAE3;
+  }
+  :root[data-theme="dark"]{
+    --bg:#121213; --bg-elev:#202022; --bg-card:#1B1B1D; --border:#2C2C2F; --border-soft:#232326;
+    --text:#ECECEA; --text-dim:#A9A9A6; --text-faint:#85857F; --accent:#ECECEA;
+    --ok:#5CCDC1; --warn:#E7B84E; --star:#E7B84E; --track:#2C2C2F;
+  }
+  :root{
+    --c-anaerobic:#FF5D75; --c-threshold:#F2764A; --c-tempo:#49B4B0;
+    --mono:'JetBrains Mono',ui-monospace,monospace; --sans:'Inter',system-ui,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;
+    padding:30px 22px 70px;transition:background .2s,color .2s;}
+  .wrap{max-width:1080px;margin:0 auto;}
+  header{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px 26px;margin-bottom:8px;}
+  h1{margin:0;font-size:24px;font-weight:700;letter-spacing:-.02em;}
+  .lede{margin:6px 0 0;color:var(--text-dim);font-size:14px;max-width:560px;line-height:1.5;}
+  .controls{margin-left:auto;display:flex;align-items:center;gap:18px;}
+  .ctl{display:flex;flex-direction:column;gap:5px;}
+  .ctl label{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);}
+  .ctl .read{font-family:var(--mono);font-weight:700;font-size:13px;}
+  input[type=range]{width:220px;accent-color:var(--star);}
+  .tgl{border:1px solid var(--border);background:var(--bg-card);color:var(--text);border-radius:9px;
+    padding:9px 15px;font:inherit;font-size:13px;font-weight:600;cursor:pointer;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px;margin-top:26px;}
+  .opt{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:18px 18px 20px;}
+  .opt-h{display:flex;align-items:baseline;gap:9px;margin-bottom:4px;}
+  .opt-n{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--star);letter-spacing:.06em;}
+  .opt-t{font-size:15px;font-weight:700;}
+  .opt-d{margin:0 0 16px;font-size:12.5px;color:var(--text-dim);line-height:1.45;}
+  .stage{min-height:140px;display:flex;align-items:center;justify-content:center;}
+
+  /* shared bits */
+  .word{font-size:26px;font-weight:700;letter-spacing:-.01em;}
+  .cap{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-faint);}
+  .val{font-family:var(--mono);font-weight:700;}
+
+  /* 2 gradient track */
+  .g2{width:100%;}
+  .g2-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:16px;}
+  .g2-track{position:relative;height:10px;border-radius:6px;
+    background:linear-gradient(90deg,var(--c-anaerobic),var(--c-threshold) 32%,var(--star) 54%,var(--c-tempo) 76%,var(--ok));}
+  .g2-thumb{position:absolute;top:50%;width:18px;height:18px;border-radius:50%;background:var(--bg-card);
+    border:3px solid var(--text);transform:translate(-50%,-50%);box-shadow:0 2px 6px rgba(0,0,0,.25);}
+  .g2-ends{display:flex;justify-content:space-between;margin-top:9px;font-size:11px;color:var(--text-faint);}
+
+  /* 3 named ladder */
+  .g3{width:100%;display:flex;flex-direction:column;gap:6px;}
+  .g3-row{display:flex;align-items:center;gap:10px;padding:7px 11px;border-radius:9px;border:1px solid transparent;
+    font-size:13px;color:var(--text-faint);}
+  .g3-row .dot{width:9px;height:9px;border-radius:50%;background:currentColor;opacity:.45;flex:none;}
+  .g3-row.on{background:var(--bg-elev);border-color:var(--border);color:var(--text);font-weight:700;}
+  .g3-row.on .dot{opacity:1;}
+  .g3-row .rv{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--text-faint);}
+
+  /* 4 donut */
+  .g4{display:flex;align-items:center;gap:18px;}
+  .g4 .mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;}
+  .g4 .mid .w{font-size:18px;font-weight:700;}
+  .g4 .mid .v{font-family:var(--mono);font-size:12px;color:var(--text-dim);}
+  .g4-leg{display:flex;flex-direction:column;gap:7px;font-size:12px;color:var(--text-dim);}
+  .g4-leg .t{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);}
+  .g4-leg b{font-family:var(--mono);font-size:19px;color:var(--text);font-weight:700;}
+
+  /* 6 minimal type */
+  .g6{width:100%;text-align:left;}
+  .g6 .row{display:flex;align-items:baseline;gap:10px;margin-bottom:14px;}
+  .g6 .big{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1;}
+  .g6 .tsb{font-family:var(--mono);font-size:15px;font-weight:700;}
+  .g6 .base{position:relative;height:2px;background:var(--track);border-radius:2px;}
+  .g6 .zero{position:absolute;top:-3px;width:1px;height:8px;background:var(--text-faint);left:57.1%;}
+  .g6 .tick{position:absolute;top:-6px;width:3px;height:14px;border-radius:2px;background:var(--text);transform:translateX(-50%);}
+  .g6 .ends{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--text-faint);}
+
+  svg{display:block;overflow:visible;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Readiness meter — six directions</h1>
+      <p class="lede">The same Form (TSB) value shown six ways. Drag the slider to see how each handles fresh, neutral and overloaded. Pick one (or a blend) and I'll build it into the card.</p>
+    </div>
+    <div class="controls">
+      <div class="ctl">
+        <label>Form (TSB) <span class="read" id="tsbRead">+8</span></label>
+        <input type="range" id="tsb" min="-45" max="30" value="8">
+      </div>
+      <button class="tgl" id="theme">Dark</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <div class="opt">
+      <div class="opt-h"><span class="opt-n">01</span><span class="opt-t">Arc gauge + needle</span></div>
+      <p class="opt-d">A speedo-style half-dial. Zone-coloured arc, a needle to today's value. Familiar, confident, reads in a glance.</p>
+      <div class="stage"><svg id="s1" viewBox="0 0 240 172" width="240" height="172"></svg></div>
+    </div>
+
+    <div class="opt">
+      <div class="opt-h"><span class="opt-n">02</span><span class="opt-t">Gradient track + thumb</span></div>
+      <p class="opt-d">One smooth red→green gradient, a single thumb at today's position. No segments — modern and calm.</p>
+      <div class="stage"><div class="g2">
+        <div class="g2-top"><span class="word" id="w2">Rested</span><span class="val" id="v2" style="font-size:20px">+8</span></div>
+        <div class="g2-track"><div class="g2-thumb" id="t2"></div></div>
+        <div class="g2-ends"><span>Overloaded</span><span>Fresh</span></div>
+      </div></div>
+    </div>
+
+    <div class="opt">
+      <div class="opt-h"><span class="opt-n">03</span><span class="opt-t">Named zone ladder</span></div>
+      <p class="opt-d">Drops the gauge metaphor entirely — the five states listed, today's one lit. Most legible, zero ambiguity.</p>
+      <div class="stage"><div class="g3" id="s3"></div></div>
+    </div>
+
+    <div class="opt">
+      <div class="opt-h"><span class="opt-n">04</span><span class="opt-t">Donut ring</span></div>
+      <p class="opt-d">A ring that fills to the value, word and number in the middle. Compact and dashboard-like; pairs well beside the tiles.</p>
+      <div class="stage"><div class="g4">
+        <div style="position:relative;width:120px;height:120px;">
+          <svg id="s4" viewBox="0 0 120 120" width="120" height="120"></svg>
+          <div class="mid"><span class="w" id="w4">Rested</span><span class="v" id="v4">TSB +8</span></div>
+        </div>
+        <div class="g4-leg"><span class="t">Readiness</span><b id="b4">Rested</b><span id="l4">Lightly tapered — good to go.</span></div>
+      </div></div>
+    </div>
+
+    <div class="opt">
+      <div class="opt-h"><span class="opt-n">05</span><span class="opt-t">Form trend sparkline</span></div>
+      <p class="opt-d">Shows the last three weeks of Form over faint zone bands, with today marked. Tells you where you're <em>heading</em>, not just where you are.</p>
+      <div class="stage"><svg id="s5" viewBox="0 0 300 130" width="300" height="130"></svg></div>
+    </div>
+
+    <div class="opt">
+      <div class="opt-h"><span class="opt-n">06</span><span class="opt-t">Minimal typographic</span></div>
+      <p class="opt-d">The restrained, on-brand take. Big word, signed number, one hairline with a single tick. Lets the type carry it.</p>
+      <div class="stage"><div class="g6">
+        <div class="row"><span class="big" id="w6">Rested</span><span class="tsb" id="v6">+8 <span style="color:var(--text-faint)">TSB</span></span></div>
+        <div class="base"><span class="zero"></span><span class="tick" id="t6"></span></div>
+        <div class="ends"><span>Overloaded</span><span>Fresh</span></div>
+      </div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var LO=-45, HI=30;
+function frac(tsb){ return Math.max(0, Math.min(1, (tsb-LO)/(HI-LO))); }
+function word(t){ if(t>15)return'Fresh'; if(t>5)return'Rested'; if(t>=-10)return'Neutral'; if(t>=-30)return'Building'; return'Overreaching'; }
+function note(t){ if(t>15)return'Peaked and primed.'; if(t>5)return'Lightly tapered — good to go.'; if(t>=-10)return'Balanced. Train as planned.'; if(t>=-30)return'Carrying fatigue — productive load.'; return'Deep fatigue — ease off.'; }
+// red -> green ramp by zone
+function col(t){ if(t>15)return getVar('--ok'); if(t>5)return getVar('--c-tempo'); if(t>=-10)return getVar('--star'); if(t>=-30)return getVar('--c-threshold'); return getVar('--c-anaerobic'); }
+function getVar(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+function sign(t){ return (t>0?'+':'')+t; }
+
+// polar helper for arc/donut
+function pol(cx,cy,r,deg){ var a=(deg-90)*Math.PI/180; return [cx+r*Math.cos(a), cy+r*Math.sin(a)]; }
+function arcPath(cx,cy,r,a0,a1){ var p0=pol(cx,cy,r,a1), p1=pol(cx,cy,r,a0); var big=(a1-a0)<=180?0:1; return 'M '+p0[0]+' '+p0[1]+' A '+r+' '+r+' 0 '+big+' 0 '+p1[0]+' '+p1[1]; }
+
+// 1 — arc gauge
+function draw1(t){
+  var cx=120, cy=108, r=90, segs=[['--c-anaerobic',-45,-30],['--c-threshold',-30,-10],['--star',-10,5],['--c-tempo',5,15],['--ok',15,30]];
+  var s='';
+  function deg(v){ return -90 + frac(v)*180; }
+  segs.forEach(function(sg){
+    s+='<path d="'+arcPath(cx,cy,r,deg(sg[1]),deg(sg[2]))+'" fill="none" stroke="'+getVar(sg[0])+'" stroke-width="13" stroke-linecap="butt"/>';
+  });
+  var nd=deg(t), np=pol(cx,cy,r-6,nd), base1=pol(cx,cy,8,nd+90), base2=pol(cx,cy,8,nd-90);
+  s+='<polygon points="'+np[0]+','+np[1]+' '+base1[0]+','+base1[1]+' '+base2[0]+','+base2[1]+'" fill="'+getVar('--text')+'"/>';
+  s+='<circle cx="'+cx+'" cy="'+cy+'" r="6" fill="'+getVar('--text')+'"/>';
+  s+='<text x="'+cx+'" y="140" text-anchor="middle" font-family="'+getVar('--sans')+'" font-size="20" font-weight="700" fill="'+getVar('--text')+'">'+word(t)+'</text>';
+  s+='<text x="'+cx+'" y="162" text-anchor="middle" font-family="'+getVar('--mono')+'" font-size="12" fill="'+getVar('--text-dim')+'">TSB '+sign(t)+'</text>';
+  document.getElementById('s1').innerHTML=s;
+}
+// 2 — gradient thumb
+function draw2(t){
+  document.getElementById('t2').style.left=(frac(t)*100)+'%';
+  document.getElementById('w2').textContent=word(t);
+  document.getElementById('v2').textContent=sign(t);
+}
+// 3 — ladder
+function draw3(t){
+  var zs=[['Fresh',16,30],['Rested',6,15],['Neutral',-10,5],['Building',-30,-11],['Overreaching',-45,-31]];
+  var w=word(t), s='';
+  zs.forEach(function(z){
+    var on=z[0]===w;
+    var mid=(z[1]+z[2])/2, c=col(mid);
+    s+='<div class="g3-row'+(on?' on':'')+'" style="color:'+(on?c:'')+'">'+
+       '<span class="dot" style="background:'+c+'"></span>'+z[0]+
+       (on?'<span class="rv">TSB '+sign(t)+'</span>':'')+'</div>';
+  });
+  document.getElementById('s3').innerHTML=s;
+}
+// 4 — donut
+function draw4(t){
+  var cx=60, cy=60, r=48, C=2*Math.PI*r, f=frac(t), c=col(t);
+  var s='<circle cx="60" cy="60" r="48" fill="none" stroke="'+getVar('--track')+'" stroke-width="11"/>';
+  s+='<circle cx="60" cy="60" r="48" fill="none" stroke="'+c+'" stroke-width="11" stroke-linecap="round" '+
+     'stroke-dasharray="'+(f*C)+' '+C+'" transform="rotate(-90 60 60)"/>';
+  document.getElementById('s4').innerHTML=s;
+  document.getElementById('w4').textContent=word(t);
+  document.getElementById('v4').textContent='TSB '+sign(t);
+  document.getElementById('b4').textContent=word(t);
+  document.getElementById('b4').style.color=c;
+  document.getElementById('l4').textContent=note(t);
+}
+// 5 — sparkline (synthesise 21 days trending to today's value)
+function draw5(t){
+  var W=300,H=130,padL=6,padR=6,padT=10,padB=18, n=21;
+  var lo=-45, hi=30;
+  var series=[]; for(var i=0;i<n;i++){ var k=i/(n-1); var v=(t-18)*(1-k)+t*k + 7*Math.sin(i/2.4) + (i<n-1?6*Math.sin(i):0); series.push(Math.max(lo,Math.min(hi,v))); }
+  series[n-1]=t;
+  function x(i){ return padL + i/(n-1)*(W-padL-padR); }
+  function y(v){ return padT + (hi-v)/(hi-lo)*(H-padT-padB); }
+  var bands=[['--ok',15,30],['--c-tempo',5,15],['--star',-10,5],['--c-threshold',-30,-10],['--c-anaerobic',-45,-30]];
+  var s='';
+  bands.forEach(function(b){ var yt=y(Math.min(hi,b[2])), yb=y(Math.max(lo,b[1])); s+='<rect x="0" y="'+yt+'" width="'+W+'" height="'+(yb-yt)+'" fill="'+getVar(b[0])+'" opacity="0.08"/>'; });
+  s+='<line x1="0" y1="'+y(0)+'" x2="'+W+'" y2="'+y(0)+'" stroke="'+getVar('--text-faint')+'" stroke-dasharray="3 4" opacity="0.5"/>';
+  var d=''; for(var j=0;j<n;j++){ d+=(j?'L':'M')+x(j).toFixed(1)+' '+y(series[j]).toFixed(1)+' '; }
+  s+='<path d="'+d+'" fill="none" stroke="'+getVar('--text')+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
+  var px=x(n-1), py=y(t), c=col(t);
+  s+='<circle cx="'+px+'" cy="'+py+'" r="5" fill="'+c+'" stroke="'+getVar('--bg-card')+'" stroke-width="2"/>';
+  s+='<text x="'+(px-6)+'" y="'+(py-9)+'" text-anchor="end" font-family="'+getVar('--mono')+'" font-size="12" font-weight="700" fill="'+getVar('--text')+'">'+word(t)+' '+sign(t)+'</text>';
+  document.getElementById('s5').innerHTML=s;
+}
+// 6 — minimal type
+function draw6(t){
+  document.getElementById('w6').textContent=word(t);
+  document.getElementById('w6').style.color=col(t);
+  document.getElementById('v6').innerHTML=sign(t)+' <span style="color:var(--text-faint)">TSB</span>';
+  document.getElementById('t6').style.left=(frac(t)*100)+'%';
+  document.getElementById('t6').style.background=col(t);
+}
+
+function render(){
+  var t=+document.getElementById('tsb').value;
+  document.getElementById('tsbRead').textContent=sign(t);
+  draw1(t);draw2(t);draw3(t);draw4(t);draw5(t);draw6(t);
+}
+document.getElementById('tsb').addEventListener('input', render);
+document.getElementById('theme').addEventListener('click', function(){
+  var d=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+  document.documentElement.setAttribute('data-theme', d);
+  this.textContent = d==='light'?'Dark':'Light';
+  render();
+});
+render();
+</script>
+</body>
+</html>

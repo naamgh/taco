@@ -1,0 +1,10 @@
+name = "ftp-sync"
+main = "sync-worker.js"
+compatibility_date = "2024-11-01"
+
+# The rider's ride log + plans are stored here, one blob per Strava athlete.
+# The `id` below is filled in by the `wrangler kv namespace create` step
+# (see DEPLOY.md) — paste the id it prints in place of PASTE_KV_ID_HERE.
+[[kv_namespaces]]
+binding = "RIDES"
+id = "de40c0a2d35c47f287c2bb7f943acd93"

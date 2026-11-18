@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Charts - minimal mock</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+  body{padding:30px;display:flex;justify-content:center;}
+  .modal{width:100%;max-width:1300px;background:var(--card);border:1.5px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 30px 80px -40px rgba(0,0,0,.35);}
+  .ch-head{display:flex;align-items:center;gap:16px;padding:22px 30px;border-bottom:1.5px solid var(--line);}
+  .ch-head h1{font-size:22px;font-weight:600;letter-spacing:-.01em;}
+  .ranges{display:flex;gap:8px;margin-left:8px;}
+  .ranges button{background:transparent;border:1.5px solid var(--line-2);border-radius:20px;padding:7px 15px;font-family:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;}
+  .ranges button.on{background:var(--ink);border-color:var(--ink);color:var(--page);}
+  .ch-head .sp{flex:1;}
+  .body{padding:26px 30px 34px;}
+  .tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:26px;}
+  .tile{background:var(--card-2);border:1.5px solid var(--line);border-radius:16px;padding:18px 20px;}
+  .tile .k{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:10px;}
+  .tile .v{font-family:var(--mono);font-size:32px;font-weight:600;line-height:1;}
+  .tile .s{font-size:12px;color:var(--faint);margin-top:8px;}
+  .tile.pos .v{color:var(--ok);}
+  .cols{display:grid;grid-template-columns:1fr 360px;gap:20px;}
+  .col{display:flex;flex-direction:column;gap:20px;}
+  .card{background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:20px 22px;}
+  .card h3{font-size:14px;font-weight:600;margin-bottom:4px;}
+  .card .cap{font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+  .card .legend{display:flex;gap:18px;margin-bottom:14px;font-size:12px;color:var(--ink-soft);}
+  .card .legend span{display:flex;align-items:center;gap:8px;}
+  .card .legend i{width:16px;height:3px;border-radius:2px;display:inline-block;}
+  .pc-row{display:flex;align-items:center;gap:14px;margin-bottom:11px;}
+  .pc-row .dl{width:42px;font-family:var(--mono);font-size:12.5px;color:var(--muted);text-align:right;}
+  .pc-row .bar{flex:1;height:22px;background:var(--card-2);border-radius:6px;overflow:hidden;}
+  .pc-row .bar i{display:block;height:100%;background:var(--line-2);border-radius:6px;}
+  .pc-row.pr .bar i{background:var(--d-sweetspot);}
+  .pc-row .w{font-family:var(--mono);font-size:13px;font-weight:600;width:52px;}
+  .now{font-size:12.5px;color:var(--muted);margin-bottom:8px;}
+  .now b{font-family:var(--mono);font-size:18px;color:var(--ink);}
+</style>
+</head>
+<body>
+<div class="modal">
+
+  <div class="ch-head">
+    <h1>Training</h1>
+    <div class="ranges"><button>6w</button><button class="on">3m</button><button>6m</button><button>1y</button><button>All</button></div>
+    <div class="sp"></div>
+    <button class="pill">Close</button>
+  </div>
+
+  <div class="body">
+    <div class="tiles">
+      <div class="tile"><div class="k">Fitness</div><div class="v">52</div><div class="s">CTL</div></div>
+      <div class="tile"><div class="k">Fatigue</div><div class="v">48</div><div class="s">ATL</div></div>
+      <div class="tile pos"><div class="k">Form</div><div class="v">+4</div><div class="s">Neutral</div></div>
+      <div class="tile"><div class="k">This week</div><div class="v">312</div><div class="s">load ▲ 24</div></div>
+      <div class="tile"><div class="k">Time</div><div class="v">4:20</div><div class="s">5 activities</div></div>
+    </div>
+
+    <div class="cols">
+      <div class="col">
+
+        <div class="card">
+          <h3>Fitness &amp; Fatigue</h3>
+          <div class="legend"><span><i style="background:var(--ink)"></i>Fitness</span><span><i style="background:var(--plot-hr)"></i>Fatigue</span></div>
+          <svg viewBox="0 0 560 210" width="100%" height="210" preserveAspectRatio="none">
+            <line x1="0" y1="70" x2="560" y2="70" stroke="var(--line)" stroke-width="1" stroke-dasharray="4 5"/>
+            <line x1="0" y1="140" x2="560" y2="140" stroke="var(--line)" stroke-width="1" stroke-dasharray="4 5"/>
+            <path d="M0 170 C120 150 180 120 280 105 S440 80 560 70" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"/>
+            <path d="M0 175 C110 120 190 150 280 110 S450 120 560 92" fill="none" stroke="var(--plot-hr)" stroke-width="2.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <div class="card">
+          <h3>Form</h3>
+          <div class="cap">Above zero you’re fresh; a touch below is productive; deeply negative means overreached.</div>
+          <svg viewBox="0 0 560 200" width="100%" height="200" preserveAspectRatio="none">
+            <rect x="0" y="0" width="560" height="70" fill="var(--z-tempo)" opacity=".5"/>
+            <rect x="0" y="70" width="560" height="55" fill="var(--z-endurance)" opacity=".45"/>
+            <rect x="0" y="125" width="560" height="75" fill="var(--z-anaerobic)" opacity=".4"/>
+            <line x1="0" y1="70" x2="560" y2="70" stroke="var(--muted)" stroke-width="1.2" stroke-dasharray="5 5"/>
+            <path d="M0 60 C120 40 180 95 280 110 S430 150 560 78" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+      </div>
+
+      <div class="col">
+
+        <div class="card">
+          <h3>12-week trend</h3>
+          <div class="now"><b>312 TSS</b> this week</div>
+          <svg viewBox="0 0 320 190" width="100%" height="190" preserveAspectRatio="none">
+            <line x1="0" y1="60" x2="320" y2="60" stroke="var(--line)" stroke-width="1" stroke-dasharray="4 5"/>
+            <line x1="0" y1="120" x2="320" y2="120" stroke="var(--line)" stroke-width="1" stroke-dasharray="4 5"/>
+            <path d="M6 150 L34 130 L62 138 L90 100 L118 118 L146 88 L174 96 L202 70 L230 84 L258 58 L286 74 L314 50 L314 175 L6 175 Z" fill="var(--z-endurance)" opacity=".4"/>
+            <path d="M6 150 L34 130 L62 138 L90 100 L118 118 L146 88 L174 96 L202 70 L230 84 L258 58 L286 74 L314 50" fill="none" stroke="var(--ink)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="314" cy="50" r="5" fill="var(--ink)"/>
+          </svg>
+        </div>
+
+        <div class="card">
+          <h3 style="margin-bottom:16px">Power curve</h3>
+          <div class="pc-row pr"><span class="dl">15s</span><span class="bar"><i style="width:96%"></i></span><span class="w">640</span></div>
+          <div class="pc-row"><span class="dl">1m</span><span class="bar"><i style="width:74%"></i></span><span class="w">468</span></div>
+          <div class="pc-row pr"><span class="dl">5m</span><span class="bar"><i style="width:52%"></i></span><span class="w">338</span></div>
+          <div class="pc-row"><span class="dl">20m</span><span class="bar"><i style="width:40%"></i></span><span class="w">262</span></div>
+          <div class="pc-row"><span class="dl">60m</span><span class="bar"><i style="width:33%"></i></span><span class="w">218</span></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

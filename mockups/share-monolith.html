@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monolith · HR</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--accent:#6E8BFF;--hr:#FF5D6C;--grey:#E6E3DC;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--grey);color:#14140F;font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:40px 24px 80px;}
+  .wrap{max-width:900px;margin:0 auto;}
+  .kick{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#6E6B60;margin:0 0 10px;}
+  h1{margin:0 0 8px;font-family:'Archivo Black',sans-serif;font-size:32px;letter-spacing:-0.01em;}
+  .lede{margin:0 0 30px;max-width:620px;color:#4A4A44;font-size:14.5px;line-height:1.55;}
+  .slot{margin-bottom:40px;}
+  .tag{display:flex;align-items:baseline;gap:9px;margin-bottom:12px;}
+  .tag b{font-size:16px;font-weight:700;}
+  .tag span{font-family:'JetBrains Mono',monospace;font-size:11px;color:#6E6B60;letter-spacing:.04em;}
+  .card{width:100%;aspect-ratio:4/3;border-radius:14px;overflow:hidden;box-shadow:0 24px 50px -24px rgba(0,0,0,.45);}
+  .card svg{display:block;width:100%;height:100%;}
+  .note{margin-top:11px;font-size:13px;color:#4A4A44;line-height:1.5;max-width:720px;}
+  .note b{color:#14140F;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kick">Monolith · 4:3 landscape · with heart rate</p>
+  <h1>Three ways to bring HR in</h1>
+  <p class="lede">Same Monolith DNA — a chunky knocked-out title, mono + accent, raw data — now at the real 4:3 export size with heart rate added. The power signal stays the accent blue; HR comes in as a second signal in warm red. The three differ in how loud the heart gets.</p>
+  <div id="board"></div>
+</div>
+
+<script>
+var R={name:'CUTLINE', struct:'2 × 20 MIN @ 205 W', zone:'SWEET SPOT', date:'30 SEP 2026',
+  dur:'60:00', np:183, tss:72, work:594, avghr:147, maxhr:171, drift:'HELD STRONG', driftv:'+3%'};
+var A='#6E8BFF', HR='#FF5D6C', BG='#0C0D10', INK='#F2F1EC', DIM='#6B7180', GRID='#23252E';
+
+// power profile + a lagged, drifting HR trace from it
+var SEG=[[.26,.52,5],[.9,.9,20],[.44,.44,5],[.9,.9,20],[.52,.24,10]];
+function profile(n){var total=0,i,j;for(i=0;i<SEG.length;i++)total+=SEG[i][2];var out=[];for(i=0;i<n;i++){var mp=i/(n-1)*total,c=0,v=0;for(j=0;j<SEG.length;j++){if(mp<=c+SEG[j][2]||j===SEG.length-1){var f=Math.min(1,Math.max(0,(mp-c)/SEG[j][2]));v=SEG[j][0]+(SEG[j][1]-SEG[j][0])*f;break;}c+=SEG[j][2];}out.push(v);}return out;}
+var P=profile(120);
+function hrTrace(P){var hr=90,out=[],cw=0;for(var i=0;i<P.length;i++){if(P[i]>0.6)cw++;var tgt=90+P[i]*78+0.35*cw;hr+=(tgt-hr)*0.07;out.push(hr);}var mn=Math.min.apply(null,out),mx=Math.max.apply(null,out);return out.map(function(v){return 106+(v-mn)/(mx-mn)*(171-106);});}
+var H=hrTrace(P);           // bpm-ish, peaks at 171
+
+function pbar(x0,y0,w,hgt,alpha,n){ // power bars in region
+  var s='',bw=w/n; n=n||P.length;
+  for(var i=0;i<P.length;i++){var bh=P[i]*hgt;s+='<rect x="'+(x0+i*(w/P.length)).toFixed(1)+'" y="'+(y0+hgt-bh).toFixed(1)+'" width="'+(w/P.length-0.8).toFixed(2)+'" height="'+bh.toFixed(1)+'" fill="'+(P[i]>0.75?A:'#2A2D36')+'" opacity="'+alpha+'"/>';}
+  return s;
+}
+function hrline(x0,y0,w,hgt,fill){
+  var mn=104,mx=173,n=H.length,step=w/(n-1),d='';
+  for(var i=0;i<n;i++){var y=y0+hgt-(H[i]-mn)/(mx-mn)*hgt;d+=(i?'L':'M')+(x0+i*step).toFixed(1)+' '+y.toFixed(1)+' ';}
+  var area='';
+  if(fill){area='<path d="'+d+'L'+(x0+w)+' '+(y0+hgt)+' L'+x0+' '+(y0+hgt)+' Z" fill="'+HR+'" opacity="0.14"/>';}
+  return area+'<path d="'+d+'" fill="none" stroke="'+HR+'" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>';
+}
+function meta(){return '<text x="40" y="46" font-family="JetBrains Mono" font-size="15" font-weight="700" letter-spacing="3" fill="'+DIM+'">INDOOR · '+R.zone+'</text>'+
+  '<text x="760" y="46" text-anchor="end" font-family="JetBrains Mono" font-size="15" font-weight="700" letter-spacing="3" fill="'+DIM+'">'+R.date+'</text>';}
+function stat(x,v,l,anchor){return '<text x="'+x+'" y="548" font-family="JetBrains Mono" font-size="23" font-weight="800" fill="'+INK+'"'+(anchor?' text-anchor="'+anchor+'"':'')+'>'+v+'</text>'+
+  '<text x="'+x+'" y="570" font-family="JetBrains Mono" font-size="11" letter-spacing="1" fill="'+DIM+'"'+(anchor?' text-anchor="'+anchor+'"':'')+'>'+l+'</text>';}
+
+/* ===== V1 · OVERLAY — title left, power bars + HR line share one plot ===== */
+function overlay(){
+  var px=410,py=120,pw=350,ph=330;
+  return '<svg viewBox="0 0 800 600"><rect width="800" height="600" fill="'+BG+'"/>'+meta()+
+    '<text x="34" y="236" font-family="Archivo Black" font-size="128" fill="'+INK+'" letter-spacing="-4">CUT</text>'+
+    '<text x="34" y="356" font-family="Archivo Black" font-size="128" fill="'+A+'" letter-spacing="-4">LINE</text>'+
+    '<text x="40" y="398" font-family="JetBrains Mono" font-size="17" font-weight="700" letter-spacing="2" fill="#9AA0AE">'+R.struct+'</text>'+
+    // right plot
+    pbar(px,py,pw,ph,0.85)+
+    '<line x1="'+px+'" y1="'+(py+ph)+'" x2="'+(px+pw)+'" y2="'+(py+ph)+'" stroke="'+GRID+'" stroke-width="1.5"/>'+
+    hrline(px,py,pw,ph,false)+
+    '<text x="'+px+'" y="104" font-family="JetBrains Mono" font-size="13" letter-spacing="1" fill="'+A+'">■ POWER</text>'+
+    '<text x="'+(px+pw)+'" y="104" text-anchor="end" font-family="JetBrains Mono" font-size="13" letter-spacing="1" fill="'+HR+'">HEART RATE ▬</text>'+
+    // stat rail
+    '<line x1="40" y1="500" x2="760" y2="500" stroke="'+GRID+'" stroke-width="1.5"/>'+
+    stat(40,R.dur,'TIME')+stat(165,R.np+'W','NORMALISED')+stat(320,R.tss,'TSS')+
+    stat(430,R.avghr,'AVG HR')+stat(560,R.maxhr,'MAX HR')+
+    '<text x="760" y="548" text-anchor="end" font-family="JetBrains Mono" font-size="16" font-weight="700" fill="'+HR+'">'+R.drift+' '+R.driftv+'</text>'+
+    '<text x="760" y="570" text-anchor="end" font-family="JetBrains Mono" font-size="11" letter-spacing="1" fill="'+DIM+'">HR DRIFT</text>'+
+    '</svg>';
+}
+
+/* ===== V2 · DUAL BAND — title across top, power strip over an HR strip ===== */
+function dual(){
+  return '<svg viewBox="0 0 800 600"><rect width="800" height="600" fill="'+BG+'"/>'+meta()+
+    '<text x="34" y="150" font-family="Archivo Black" font-size="118" fill="'+INK+'" letter-spacing="-4">CUTLINE</text>'+
+    '<rect x="40" y="168" width="300" height="12" fill="'+A+'"/>'+
+    '<text x="360" y="178" font-family="JetBrains Mono" font-size="17" font-weight="700" letter-spacing="2" fill="#9AA0AE">'+R.struct+'</text>'+
+    // power band
+    '<text x="40" y="224" font-family="JetBrains Mono" font-size="12" letter-spacing="2" fill="'+A+'">POWER</text>'+
+    pbar(40,235,720,120,0.9)+
+    '<line x1="40" y1="355" x2="760" y2="355" stroke="'+GRID+'" stroke-width="1.5"/>'+
+    // hr band
+    '<text x="40" y="390" font-family="JetBrains Mono" font-size="12" letter-spacing="2" fill="'+HR+'">HEART RATE</text>'+
+    '<text x="760" y="390" text-anchor="end" font-family="JetBrains Mono" font-size="12" fill="'+DIM+'">AVG '+R.avghr+' · MAX '+R.maxhr+' bpm</text>'+
+    hrline(40,400,720,80,true)+
+    // stat rail
+    '<line x1="40" y1="508" x2="760" y2="508" stroke="'+GRID+'" stroke-width="1.5"/>'+
+    stat(40,R.dur,'TIME')+stat(190,R.np+'W','NORMALISED')+stat(360,R.tss,'TSS')+stat(500,R.work,'kJ')+
+    '<text x="760" y="548" text-anchor="end" font-family="JetBrains Mono" font-size="17" font-weight="700" fill="'+HR+'">'+R.drift+' '+R.driftv+'</text>'+
+    '<text x="760" y="570" text-anchor="end" font-family="JetBrains Mono" font-size="11" letter-spacing="1" fill="'+DIM+'">HR DRIFT</text>'+
+    '</svg>';
+}
+
+/* ===== V3 · HEART-LED — HR is the hero area, power quiet behind, big HR numbers ===== */
+function heartLed(){
+  var px=40,py=150,pw=720,ph=300;
+  return '<svg viewBox="0 0 800 600"><rect width="800" height="600" fill="'+BG+'"/>'+meta()+
+    // quiet power silhouette behind
+    pbar(px,py+ph-150,pw,150,0.28)+
+    // big HR area as the hero
+    hrline(px,py,pw,ph,true)+
+    // title overlaid top-left
+    '<text x="34" y="150" font-family="Archivo Black" font-size="104" fill="'+INK+'" letter-spacing="-3">CUTLINE</text>'+
+    '<text x="40" y="186" font-family="JetBrains Mono" font-size="16" font-weight="700" letter-spacing="2" fill="#9AA0AE">'+R.struct+'</text>'+
+    // big HR callouts (left), compact ride stats + verdict (right)
+    '<text x="40" y="526" font-family="Archivo Black" font-size="76" fill="'+HR+'">'+R.avghr+'</text>'+
+    '<text x="44" y="552" font-family="JetBrains Mono" font-size="12" letter-spacing="1" fill="'+DIM+'">AVG BPM</text>'+
+    '<text x="232" y="526" font-family="Archivo Black" font-size="76" fill="'+INK+'">'+R.maxhr+'</text>'+
+    '<text x="236" y="552" font-family="JetBrains Mono" font-size="12" letter-spacing="1" fill="'+DIM+'">MAX BPM</text>'+
+    '<text x="760" y="506" text-anchor="end" font-family="JetBrains Mono" font-size="16" font-weight="800" fill="'+INK+'">'+R.dur+' · '+R.np+'W · TSS '+R.tss+'</text>'+
+    '<text x="760" y="536" text-anchor="end" font-family="JetBrains Mono" font-size="18" font-weight="700" fill="'+HR+'">'+R.drift+' '+R.driftv+'</text>'+
+    '</svg>';
+}
+
+var CARDS=[
+  {t:'1 · Overlay', s:'both signals, one plot', fn:overlay, n:'<b>Power bars + HR line share the same plot.</b> Title keeps the stacked two-tone, HR rides over the bars in red, and avg/max HR + the drift verdict join the stat rail. The tightest way to show effort vs. heart at a glance.'},
+  {t:'2 · Dual band', s:'power over HR, stacked', fn:dual, n:'<b>Two clean bands.</b> One-line title with the accent bar, power as a strip up top, heart rate as its own filled line below with avg/max. Reads calmest — nothing overlaps, each signal gets its own lane.'},
+  {t:'3 · Heart-led', s:'HR as the hero', fn:heartLed, n:'<b>Heart rate takes the stage.</b> The red HR curve fills the frame with power as a faint silhouette behind it, and big avg/max bpm numbers. For when the HR story (durability, a big effort) is the point.'}
+];
+var board=document.getElementById('board');
+CARDS.forEach(function(c){
+  var slot=document.createElement('div'); slot.className='slot';
+  slot.innerHTML='<div class="tag"><b>'+c.t+'</b><span>'+c.s+'</span></div><div class="card">'+c.fn()+'</div><div class="note">'+c.n+'</div>';
+  board.appendChild(slot);
+});
+</script>
+</body>
+</html>

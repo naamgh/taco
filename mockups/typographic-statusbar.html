@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Status bar — concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{ --bg:#F4F3EF; --elev:#FFFFFF; --strong:#14140F; --fg:#14140F; --dim:#6E6B60; --faint:#A8A496; --rule:#E2E0D8; --hair:#ECEAE3; --ok:#1C8579; --warn:#E8395A; }
+  :root[data-theme="dark"]{ --bg:#121213; --elev:#1E1E20; --strong:#F2F2F0; --fg:#ECECEA; --dim:#9A9A93; --faint:#6A6A62; --rule:#2A2A2C; --hair:#202022; --ok:#5CCDC1; --warn:#FF6A7E; }
+  :root{ --mono:'DM Mono',ui-monospace,monospace; --strava:#FC4C02; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);-webkit-font-smoothing:antialiased;font-size:14px;}
+  .chrome{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:14px 22px;background:var(--bg);border-bottom:1px solid var(--rule);flex-wrap:wrap;}
+  .chrome .t{font-size:12px;letter-spacing:.16em;text-transform:uppercase;}
+  .seg{display:flex;gap:4px;margin-left:6px;flex-wrap:wrap;}
+  .seg button{font:inherit;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);background:none;border:1px solid var(--rule);border-radius:7px;padding:6px 11px;cursor:pointer;}
+  .seg button.on{color:var(--bg);background:var(--fg);border-color:var(--fg);}
+  .chrome .tgl{margin-left:auto;font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);background:none;border:0;cursor:pointer;}
+  .stage{max-width:1040px;margin:0 auto;padding:26px 22px 60px;}
+  .cap{font-size:12px;color:var(--dim);margin:0 0 10px;line-height:1.5;}
+  .cap b{color:var(--fg);font-weight:500;}
+  .stateseg{display:inline-flex;gap:4px;margin:0 0 20px;}
+  .stateseg button{font:inherit;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);background:none;border:1px solid var(--rule);border-radius:6px;padding:5px 10px;cursor:pointer;}
+  .stateseg button.on{color:var(--strong);border-color:var(--strong);}
+
+  /* a real top-bar frame */
+  .bar{display:flex;align-items:center;gap:16px;border:1px solid var(--rule);border-radius:12px;padding:12px 18px;background:var(--bg);}
+  .brand{width:26px;height:26px;border-radius:6px;background:color-mix(in srgb,var(--fg) 14%,transparent);flex:none;}
+  .nav{display:flex;gap:20px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);}
+  .nav b{color:var(--strong);font-weight:500;border-bottom:2px solid var(--strong);padding-bottom:3px;}
+  .right{margin-left:auto;display:flex;align-items:center;gap:14px;}
+  svg{display:block;}
+  .ico{width:15px;height:15px;}
+
+  /* FTP chip (shared, tunable per concept) */
+  .ftp{display:inline-flex;align-items:baseline;gap:6px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);cursor:pointer;}
+  .ftp b{font-family:var(--mono);font-size:14px;font-weight:500;color:var(--strong);letter-spacing:0;}
+  .ftp.chip{border:1px solid var(--rule);border-radius:8px;padding:6px 11px;text-transform:none;letter-spacing:.04em;}
+  .divider{width:1px;height:20px;background:var(--rule);}
+
+  /* ---------- NOW ---------- */
+  .now .inds{display:flex;align-items:center;gap:10px;}
+  .now .ind{display:flex;align-items:center;gap:4px;color:var(--faint);}
+  .now .dot{width:8px;height:8px;border-radius:50%;background:var(--faint);position:relative;}
+  .now .dot.on{background:var(--ok);}
+  .now .dot.off{width:12px;height:12px;background:none;}
+  .now .dot.off::before,.now .dot.off::after{content:"";position:absolute;left:50%;top:50%;width:11px;height:1.6px;background:var(--warn);border-radius:1px;}
+  .now .dot.off::before{transform:translate(-50%,-50%) rotate(45deg);}
+  .now .dot.off::after{transform:translate(-50%,-50%) rotate(-45deg);}
+
+  /* ---------- A · Ghost icons ---------- */
+  .a .inds{display:flex;align-items:center;gap:14px;}
+  .a .ind{position:relative;color:var(--faint);opacity:.4;transition:opacity .2s,color .2s;}
+  .a .ind.on{opacity:1;color:var(--strong);}
+  .a .ind.on::after{content:"";position:absolute;right:-3px;top:-2px;width:5px;height:5px;border-radius:50%;background:var(--ok);}
+
+  /* ---------- B · Labeled status ---------- */
+  .b .inds{display:flex;align-items:center;gap:16px;}
+  .b .ind{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
+  .b .ind.on{color:var(--dim);}
+  .b .pip{width:7px;height:7px;border-radius:50%;border:1.3px solid var(--faint);box-sizing:border-box;}
+  .b .ind.on .pip{background:var(--ok);border-color:var(--ok);}
+
+  /* ---------- C · Connect pill ---------- */
+  .c .pill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--rule);border-radius:999px;padding:6px 14px;font-size:11.5px;letter-spacing:.06em;color:var(--dim);cursor:pointer;}
+  .c .pill:hover{border-color:var(--strong);color:var(--strong);}
+  .c .pill .n{color:var(--strong);}
+  .c .inds{display:flex;align-items:center;gap:14px;}
+  .c .ind{color:var(--strong);position:relative;}
+  .c .ind::after{content:"";position:absolute;right:-3px;top:-2px;width:5px;height:5px;border-radius:50%;background:var(--ok);}
+
+  /* ---------- D · Dot trio ---------- */
+  .d .inds{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--rule);border-radius:8px;padding:7px 11px;}
+  .d .ind{display:inline-flex;align-items:center;gap:5px;color:var(--faint);font-size:9px;letter-spacing:.1em;text-transform:uppercase;}
+  .d .dot{width:7px;height:7px;border-radius:50%;border:1.3px solid var(--faint);box-sizing:border-box;}
+  .d .ind.on{color:var(--dim);}
+  .d .ind.on .dot{background:var(--ok);border-color:var(--ok);}
+</style>
+</head>
+<body>
+  <div class="chrome">
+    <span class="t">Status bar</span>
+    <span class="seg" id="seg">
+      <button data-d="now" class="on">Now</button>
+      <button data-d="a">A · Ghost icons</button>
+      <button data-d="b">B · Labelled</button>
+      <button data-d="c">C · Connect pill</button>
+      <button data-d="d">D · Dot trio</button>
+    </span>
+    <button class="tgl" id="theme">Dark</button>
+  </div>
+  <div class="stage">
+    <p class="cap" id="cap"></p>
+    <div class="stateseg" id="stateseg">
+      <button data-s="off" class="on">Nothing connected</button>
+      <button data-s="mixed">Trainer + HR</button>
+      <button data-s="on">All connected</button>
+    </div>
+    <div class="bar">
+      <span class="brand"></span>
+      <span class="nav"><b>Workouts</b><span>Calendar</span><span>Fitness</span></span>
+      <span class="right" id="right"></span>
+    </div>
+  </div>
+<script>
+  var ICON={
+    trainer:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="6" cy="16.5" r="3.1"/><circle cx="18" cy="16.5" r="3.1"/><path d="M6 16.5l3.6-7h5.2l3.2 7M12.2 16.5l2.6-7" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+    hr:'<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 20S3.6 15 3.6 9.3A4.3 4.3 0 0112 7.1a4.3 4.3 0 018.4 2.2C20.4 15 12 20 12 20z" stroke-linejoin="round"/></svg>',
+    strava:'<svg class="ico" viewBox="0 0 24 24"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" fill="currentColor"/></svg>'
+  };
+  var LABEL={trainer:'Trainer',hr:'HR',strava:'Strava'};
+  var ORDER=['trainer','hr','strava'];
+  var STATE={off:{trainer:0,hr:0,strava:0},mixed:{trainer:1,hr:1,strava:0},on:{trainer:1,hr:1,strava:1}};
+  var FTP='<span class="ftp"><span>FTP</span><b>223</b></span>';
+
+  function R(d,st){
+    var s=STATE[st];
+    function each(fn){ return ORDER.map(function(k){return fn(k,s[k]);}).join(''); }
+    if(d==='now'){
+      return '<span class="now"><span class="inds">'+each(function(k,on){
+        return '<span class="ind">'+ICON[k]+'<span class="dot '+(on?'on':'off')+'"></span></span>';})+'</span></span>'+FTP;
+    }
+    if(d==='a'){
+      return '<span class="a"><span class="inds">'+each(function(k,on){
+        return '<span class="ind'+(on?' on':'')+'" title="'+LABEL[k]+(on?' connected':' not connected')+'">'+ICON[k]+'</span>';})+'</span></span><span class="divider"></span>'+FTP;
+    }
+    if(d==='b'){
+      return '<span class="b"><span class="inds">'+each(function(k,on){
+        return '<span class="ind'+(on?' on':'')+'"><span class="pip"></span>'+LABEL[k]+'</span>';})+'</span></span><span class="divider"></span>'+FTP;
+    }
+    if(d==='c'){
+      var offCount=ORDER.filter(function(k){return !s[k];}).length;
+      var mid = offCount===0
+        ? '<span class="inds">'+each(function(k){return '<span class="ind" title="'+LABEL[k]+' connected">'+ICON[k]+'</span>';})+'</span>'
+        : '<span class="pill" title="Connect devices"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M13.5 2 5 13.2h5l-1.6 8.8L18.5 10h-5z" fill="currentColor" stroke="none"/></svg>Connect<span class="n"> '+(3-offCount)+'/3</span></span>';
+      return '<span class="c">'+mid+'</span><span class="divider"></span>'+FTP;
+    }
+    if(d==='d'){
+      return '<span class="d"><span class="inds">'+each(function(k,on){
+        return '<span class="ind'+(on?' on':'')+'" title="'+LABEL[k]+'"><span class="dot"></span>'+LABEL[k].charAt(0)+'</span>';})+'</span></span><span class="divider"></span>'+FTP;
+    }
+  }
+  var CAP={
+    now:'<b>Now.</b> Three icons, each with a dot that becomes a loud red ✗ when the device is off — three crosses plus FTP reads busy and off-theme.',
+    a:'<b>A · Ghost icons.</b> Same icons, but state is shown by weight: a disconnected device is ghosted (faint), a connected one goes full-ink with a small green dot. No red. FTP split off to the right.',
+    b:'<b>B · Labelled.</b> Tiny small-caps labels with a status pip (hollow ring = off, filled = on). Self-explanatory, no icons to decode, very editorial.',
+    c:'<b>C · Connect pill.</b> Collapses the messy disconnected state into one quiet "Connect 0/3" pill; once everything is paired it shows the three lit icons. Calmest when nothing is connected (the common first-run).',
+    d:'<b>D · Dot trio.</b> A compact bordered group — one lettered dot each (T / H / S), filled when connected. Smallest footprint.'
+  };
+  var curD='now', curS='off';
+  function show(){ document.getElementById('right').innerHTML=R(curD,curS); document.getElementById('cap').innerHTML=CAP[curD]; }
+  document.getElementById('seg').addEventListener('click',function(e){var b=e.target.closest('button[data-d]');if(!b)return;[].forEach.call(this.children,function(x){x.classList.toggle('on',x===b);});curD=b.getAttribute('data-d');show();});
+  document.getElementById('stateseg').addEventListener('click',function(e){var b=e.target.closest('button[data-s]');if(!b)return;[].forEach.call(this.children,function(x){x.classList.toggle('on',x===b);});curS=b.getAttribute('data-s');show();});
+  document.getElementById('theme').addEventListener('click',function(){var d=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',d);this.textContent=d==='light'?'Dark':'Light';});
+  show();
+</script>
+</body>
+</html>

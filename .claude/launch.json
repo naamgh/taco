@@ -1,0 +1,62 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "ftp-plan",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File",
+        "C:\\Users\\hire\\Desktop\\ftp\\serve.ps1",
+        "-Root",
+        "C:\\Users\\hire\\Desktop\\ftp",
+        "-Port",
+        "8777"
+      ],
+      "port": 8777
+    },
+    {
+      "name": "ftp-plan-alt",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File",
+        "C:\\Users\\hire\\Desktop\\ftp\\serve.ps1",
+        "-Root",
+        "C:\\Users\\hire\\Desktop\\ftp",
+        "-Port",
+        "8790"
+      ],
+      "port": 8790
+    },
+    {
+      "name": "quote-desk",
+      "runtimeExecutable": "powershell",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File",
+        "C:\\Users\\hire\\Desktop\\ftp\\serve.ps1",
+        "-Root",
+        "C:\\Users\\hire\\Desktop\\ftp\\quote-desk",
+        "-Port",
+        "8781"
+      ],
+      "port": 8781
+    },
+    {
+      "name": "hire-desk",
+      "runtimeExecutable": "node",
+      "runtimeArgs": [
+        "C:\\Users\\hire\\Desktop\\ftp\\games-hire\\app\\node_modules\\wrangler\\bin\\wrangler.js",
+        "dev",
+        "--config", "C:\\Users\\hire\\Desktop\\ftp\\games-hire\\app\\wrangler.toml",
+        "--persist-to", "C:\\Users\\hire\\Desktop\\ftp\\games-hire\\app\\.wrangler\\state",
+        "--local", "--var", "DEV_MODE:1", "--port", "8799"
+      ],
+      "port": 8799
+    }
+  ]
+}

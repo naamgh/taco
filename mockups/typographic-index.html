@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workouts — typographic index</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{
+    --bg:#F4F3EF; --elev:#FFFFFF; --fg:#14140F; --dim:#6E6B60; --faint:#A8A496; --rule:#E2E0D8; --hair:#ECEAE3;
+  }
+  :root[data-theme="dark"]{
+    --bg:#121213; --elev:#1E1E20; --fg:#ECECEA; --dim:#9A9A93; --faint:#6A6A62; --rule:#2A2A2C; --hair:#202022;
+  }
+  :root{ --mono:'DM Mono',ui-monospace,monospace; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);-webkit-font-smoothing:antialiased;font-size:14px;}
+  .wrap{max-width:1080px;margin:0 auto;padding:34px 40px 80px;}
+
+  .top{display:flex;align-items:baseline;gap:18px;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);}
+  .top .brand{color:var(--fg);}
+  .top .nav{display:flex;gap:20px;margin-left:30px;}
+  .top .nav a{color:var(--faint);text-decoration:none;cursor:pointer;}
+  .top .nav a.on{color:var(--fg);}
+  .top .right{margin-left:auto;display:flex;gap:18px;align-items:baseline;}
+  .top .tgl{font:inherit;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);background:none;border:0;cursor:pointer;}
+
+  .filters{display:flex;align-items:baseline;gap:26px;margin-top:30px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);}
+  .filters .f b{color:var(--fg);font-weight:500;}
+  .filters .search{margin-left:auto;color:var(--dim);}
+
+  .idx{margin-top:26px;border-top:1px solid var(--rule);}
+  .row{display:grid;grid-template-columns:44px minmax(0,1fr) 188px 104px 140px;align-items:center;gap:20px;
+    padding:18px 4px;border-bottom:1px solid var(--rule);cursor:pointer;}
+  .row:hover{background:var(--hair);}
+  .row .num{font-size:12px;color:var(--faint);letter-spacing:.04em;}
+  .row .name{font-size:32px;font-weight:500;line-height:1.02;letter-spacing:-.01em;min-width:0;}
+  .row .struct{font-size:12.5px;color:var(--dim);line-height:1.4;}
+  .row .thumb{height:38px;}
+  .row .meta{text-align:right;font-size:12px;color:var(--dim);letter-spacing:.03em;line-height:1.7;}
+  .row .meta .zone{text-transform:uppercase;letter-spacing:.1em;color:var(--faint);}
+  .row .meta .big{color:var(--fg);}
+  /* the one spot of colour: a small zone swatch — a quick visual read of effort type */
+  .zsq{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:7px;vertical-align:baseline;background:#999;}
+
+  /* monotone profile — bars in ink, baseline hairline */
+  .pfill{fill:var(--fg);opacity:.8;}
+  .pbase{stroke:var(--rule);}
+  .thumb svg,.prof svg{display:block;width:100%;height:100%;}
+
+  /* selected: a softly lifted, monochrome panel with air above and below */
+  .row.sel{background:var(--bg);border-bottom:0;margin-top:22px;}
+  .row.sel:hover{background:var(--bg);}
+  .exp{background:var(--bg);margin-bottom:22px;overflow:hidden;}
+  .row.sel .thumb{visibility:hidden;}   /* its preview "travels" into the big one */
+  .exp-in{display:grid;grid-template-columns:44px 1fr 340px;gap:20px;padding:26px 16px 30px;align-items:start;}
+  .exp .lead{grid-column:2;}
+  .exp .cue{font-size:13px;line-height:1.6;color:var(--dim);max-width:42ch;margin:0 0 20px;}
+  .exp .specs{display:flex;gap:34px;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
+  .exp .specs b{display:block;font-size:20px;letter-spacing:0;text-transform:none;color:var(--fg);margin-top:5px;font-weight:500;}
+  .exp .start{margin-top:24px;display:inline-block;border:1px solid var(--fg);color:var(--fg);background:none;
+    font:inherit;font-size:13px;letter-spacing:.12em;text-transform:uppercase;padding:12px 26px;cursor:pointer;}
+  .exp .start:hover{background:var(--fg);color:var(--bg);}
+  .prof{grid-column:3;height:128px;}
+  .prof .ph{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:10px;}
+  .prof .box{height:128px;}
+
+  .flyer{position:fixed;z-index:60;pointer-events:none;}
+  .flyer svg{display:block;width:100%;height:100%;}
+
+  .foot{margin-top:40px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);display:flex;justify-content:space-between;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <span class="brand">FTP / WORKOUTS</span>
+      <span class="nav"><a class="on">Workouts</a><a>Calendar</a><a>Fitness</a></span>
+      <span class="right"><button class="tgl" id="theme">Dark</button><span>522 Entries</span></span>
+    </div>
+    <div class="filters">
+      <span class="f">Zone <b>All</b></span><span class="f">Time <b>Any</b></span>
+      <span class="f">Shape <b>Any</b></span><span class="f">Spice <b>Any</b></span>
+      <span class="search">Search</span>
+    </div>
+    <div class="idx" id="idx"></div>
+    <div class="foot"><span>FTP 250 W</span><span>Showing 01–08 / 522</span></div>
+  </div>
+<script>
+  var W=[
+    {name:'Anvil Light', struct:'2 × 12 min @ 218 W', zone:'Tempo', min:60, tss:54, np:172,
+     cue:'Two steady tempo blocks to build aerobic strength without deep fatigue. Settle in, breathe, hold the number.',
+     prof:[30,38,46,55,55,55,55,42,55,55,55,55,42,40,38,30]},
+    {name:'Anvilstone', struct:'3 × 18 min @ 210 W', zone:'Tempo', min:90, tss:88, np:168,
+     cue:'A longer tempo set — three sustained efforts that teach your body to hold a hard-but-steady pace.',
+     prof:[30,40,52,52,52,40,52,52,52,40,52,52,52,40,35,30]},
+    {name:'Ashbank', struct:'6 × 8 min @ 230 W', zone:'Sweet Spot', min:75, tss:76, np:205,
+     cue:'Sweet-spot repeats: the most fitness per minute. Sit just under threshold and keep the recoveries honest.',
+     prof:[30,45,62,45,62,45,62,45,62,45,62,45,62,45,40,30]},
+    {name:'Ashcreek', struct:'5 × 4 min @ 245 W', zone:'Sweet Spot', min:65, tss:68, np:208,
+     cue:'Shorter, punchier sweet-spot blocks with full recoveries — quality over volume.',
+     prof:[28,60,60,40,60,60,40,60,60,40,60,60,40,55,40,28]},
+    {name:'Ashfield', struct:'2 × 15 min @ 228 W', zone:'Sweet Spot', min:75, tss:75, np:206,
+     cue:'Two long sweet-spot efforts. Find a rhythm and hold it — the back half is where the fitness is.',
+     prof:[30,42,58,58,58,58,58,42,58,58,58,58,58,42,38,30]},
+    {name:'Ashglow', struct:'3 × 9 min @ 300 W', zone:'VO2 Max', min:60, tss:82, np:232,
+     cue:'VO2 work — short and sharp. Open hard, settle into the ceiling of your aerobic power, and hang on.',
+     prof:[28,74,74,36,74,74,36,72,72,36,70,70,36,42,34,28]},
+    {name:'Ashgrove', struct:'75 min @ 165 W', zone:'Endurance', min:75, tss:52, np:160,
+     cue:'Pure aerobic base — flat and conversational. Builds the engine that everything else sits on.',
+     prof:[30,40,45,45,45,45,45,45,45,45,45,45,45,45,40,30]},
+    {name:'Ashlane', struct:'8 × 30 s @ 420 W', zone:'Anaerobic', min:50, tss:61, np:198,
+     cue:'Neuromuscular sprints — all-out thirty-second hits with long recoveries. Snap, don’t grind.',
+     prof:[26,92,30,92,30,92,30,92,30,92,30,92,30,42,30,26]}
+  ];
+  var SEL=-1, VB_W=320, VB_H=120, flying=false;
+  var ZONE={'Recovery':'#6FA0C4','Endurance':'#3F8E7D','Tempo':'#5E9E53','Sweet Spot':'#D9A128','Threshold':'#E07A3A','VO2 Max':'#D1544E','Anaerobic':'#8E5AA8'};
+  function zoneColor(z){ return ZONE[z]||'#999'; }
+
+  function profSVG(arr){
+    var n=arr.length, gap=4, bw=(VB_W-(n-1)*gap)/n, mx=Math.max.apply(null,arr), s='';
+    for(var i=0;i<n;i++){ var bh=arr[i]/mx*(VB_H-6), x=i*(bw+gap); s+='<rect class="pfill" x="'+x.toFixed(1)+'" y="'+(VB_H-bh).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+bh.toFixed(1)+'"/>'; }
+    s+='<line class="pbase" x1="0" y1="'+(VB_H-3)+'" x2="'+VB_W+'" y2="'+(VB_H-3)+'" stroke-width="1"/>';
+    return '<svg viewBox="0 0 '+VB_W+' '+VB_H+'" preserveAspectRatio="none">'+s+'</svg>';
+  }
+  function num(i){ return (i+1<10?'0':'')+(i+1); }
+  function render(){
+    var h='';
+    W.forEach(function(w,i){
+      h+='<div class="row'+(i===SEL?' sel':'')+'" data-i="'+i+'">'+
+        '<span class="num">'+num(i)+'</span>'+
+        '<span class="name">'+w.name+'</span>'+
+        '<span class="struct">'+w.struct+'</span>'+
+        '<span class="thumb">'+profSVG(w.prof)+'</span>'+
+        '<span class="meta"><span class="zone"><i class="zsq" style="background:'+zoneColor(w.zone)+'"></i>'+w.zone+'</span><br><span class="big">'+w.min+' MIN</span> · TSS '+w.tss+'</span>'+
+      '</div>';
+      if(i===SEL){
+        h+='<div class="exp"><div class="exp-in">'+
+          '<div class="lead">'+
+            '<p class="cue">'+(w.cue||'')+'</p>'+
+            '<div class="specs"><span>Duration<b>'+w.min+' min</b></span><span>Load<b>'+w.tss+' TSS</b></span><span>Norm Power<b>'+(w.np||'—')+' W</b></span></div>'+
+            '<button class="start">▶ Start Workout</button>'+
+          '</div>'+
+          '<div class="prof"><div class="ph">Profile</div><div class="box" id="bigProf">'+profSVG(w.prof)+'</div></div>'+
+        '</div></div>';
+      }
+    });
+    document.getElementById('idx').innerHTML=h;
+    [].forEach.call(document.querySelectorAll('.row'),function(r){ r.addEventListener('click',function(){ toggle(+r.getAttribute('data-i')); }); });
+  }
+  // The shape preview flies from the card into the big profile on open.
+  function toggle(i){
+    if(flying) return;
+    if(i===SEL){ SEL=-1; render(); return; }
+    var oldThumb=document.querySelector('.row[data-i="'+i+'"] .thumb svg');
+    var tr=oldThumb?oldThumb.getBoundingClientRect():null;
+    SEL=i; render();
+    var big=document.querySelector('#bigProf svg');
+    if(!tr||!big){ return; }
+    var lr=big.getBoundingClientRect();
+    big.style.opacity='0';
+    var fly=document.createElement('div'); fly.className='flyer';
+    fly.style.left=tr.left+'px'; fly.style.top=tr.top+'px'; fly.style.width=tr.width+'px'; fly.style.height=tr.height+'px';
+    fly.innerHTML=big.outerHTML;
+    document.body.appendChild(fly); flying=true;
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      fly.style.transition='left .5s cubic-bezier(.45,.05,.2,1),top .5s cubic-bezier(.45,.05,.2,1),width .5s cubic-bezier(.45,.05,.2,1),height .5s cubic-bezier(.45,.05,.2,1)';
+      fly.style.left=lr.left+'px'; fly.style.top=lr.top+'px'; fly.style.width=lr.width+'px'; fly.style.height=lr.height+'px';
+    });});
+    var done=function(){ if(!flying)return; flying=false; if(fly.parentNode)fly.parentNode.removeChild(fly); if(big)big.style.opacity='1'; };
+    fly.addEventListener('transitionend', done, {once:true});
+    setTimeout(done, 700);   // fallback if the transition is throttled
+  }
+  render();
+  document.getElementById('theme').addEventListener('click',function(){
+    var d=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+    document.documentElement.setAttribute('data-theme',d);this.textContent=d==='light'?'Dark':'Light';render();
+  });
+</script>
+</body>
+</html>

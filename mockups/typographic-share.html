@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Share image — mocks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{ --bg:#F4F3EF; --elev:#FFFFFF; --fg:#14140F; --dim:#6E6B60; --faint:#A8A496; --rule:#E2E0D8; --hair:#ECEAE3; }
+  :root[data-theme="dark"]{ --bg:#121213; --elev:#1E1E20; --fg:#ECECEA; --dim:#9A9A93; --faint:#6A6A62; --rule:#2A2A2C; --hair:#202022; }
+  :root{ --mono:'DM Mono',ui-monospace,monospace; --vo2:#A65BF0; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);-webkit-font-smoothing:antialiased;font-size:14px;}
+  .chrome{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:16px;padding:14px 22px;background:var(--bg);border-bottom:1px solid var(--rule);}
+  .chrome .t{font-size:12px;letter-spacing:.16em;text-transform:uppercase;}
+  .seg{display:flex;gap:4px;margin-left:8px;}
+  .seg button{font:inherit;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);background:none;border:1px solid var(--rule);border-radius:7px;padding:6px 12px;cursor:pointer;}
+  .seg button.on{color:var(--bg);background:var(--fg);border-color:var(--fg);}
+  .chrome .tgl{margin-left:auto;font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);background:none;border:0;cursor:pointer;}
+  .stage{max-width:1000px;margin:0 auto;padding:26px 22px 60px;}
+  .cap{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0 0 14px;}
+  .hide{display:none!important;}
+
+  .screen{border:1px solid var(--rule);border-radius:18px;background:var(--bg);padding:24px 26px 28px;}
+  .shead{display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+  .shead .back{width:32px;height:32px;border:1px solid var(--rule);border-radius:8px;background:none;color:var(--dim);cursor:pointer;display:grid;place-items:center;font-size:15px;}
+  .shead h2{margin:0;font-size:13px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;}
+
+  /* style picker — underline tabs */
+  .styles{display:flex;gap:24px;border-bottom:1px solid var(--rule);margin-bottom:20px;}
+  .styles button{font:inherit;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;padding:9px 0;cursor:pointer;}
+  .styles button.on{color:var(--fg);border-bottom-color:var(--fg);}
+  .styles.chips{border:0;gap:8px;}
+  .styles.chips button{border:1px solid var(--rule);border-radius:999px;padding:7px 15px;}
+  .styles.chips button.on{background:var(--fg);color:var(--bg);border-color:var(--fg);}
+  .styles.rail{flex-direction:column;border:0;gap:3px;}
+  .styles.rail button{text-align:left;border:0;border-left:2px solid transparent;padding:11px 12px;border-radius:0 7px 7px 0;}
+  .styles.rail button.on{color:var(--fg);border-left-color:var(--fg);background:var(--hair);}
+
+  .acts{display:flex;gap:12px;margin-top:22px;}
+  .btn{font:inherit;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;padding:13px 20px;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:9px;justify-content:center;}
+  .btn.primary{flex:1;border:1px solid var(--fg);background:var(--fg);color:var(--bg);}
+  .btn.primary:hover{opacity:.9;}
+  .btn.ghost{flex:1;border:1px solid var(--rule);background:none;color:var(--dim);}
+  .btn.ghost:hover{border-color:var(--fg);color:var(--fg);}
+
+  /* ---- the share card preview (monotone, 4:3) ---- */
+  .sharecard{aspect-ratio:4/3;width:100%;background:var(--elev);border:1px solid var(--rule);border-radius:12px;padding:26px 28px;display:flex;flex-direction:column;overflow:hidden;}
+  :root[data-theme="dark"] .sharecard{background:#0C0C0D;}
+  .sc-eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);}
+  .sc-name{font-size:34px;font-weight:500;letter-spacing:-.01em;margin:6px 0 0;}
+  .sc-prof{flex:1;display:flex;align-items:flex-end;gap:3px;margin:22px 0 18px;min-height:0;}
+  .sc-prof i{flex:1;background:var(--fg);opacity:.16;border-radius:3px 3px 0 0;}
+  .sc-prof.accent i.hot{opacity:.9;background:var(--vo2);}
+  .sc-prof.skyline i{border-radius:0;}
+  .sc-prof.matrix{align-items:stretch;}
+  .sc-prof.matrix i{opacity:.1;background:none;border:1px solid var(--fg);border-radius:2px;}
+  .sc-stats{display:flex;gap:30px;border-top:1px solid var(--rule);padding-top:14px;}
+  .sc-stat .k{font-size:9px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);}
+  .sc-stat .v{font-size:19px;font-weight:500;margin-top:3px;}
+
+  .cols{display:grid;grid-template-columns:200px 1fr;gap:28px;align-items:start;}
+  .note{font-size:11px;color:var(--faint);margin-top:14px;letter-spacing:.02em;}
+</style>
+</head>
+<body>
+  <div class="chrome">
+    <span class="t">Post-ride · share image</span>
+    <span class="seg" id="seg">
+      <button data-d="a" class="on">A · Tabs</button>
+      <button data-d="b">B · Preview-first</button>
+      <button data-d="c">C · Split</button>
+    </span>
+    <button class="tgl" id="theme">Dark</button>
+  </div>
+  <div class="stage">
+    <p class="cap" id="cap">Design A — Style tabs over a centred preview</p>
+
+    <!-- A: tabs on top, preview, actions -->
+    <div class="screen a" data-d="a">
+      <div class="shead"><button class="back">‹</button><h2>Share image</h2></div>
+      <div class="styles" data-styles>
+        <button class="on">Bars</button><button>Blocks</button><button>Skyline</button><button>Matrix</button>
+      </div>
+      <div class="sharecard" data-card></div>
+      <div class="acts">
+        <button class="btn primary"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4M5 19h14"/></svg>Download image</button>
+        <button class="btn ghost">Download .fit</button>
+      </div>
+    </div>
+
+    <!-- B: preview hero, compact chip styles below -->
+    <div class="screen b hide" data-d="b">
+      <div class="shead"><button class="back">‹</button><h2>Share image</h2></div>
+      <div class="sharecard" data-card></div>
+      <div class="styles chips" data-styles style="margin:20px 0 0;justify-content:center;">
+        <button class="on">Bars</button><button>Blocks</button><button>Skyline</button><button>Matrix</button>
+      </div>
+      <div class="acts">
+        <button class="btn primary"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4M5 19h14"/></svg>Download image</button>
+        <button class="btn ghost">Download .fit</button>
+      </div>
+    </div>
+
+    <!-- C: styles rail left, preview right -->
+    <div class="screen c hide" data-d="c">
+      <div class="shead"><button class="back">‹</button><h2>Share image</h2></div>
+      <div class="cols">
+        <div>
+          <div class="styles rail" data-styles>
+            <button class="on">Bars</button><button>Blocks</button><button>Skyline</button><button>Matrix</button>
+          </div>
+          <p class="note">Pick a style, then download the image or the .fit file.</p>
+        </div>
+        <div>
+          <div class="sharecard" data-card></div>
+          <div class="acts">
+            <button class="btn primary"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M8 11l4 4 4-4M5 19h14"/></svg>Download image</button>
+            <button class="btn ghost">Download .fit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<script>
+  var PROF=[30,40,46,55,55,42,74,74,36,74,74,36,70,70,36,55,55,42,52,52,40,38,32,28];
+  function cardHtml(style){
+    var cls='sc-prof'+(style==='Skyline'?' skyline':'')+(style==='Matrix'?' matrix':'')+(style==='Bars'?' accent':'');
+    var bars=PROF.map(function(h){var hot=(h>=70)?' class="hot"':''; return '<i'+hot+' style="height:'+h+'%"></i>';}).join('');
+    return '<div class="sc-eyebrow">VO2 Max · Fri 16 Oct</div>'+
+      '<div class="sc-name">Ashglow</div>'+
+      '<div class="'+cls+'">'+bars+'</div>'+
+      '<div class="sc-stats">'+
+        '<span class="sc-stat"><span class="k">Duration</span><span class="v">60 min</span></span>'+
+        '<span class="sc-stat"><span class="k">TSS</span><span class="v">82</span></span>'+
+        '<span class="sc-stat"><span class="k">Norm Power</span><span class="v">232 W</span></span>'+
+        '<span class="sc-stat"><span class="k">Avg HR</span><span class="v">161</span></span>'+
+      '</div>';
+  }
+  function paint(){ [].forEach.call(document.querySelectorAll('[data-card]'),function(c){ var scr=c.closest('.screen'); var on=scr.querySelector('[data-styles] button.on'); c.innerHTML=cardHtml(on?on.textContent:'Bars'); }); }
+  [].forEach.call(document.querySelectorAll('[data-styles]'),function(g){ g.addEventListener('click',function(e){ var b=e.target.closest('button'); if(!b)return; [].forEach.call(this.children,function(x){x.classList.toggle('on',x===b);}); paint(); }); });
+  var CAP={a:'Design A — Style tabs over a centred preview',b:'Design B — Preview first, styles as chips',c:'Design C — Style rail beside the preview'};
+  document.getElementById('seg').addEventListener('click',function(e){var b=e.target.closest('button[data-d]');if(!b)return;var d=b.getAttribute('data-d');[].forEach.call(this.children,function(x){x.classList.toggle('on',x===b);});[].forEach.call(document.querySelectorAll('.screen'),function(s){s.classList.toggle('hide',s.getAttribute('data-d')!==d);});document.getElementById('cap').textContent=CAP[d];});
+  document.getElementById('theme').addEventListener('click',function(){var d=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',d);this.textContent=d==='light'?'Dark':'Light';});
+  paint();
+</script>
+</body>
+</html>

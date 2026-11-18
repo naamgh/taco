@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fitness coach — ideas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{ --bg:#F4F3EF; --elev:#FFFFFF; --strong:#14140F; --fg:#14140F; --dim:#6E6B60; --faint:#A8A496; --rule:#E2E0D8; --hair:#ECEAE3; --ok:#2F9C88; --okSoft:rgba(47,156,136,.12); --warn:#D9822B; --warnSoft:rgba(217,130,43,.13); --bad:#D9455F; --badSoft:rgba(217,69,95,.11); }
+  :root[data-theme="dark"]{ --bg:#121213; --elev:#1A1A1C; --strong:#F2F2F0; --fg:#ECECEA; --dim:#9A9A93; --faint:#6A6A62; --rule:#2A2A2C; --hair:#202022; --ok:#4FC1AB; --okSoft:rgba(79,193,171,.13); --warn:#E99A48; --warnSoft:rgba(233,154,72,.14); --bad:#F06A82; --badSoft:rgba(240,106,130,.13); }
+  :root{ --mono:'DM Mono',ui-monospace,monospace;
+    --z1:#6E7486; --z2:#5B8DEF; --z3:#49B4B0; --z4:#F2764A; --z5:#C77DFF; --z6:#FF5D75; --ss:#E7B44C; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);-webkit-font-smoothing:antialiased;font-size:14px;}
+  .chrome{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px 14px;padding:14px 22px;background:var(--bg);border-bottom:1px solid var(--rule);flex-wrap:wrap;}
+  .chrome .t{font-size:12px;letter-spacing:.16em;text-transform:uppercase;}
+  .seg{display:flex;gap:4px;flex-wrap:wrap;}
+  .seg button{font:inherit;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);background:none;border:1px solid var(--rule);border-radius:7px;padding:6px 11px;cursor:pointer;}
+  .seg button.on{color:var(--bg);background:var(--fg);border-color:var(--fg);}
+  .seg-l{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);}
+  .chrome .tgl{margin-left:auto;font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);background:none;border:0;cursor:pointer;}
+  .stage{max-width:760px;margin:0 auto;padding:26px 22px 70px;}
+  .cap{font-size:12px;color:var(--dim);margin:0 0 22px;line-height:1.6;}
+  .cap b{color:var(--fg);font-weight:500;}
+
+  /* the Fitness modal, as it is in the app */
+  .modal{background:var(--elev);border:1px solid var(--rule);border-radius:16px;padding:22px 26px 28px;}
+  .mhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+  .mhead h1{margin:0;font-size:16px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--strong);}
+  .close{font:inherit;font-size:12px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--strong);background:none;color:var(--strong);border-radius:8px;padding:7px 12px;}
+  .tabs{display:flex;gap:24px;border-bottom:1px solid var(--rule);margin:14px 0 24px;}
+  .tabs span{font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:11px 0;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .tabs span.on{color:var(--strong);border-bottom-color:var(--fg);}
+
+  .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);}
+  .new{display:inline-block;font-size:9.5px;letter-spacing:.12em;color:var(--ok);border:1px solid var(--ok);border-radius:4px;padding:1px 5px;margin-left:8px;vertical-align:1px;}
+
+  /* existing readiness band (context, dimmed a touch) */
+  .ready{display:grid;grid-template-columns:1.1fr 1fr;gap:28px;align-items:end;padding-bottom:22px;border-bottom:1px solid var(--hair);}
+  .word{font-size:30px;font-weight:500;color:var(--strong);margin:6px 0 12px;}
+  .grad{position:relative;height:6px;border-radius:3px;background:linear-gradient(90deg,var(--bad),var(--warn) 35%,var(--ok) 70%,var(--z2));}
+  .thumb{position:absolute;top:50%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;border-radius:50%;background:var(--elev);border:2px solid var(--strong);}
+  .ends{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin-top:7px;}
+  .kpis{display:flex;gap:22px;justify-content:flex-end;}
+  .kpi .v{font-size:24px;font-weight:500;color:var(--strong);}
+  .kpi .l{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:4px;}
+
+  /* ---------- coach cards ---------- */
+  .coach{display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid var(--hair);}
+  .ccol{padding:22px 0 24px;}
+  .ccol + .ccol{border-left:1px solid var(--hair);padding-left:24px;}
+  .ccol:first-child{padding-right:24px;}
+  .chead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+  .horizon{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);}
+  .verdict{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:500;color:var(--strong);margin:12px 0 6px;line-height:1.25;}
+  .pip{width:9px;height:9px;border-radius:50%;flex:none;background:var(--c,var(--ok));box-shadow:0 0 0 4px color-mix(in srgb,var(--c,var(--ok)) 18%,transparent);}
+  .why{font-size:12px;line-height:1.6;color:var(--dim);margin:0 0 16px;}
+  .why b{color:var(--fg);font-weight:500;}
+
+  .sugg{border-top:1px solid var(--hair);}
+  .srow{display:grid;grid-template-columns:10px 1fr auto;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--hair);cursor:pointer;}
+  .srow:hover .go{color:var(--strong);}
+  .sw{width:10px;height:10px;border-radius:2px;background:var(--zc);}
+  .sname{font-size:13px;color:var(--strong);}
+  .smeta{display:block;font-size:10.5px;letter-spacing:.06em;color:var(--faint);margin-top:3px;text-transform:uppercase;}
+  .go{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);}
+  .rest-note{font-size:12px;color:var(--dim);padding:12px 0;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);}
+
+  /* big-picture facts */
+  .facts{border-top:1px solid var(--hair);}
+  .fact{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--hair);font-size:12px;}
+  .fact .k{color:var(--dim);}
+  .fact .val{color:var(--strong);font-weight:500;}
+  .fact .val.ok{color:var(--ok);} .fact .val.warn{color:var(--warn);} .fact .val.bad{color:var(--bad);}
+  .ramp{grid-column:1 / -1;position:relative;height:5px;border-radius:3px;background:var(--hair);margin:2px 0 4px;}
+  .ramp .band{position:absolute;top:0;bottom:0;background:var(--okSoft);border-left:1px solid var(--ok);border-right:1px solid var(--ok);}
+  .ramp .mark{position:absolute;top:-4px;width:2px;height:13px;background:var(--strong);margin-left:-1px;}
+  .ramp-sc{grid-column:1 / -1;display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.06em;color:var(--faint);margin-top:-2px;}
+  .weeks{display:flex;gap:4px;}
+  .weeks i{width:18px;height:18px;border-radius:3px;display:block;background:var(--hair);position:relative;}
+  .weeks i.b{background:var(--fg);opacity:.75;}
+  .weeks i.r{background:none;border:1px dashed var(--faint);}
+  .weeks i.now{outline:2px solid var(--ok);outline-offset:1px;}
+  .mix{display:flex;height:8px;border-radius:2px;overflow:hidden;width:150px;}
+  .mix span{display:block;height:100%;}
+  .mixk{grid-column:1 / -1;display:flex;gap:12px;font-size:10px;color:var(--faint);letter-spacing:.04em;}
+  .mixk i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px;vertical-align:-1px;}
+  .plan{margin-top:14px;font-size:12px;line-height:1.6;color:var(--fg);padding:11px 13px;border-radius:8px;background:var(--bg);border:1px solid var(--hair);}
+  .plan b{font-weight:500;}
+
+  /* ---------- FTP check ---------- */
+  .ftpcard{padding:4px 0 0;}
+  .ftp-top{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start;}
+  .ftp-now{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
+  .ftp-big{display:flex;align-items:baseline;gap:12px;margin:10px 0 4px;}
+  .ftp-big .from{font-size:22px;color:var(--faint);text-decoration:line-through;text-decoration-thickness:1px;}
+  .ftp-big .arr{font-size:18px;color:var(--faint);}
+  .ftp-big .to{font-size:40px;font-weight:500;color:var(--strong);letter-spacing:-.01em;}
+  .ftp-big .to small{font-size:16px;color:var(--dim);font-weight:400;margin-left:4px;}
+  .delta{font-size:12px;font-weight:500;padding:3px 8px;border-radius:5px;}
+  .delta.up{color:var(--ok);background:var(--okSoft);} .delta.down{color:var(--bad);background:var(--badSoft);} .delta.hold{color:var(--dim);background:var(--hair);}
+  .conf{text-align:right;}
+  .conf .bars{display:flex;gap:3px;justify-content:flex-end;margin-top:8px;}
+  .conf .bars i{width:16px;height:6px;border-radius:2px;background:var(--hair);}
+  .conf .bars i.on{background:var(--c,var(--ok));}
+  .conf .ct{font-size:12px;color:var(--strong);margin-top:7px;}
+
+  .ev{margin-top:20px;border-top:1px solid var(--hair);}
+  .evrow{display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:start;padding:11px 0;border-bottom:1px solid var(--hair);font-size:12px;line-height:1.5;}
+  .evrow .ic{font-size:12px;text-align:center;line-height:1.5;}
+  .evrow .ic.up{color:var(--ok);} .evrow .ic.down{color:var(--bad);} .evrow .ic.na{color:var(--faint);}
+  .evrow .t{color:var(--fg);}
+  .evrow .t small{display:block;color:var(--faint);font-size:11px;margin-top:2px;}
+  .evrow .w{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);white-space:nowrap;padding-top:2px;}
+  .evrow.muted .t{color:var(--faint);}
+
+  .ftp-acts{display:flex;gap:10px;align-items:center;margin-top:18px;flex-wrap:wrap;}
+  .btn{font:inherit;font-size:12px;letter-spacing:.08em;text-transform:uppercase;border-radius:8px;padding:10px 15px;cursor:pointer;border:1px solid var(--strong);background:var(--strong);color:var(--bg);}
+  .btn.ghost{background:none;color:var(--strong);}
+  .btn.text{border:0;background:none;color:var(--faint);padding:10px 4px;}
+
+  .hist{margin-top:26px;padding-top:18px;border-top:1px solid var(--hair);}
+  .hist svg{display:block;width:100%;height:auto;margin-top:10px;}
+
+  .curve-ph{margin-top:26px;padding-top:18px;border-top:1px solid var(--hair);}
+  .curve-ph .box{height:120px;margin-top:10px;border:1px dashed var(--rule);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
+
+  @media (max-width:640px){
+    .modal{padding:18px 16px 22px;border-radius:12px;}
+    .ready{grid-template-columns:1fr;gap:16px;}
+    .kpis{justify-content:space-between;}
+    .coach{grid-template-columns:1fr;}
+    .ccol:first-child{padding-right:0;}
+    .ccol + .ccol{border-left:0;border-top:1px solid var(--hair);padding-left:0;}
+    .ftp-top{grid-template-columns:1fr;}
+    .conf{text-align:left;} .conf .bars{justify-content:flex-start;}
+    .ftp-big .to{font-size:34px;}
+  }
+</style>
+</head>
+<body>
+<div class="chrome">
+  <span class="t">Fitness coach</span>
+  <div class="seg" id="view"><button data-v="sum" class="on">1 · Summary — today + 4 weeks</button><button data-v="ftp">2 · Power — FTP check</button></div>
+  <span class="seg-l" id="scenL">Scenario</span>
+  <div class="seg" id="scen"></div>
+  <button class="tgl" id="theme">Dark</button>
+</div>
+<div class="stage">
+  <p class="cap" id="cap"></p>
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+var W = {
+  rec:{n:'Recovery Spin', z:'--z1', m:'Recovery · 30 min · TSS 15'},
+  end:{n:'Long Aerobic', z:'--z2', m:'Endurance · 75 min · TSS 55'},
+  end2:{n:'Base Miles', z:'--z2', m:'Endurance · 60 min · TSS 42'},
+  tempo:{n:'Steady State', z:'--z3', m:'Tempo · 60 min · TSS 58'},
+  ss:{n:'Anvil', z:'--ss', m:'Sweet Spot · 60 min · TSS 72'},
+  thr:{n:'Over-Unders', z:'--z4', m:'Threshold · 60 min · TSS 78'},
+  vo2:{n:'Spitfire', z:'--z5', m:'VO₂ Max · 55 min · TSS 70'}
+};
+function srow(w){ return '<div class="srow"><span class="sw" style="--zc:var('+w.z+')"></span><span><span class="sname">'+w.n+'</span><span class="smeta">'+w.m+'</span></span><span class="go">Start ›</span></div>'; }
+
+/* ---------------- 1 · Summary scenarios ---------------- */
+var SUM = {
+  fresh:{
+    label:'Fresh', word:'Fresh', tsb:'+12', ctl:'54', atl:'42', thumb:82,
+    today:{c:'--z5', v:'Go hard today', why:'Form is <b>+12</b> and your last hard session was <b>4 days ago</b>. Legs should be ready for real intensity.', ws:['vo2','thr']},
+    big:{c:'--warn', v:'Fitness is drifting — time to build', why:'You\'ve been fresh for <b>9 days</b>. Fresh is great before an event; for a while longer it means fitness starts to fade.',
+      ramp:-1.2, weeks:['b','b','r','x'], wNote:'Easy for 2 wks', mix:[62,20,18], plan:'<b>Next 3 weeks:</b> build. Aim for ~<b>+4 Fitness/week</b> — about 3 rides and ~330 TSS a week, one of them a long endurance ride.'}
+  },
+  build:{
+    label:'Building', word:'Building', tsb:'−14', ctl:'61', atl:'75', thumb:42,
+    today:{c:'--z3', v:'Steady day — tempo or sweet spot', why:'Form is <b>−14</b>: normal mid-build tiredness. You can work, but yesterday was hard (<b>TSS 92</b>), so skip the VO₂.', ws:['ss','tempo']},
+    big:{c:'--ok', v:'Productive build — keep going', why:'Fitness is climbing at a healthy rate and you\'re absorbing it — no red flags.',
+      ramp:4.6, weeks:['b','b','b','now'], wNote:'Week 3 of 3', mix:[71,18,11], plan:'<b>This week</b> finishes the block. <b>Next week:</b> recovery — ~60% of your usual load, keep a couple of short openers.'}
+  },
+  over:{
+    label:'Overreaching', word:'Overreaching', tsb:'−34', ctl:'66', atl:'100', thumb:14,
+    today:{c:'--bad', v:'Rest or spin easy', why:'Form is <b>−34</b>. Another hard day now digs a hole rather than building fitness.', ws:['rec'], rest:'Or take the day off — it counts as training too.'},
+    big:{c:'--bad', v:'Building too fast — back off', why:'Fitness has jumped <b>+9.1/week</b>, past the ~7/week most riders can sustain. The risk now is illness or burnout, not under-training.',
+      ramp:9.1, weeks:['b','b','b','b'], wNote:'4 weeks, no break', mix:[48,22,30], plan:'<b>Take a recovery week now:</b> ~50–60% of usual load, nothing above tempo. You\'ll come out of it fitter than you went in.'}
+  },
+  slip:{
+    label:'Slipping', word:'Rested', tsb:'+7', ctl:'38', atl:'31', thumb:68,
+    today:{c:'--z4', v:'Good day for a quality session', why:'Form is <b>+7</b> — rested. A threshold session is the best use of fresh legs.', ws:['thr','ss']},
+    big:{c:'--warn', v:'Fitness is slipping', why:'Fitness is down <b>18%</b> over 4 weeks (<b>46 → 38</b>) — <b>4 rides</b> in that time vs 11 the month before.',
+      ramp:-2.0, weeks:['x','b','x','x'], wNote:'1 of last 4', mix:[55,25,20], plan:'<b>Rebuild gently:</b> 3 rides a week for 2 weeks, mostly endurance, before adding hard intervals back in.'}
+  }
+};
+
+function weeksHTML(ws){
+  return '<span class="weeks">'+ws.map(function(w){ return '<i class="'+(w==='b'?'b':w==='r'?'r':w==='now'?'b now':'')+'"></i>'; }).join('')+'</span>';
+}
+function rampHTML(v){
+  var lo=-4, hi=12, pct=function(x){ return Math.max(0,Math.min(100,(x-lo)/(hi-lo)*100)); };
+  var cls = v > 7 ? 'bad' : v >= 2 ? 'ok' : 'warn';
+  return '<div class="fact"><span class="k">Fitness ramp</span><span class="val '+cls+'">'+(v>0?'+':'')+v.toFixed(1)+' / week</span>' +
+    '<div class="ramp"><span class="band" style="left:'+pct(2)+'%;width:'+(pct(7)-pct(2))+'%"></span><span class="mark" style="left:'+pct(v)+'%"></span></div>' +
+    '<div class="ramp-sc"><span>losing</span><span>healthy 2–7</span><span>too fast</span></div></div>';
+}
+function mixHTML(m){
+  return '<div class="fact"><span class="k">Intensity mix</span><span class="mix"><span style="width:'+m[0]+'%;background:var(--z2)"></span><span style="width:'+m[1]+'%;background:var(--z3)"></span><span style="width:'+m[2]+'%;background:var(--z6)"></span></span>' +
+    '<div class="mixk"><span><i style="background:var(--z2)"></i>Easy '+m[0]+'%</span><span><i style="background:var(--z3)"></i>Moderate '+m[1]+'%</span><span><i style="background:var(--z6)"></i>Hard '+m[2]+'%</span></div></div>';
+}
+function summary(s){
+  var d = SUM[s];
+  return '<div class="mhead"><h1>Fitness</h1><button class="close">Close</button></div>' +
+    '<div class="tabs"><span class="on">Summary</span><span>Performance</span><span>Power</span></div>' +
+    '<div class="ready"><div><div class="lbl">Today\'s readiness</div><div class="word">'+d.word+'</div>' +
+      '<div class="grad"><span class="thumb" style="left:'+d.thumb+'%"></span></div><div class="ends"><span>Overloaded</span><span>Fresh</span></div></div>' +
+      '<div class="kpis"><div class="kpi"><div class="v">'+d.ctl+'</div><span class="l">Fitness</span></div><div class="kpi"><div class="v">'+d.tsb+'</div><span class="l">Form</span></div><div class="kpi"><div class="v">'+d.atl+'</div><span class="l">Fatigue</span></div></div></div>' +
+    '<div class="coach">' +
+      '<div class="ccol"><div class="chead"><span class="lbl">Today<span class="new">New</span></span><span class="horizon">Based on form</span></div>' +
+        '<div class="verdict"><span class="pip" style="--c:var('+d.today.c+')"></span>'+d.today.v+'</div>' +
+        '<p class="why">'+d.today.why+'</p>' +
+        '<div class="sugg">'+d.today.ws.map(function(k){ return srow(W[k]); }).join('')+'</div>' +
+        (d.today.rest ? '<div class="rest-note">'+d.today.rest+'</div>' : '') +
+      '</div>' +
+      '<div class="ccol"><div class="chead"><span class="lbl">Next 4 weeks<span class="new">New</span></span><span class="horizon">Based on last 4–6 wks</span></div>' +
+        '<div class="verdict"><span class="pip" style="--c:var('+d.big.c+')"></span>'+d.big.v+'</div>' +
+        '<p class="why">'+d.big.why+'</p>' +
+        '<div class="facts">' + rampHTML(d.big.ramp) +
+          '<div class="fact"><span class="k">Build weeks in a row</span><span style="display:flex;align-items:center;gap:10px"><span class="val" style="font-weight:400;color:var(--dim);font-size:11px">'+d.big.wNote+'</span>'+weeksHTML(d.big.weeks)+'</span></div>' +
+          mixHTML(d.big.mix) +
+        '</div>' +
+        '<div class="plan">'+d.big.plan+'</div>' +
+      '</div>' +
+    '</div>' +
+    '<div style="margin-top:22px" class="lbl">This week · 12-week load <span style="text-transform:none;letter-spacing:0">— unchanged, continues below</span></div>';
+}
+
+/* ---------------- 2 · FTP check scenarios ---------------- */
+var FTP = {
+  up:{
+    label:'Raise', head:'Your FTP looks low', from:223, to:230, dir:'up', d:'+7 W · +3%', conf:4, ct:'Strong — 4 of 5 signals agree', c:'--ok',
+    ev:[
+      ['up','You rode sweet spot at <b>104–106%</b> on 3 of your last 4 sweet spot workouts','Measured power vs the plan\'s targets — you turned the intensity up and held it','Strong'],
+      ['up','HR at sweet spot is <b>7 bpm lower</b> than 6 weeks ago (151 → 144)','Same %FTP, less heart rate — a classic sign the number has moved','Strong'],
+      ['up','HR drift <b>≤ 4%</b> across 5 long intervals','HR held steady to the end — those efforts were well under your limit','Medium'],
+      ['up','You rated sweet spot <b>4–5 / 10</b> — it should feel ~7','From your post-ride effort ratings','Medium'],
+      ['na','20-min best <b>238 W</b> → estimate 226 W','ERG holds you to the target, so this underestimates — supporting only','Weak']
+    ],
+    acts:'<button class="btn">Update to 230 W</button><button class="btn ghost">Confirm with a ramp test</button><button class="btn text">Not now</button>'
+  },
+  hold:{
+    label:'Hold', head:'Your FTP looks right', from:null, to:223, dir:'hold', d:'No change', conf:3, ct:'Good — 3 of 5 signals agree', c:'--ok',
+    ev:[
+      ['na','Sweet spot ridden at <b>98–101%</b> — about as written','',''],
+      ['na','HR at sweet spot <b>steady</b> vs 6 weeks ago (150 → 149)','',''],
+      ['na','HR drift <b>5–7%</b> on long intervals — working, not struggling','',''],
+      ['na','Sweet spot rated <b>7 / 10</b> — right where it should be','',''],
+      ['na','20-min best <b>231 W</b> → estimate 219 W','ERG-limited — supporting only','']
+    ],
+    acts:'<button class="btn ghost">Ramp test anyway</button>'
+  },
+  down:{
+    label:'Lower', head:'Your FTP may be set too high', from:223, to:215, dir:'down', d:'−8 W · −4%', conf:4, ct:'Strong — 4 of 5 signals agree', c:'--bad',
+    ev:[
+      ['down','Intensity turned <b>down to 92–95%</b> on 3 of your last 4 threshold rides','Or intervals skipped / cut short','Strong'],
+      ['down','HR drift <b>11–14%</b> on sweet spot intervals','HR kept climbing — those efforts were near your limit','Strong'],
+      ['down','Auto-paused mid-interval <b>twice</b> in the last 2 weeks','',''],
+      ['down','Sweet spot rated <b>9 / 10</b> — should feel ~7','From your post-ride effort ratings','Medium'],
+      ['na','HR at sweet spot <b>unchanged</b>','No signal either way','']
+    ],
+    acts:'<button class="btn">Lower to 215 W</button><button class="btn ghost">Confirm with a ramp test</button><button class="btn text">Not now</button>'
+  },
+  thin:{
+    label:'Not enough data', head:'Not enough to go on yet', from:null, to:223, dir:'hold', d:'Set 6 weeks ago', conf:1, ct:'Needs 3+ sweet spot or threshold rides with HR', c:'--faint',
+    ev:[
+      ['na','<b>1</b> sweet spot / threshold ride in the last 6 weeks','The check needs at least 3 to compare',''],
+      ['na','No HR on that ride','Connect a heart-rate strap to unlock the HR signals',''],
+      ['na','No effort rating saved','Rate rides after finishing — it sharpens the check','']
+    ],
+    acts:'<button class="btn ghost">Do a ramp test</button>'
+  }
+};
+function ftpHist(){
+  // FTP over time, rebuilt from the FTP saved on each ride (+ ramp tests)
+  var pts=[[0,205],[18,205],[18,214],[44,214],[44,223],[70,223]];
+  var W=700,H=92,pl=34,pr=10,pt=8,pb=20, lo=195, hi=235;
+  function x(d){ return pl+d/70*(W-pl-pr); } function y(v){ return pt+(1-(v-lo)/(hi-lo))*(H-pt-pb); }
+  var path=pts.map(function(p,i){ return (i?'L':'M')+x(p[0]).toFixed(1)+' '+y(p[1]).toFixed(1); }).join(' ');
+  var grid=[200,215,230].map(function(v){ return '<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y(v)+'" y2="'+y(v)+'" stroke="var(--hair)"/><text x="'+(pl-6)+'" y="'+(y(v)+3)+'" text-anchor="end" font-size="9.5" fill="var(--faint)" font-family="DM Mono">'+v+'</text>'; }).join('');
+  var dots=[[18,214,'Ramp'],[44,223,'Ramp']].map(function(p){ return '<circle cx="'+x(p[0])+'" cy="'+y(p[1])+'" r="3.5" fill="var(--elev)" stroke="var(--fg)" stroke-width="1.5"/><text x="'+x(p[0])+'" y="'+(y(p[1])-9)+'" text-anchor="middle" font-size="9" fill="var(--faint)" font-family="DM Mono">'+p[2]+' '+p[1]+'</text>'; }).join('');
+  var months=[['Aug',0],['Sep',22],['Oct',52]].map(function(m){ return '<text x="'+x(m[1])+'" y="'+(H-4)+'" font-size="9.5" fill="var(--faint)" font-family="DM Mono">'+m[0]+'</text>'; }).join('');
+  return '<svg viewBox="0 0 '+W+' '+H+'">'+grid+'<path d="'+path+'" fill="none" stroke="var(--fg)" stroke-width="2"/>'+dots+months+'</svg>';
+}
+function ftpView(s){
+  var d = FTP[s];
+  var big = d.from ? '<span class="from">'+d.from+'</span><span class="arr">→</span><span class="to">'+d.to+'<small>W</small></span>' : '<span class="to">'+d.to+'<small>W</small></span>';
+  var bars=''; for(var i=0;i<5;i++) bars+='<i class="'+(i<d.conf?'on':'')+'"></i>';
+  return '<div class="mhead"><h1>Fitness</h1><button class="close">Close</button></div>' +
+    '<div class="tabs"><span>Summary</span><span>Performance</span><span class="on">Power</span></div>' +
+    '<div class="ftpcard"><div class="lbl">FTP check<span class="new">New</span></div>' +
+      '<div class="ftp-top"><div><div class="verdict" style="margin-top:12px"><span class="pip" style="--c:var('+d.c+')"></span>'+d.head+'</div>' +
+        '<div class="ftp-big">'+big+'</div><span class="delta '+d.dir+'">'+d.d+'</span></div>' +
+        '<div class="conf"><div class="ftp-now">Confidence</div><div class="bars" style="--c:var('+d.c+')">'+bars+'</div><div class="ct">'+d.ct+'</div></div></div>' +
+      '<div class="ev">'+d.ev.map(function(e){ var ic=e[0]==='up'?'▲':e[0]==='down'?'▼':'–'; return '<div class="evrow'+(e[0]==='na'&&s!=='hold'?' muted':'')+'"><span class="ic '+e[0]+'">'+ic+'</span><span class="t">'+e[1]+(e[2]?'<small>'+e[2]+'</small>':'')+'</span><span class="w">'+e[3]+'</span></div>'; }).join('')+'</div>' +
+      '<div class="ftp-acts">'+d.acts+'</div>' +
+      '<div class="hist"><div class="lbl">FTP history<span class="new">New</span></div>'+ftpHist()+'</div>' +
+      '<div class="curve-ph"><div class="lbl">Power records — unchanged</div><div class="box">existing power curve</div></div>' +
+    '</div>';
+}
+
+var CAP = {
+  sum:'<b>Today</b> reads only today\'s Form + what you rode yesterday, and suggests 1–2 library workouts that fit. <b>Next 4 weeks</b> reads the last 4–6 weeks — how fast Fitness is climbing, how many build weeks since a break, and your easy/hard mix — and says what the coming block should look like. Switch scenarios to see each state.',
+  ftp:'<b>FTP check</b> weighs several signals from your recent sweet spot / threshold rides instead of trusting best power alone: how hard you actually rode vs the plan, your HR at that effort vs your own history, HR drift, and your effort ratings. It only suggests a change when most agree, in small steps, and offers a ramp test to confirm. <b>FTP history</b> is rebuilt from the FTP saved on every ride.'
+};
+var state = {v:'sum', s:'build'};
+function render(){
+  var src = state.v==='sum' ? SUM : FTP;
+  if(!src[state.s]) state.s = Object.keys(src)[state.v==='sum'?1:0];
+  document.getElementById('scen').innerHTML = Object.keys(src).map(function(k){ return '<button data-s="'+k+'" class="'+(k===state.s?'on':'')+'">'+src[k].label+'</button>'; }).join('');
+  document.getElementById('cap').innerHTML = CAP[state.v];
+  document.getElementById('modal').innerHTML = state.v==='sum' ? summary(state.s) : ftpView(state.s);
+}
+document.getElementById('view').addEventListener('click', function(e){ var b=e.target.closest('button'); if(!b) return;
+  [].forEach.call(this.children, function(x){ x.classList.toggle('on', x===b); }); state.v=b.dataset.v; state.s = state.v==='sum'?'build':'up'; render(); });
+document.getElementById('scen').addEventListener('click', function(e){ var b=e.target.closest('button'); if(!b) return; state.s=b.dataset.s; render(); });
+document.getElementById('theme').addEventListener('click', function(){ var r=document.documentElement, d=r.dataset.theme==='dark'; r.dataset.theme=d?'light':'dark'; this.textContent=d?'Dark':'Light'; });
+render();
+</script>
+</body>
+</html>

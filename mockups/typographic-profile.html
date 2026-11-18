@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profile restyle — ideas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{ --bg:#F4F3EF; --elev:#FFFFFF; --fg:#14140F; --dim:#6E6B60; --faint:#A8A496; --rule:#E2E0D8; --hair:#ECEAE3; --ink-rgb:20,20,15; --card:#F4F3EF; }
+  :root[data-theme="dark"]{ --bg:#121213; --elev:#1E1E20; --fg:#ECECEA; --dim:#9A9A93; --faint:#6A6A62; --rule:#2A2A2C; --hair:#202022; --ink-rgb:236,236,234; --card:#121213; }
+  :root{ --mono:'DM Mono',ui-monospace,monospace;
+    --recovery:#6E7486; --endurance:#5B8DEF; --tempo:#49B4B0; --sweetspot:#E8B24D; --threshold:#F2764A; --vo2:#C77DFF; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);-webkit-font-smoothing:antialiased;font-size:14px;}
+  .chrome{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:14px;padding:14px 22px;background:var(--bg);border-bottom:1px solid var(--rule);flex-wrap:wrap;}
+  .chrome .t{font-size:12px;letter-spacing:.16em;text-transform:uppercase;}
+  .seg{display:flex;gap:4px;margin-left:6px;flex-wrap:wrap;}
+  .seg button{font:inherit;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);background:none;border:1px solid var(--rule);border-radius:7px;padding:6px 11px;cursor:pointer;}
+  .seg button.on{color:var(--bg);background:var(--fg);border-color:var(--fg);}
+  .chrome .tgl{margin-left:auto;font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);background:none;border:0;cursor:pointer;}
+  .stage{max-width:760px;margin:0 auto;padding:30px 22px 60px;}
+  .cap{font-size:12px;letter-spacing:.02em;color:var(--dim);margin:0 0 22px;line-height:1.5;}
+  .cap b{color:var(--fg);font-weight:500;}
+
+  .panel{border:1px solid var(--rule);border-radius:16px;background:var(--bg);padding:20px 22px 22px;}
+  .eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);margin:0 0 16px;}
+
+  /* ---- shared graph scaffold ---- */
+  .graph{position:relative;height:200px;padding:0 0 20px;}
+  .grid{position:absolute;left:0;right:0;top:0;bottom:20px;pointer-events:none;}
+  .grid span{position:absolute;left:0;right:0;border-top:1px dashed rgba(var(--ink-rgb),0.07);}
+  .tl{position:absolute;left:0;right:0;top:0;bottom:20px;display:flex;align-items:flex-end;gap:1px;}
+  .seg-bar{min-width:3px;position:relative;--h:40px;height:var(--h);}
+  .axis{position:absolute;left:0;right:0;bottom:0;height:20px;display:flex;align-items:center;font-size:10px;letter-spacing:.06em;color:var(--faint);}
+  .axis span:last-child{margin-left:auto;}
+
+  /* ================= NOW — current soft style ================= */
+  .graph.now{border:1px solid var(--rule);border-radius:8px;background:var(--elev);padding:0 0 20px;}
+  .graph.now .tl{left:1px;right:1px;}
+  .now .seg-bar{border-radius:5px 5px 0 0;
+    background:color-mix(in srgb, var(--seg) 32%, var(--elev));
+    box-shadow:inset 0 2.5px 0 color-mix(in srgb, var(--seg) 70%, var(--elev));}
+
+  /* ================= A — Flat zone fill ================= */
+  /* square-shouldered flat tints; crisp 2px zone top edge, no gloss */
+  .a .seg-bar{background:color-mix(in srgb, var(--seg) 24%, transparent);border-top:2px solid var(--seg);}
+  .a .tl{border-bottom:1px solid var(--rule);}
+
+  /* ================= A2 — Flat fill, no cap ================= */
+  /* same flat tint, but a touch stronger so the shape holds without the edge */
+  .a2 .seg-bar{background:color-mix(in srgb, var(--seg) 34%, transparent);}
+  .a2 .tl{border-bottom:1px solid var(--rule);}
+
+  /* ================= B — Ink bars, zone cap ================= */
+  /* one neutral ink fill for every block; colour is just a 3px cap on top */
+  .b .seg-bar{background:rgba(var(--ink-rgb),0.09);box-shadow:inset 0 3px 0 var(--seg);}
+  .b .tl{border-bottom:1px solid var(--rule);}
+
+  /* ================= C — Hairline outline ================= */
+  /* blocks as outlines only — airy, technical, zone colour in the stroke */
+  .c .seg-bar{background:color-mix(in srgb, var(--seg) 7%, transparent);
+    border:1.4px solid var(--seg);border-bottom:none;}
+  .c .tl{gap:2px;border-bottom:1.4px solid rgba(var(--ink-rgb),0.35);}
+
+  /* ================= D — Mono skyline + zone ribbon ================= */
+  /* one ink silhouette (no gaps); zone shown as a colour tick along the base */
+  .d .tl{gap:0;}
+  .d .seg-bar{background:rgba(var(--ink-rgb),0.13);border-top:1.5px solid rgba(var(--ink-rgb),0.6);}
+  .d .seg-bar::after{content:"";position:absolute;left:0;right:0;bottom:-20px;height:3px;background:var(--seg);}
+  .d .tl{bottom:23px;}
+  .d .grid{bottom:23px;}
+
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:18px;padding-top:16px;border-top:1px solid var(--hair);}
+  .legend span{display:flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.04em;text-transform:uppercase;color:var(--dim);}
+  .legend i{width:10px;height:10px;border-radius:2px;background:var(--z);}
+</style>
+</head>
+<body>
+  <div class="chrome">
+    <span class="t">Profile restyle</span>
+    <span class="seg" id="seg">
+      <button data-d="now" class="on">Now</button>
+      <button data-d="a">A · Flat + cap</button>
+      <button data-d="a2">A2 · Flat, no cap</button>
+      <button data-d="b">B · Ink + cap</button>
+      <button data-d="c">C · Outline</button>
+      <button data-d="d">D · Skyline</button>
+    </span>
+    <button class="tgl" id="theme">Dark</button>
+  </div>
+  <div class="stage">
+    <p class="cap" id="cap"></p>
+    <div class="panel">
+      <p class="eyebrow">Profile</p>
+      <div class="graph now" id="graph">
+        <div class="grid" id="grid"></div>
+        <div class="tl" id="tl"></div>
+        <div class="axis"><span>0 min</span><span id="axMax">60 min</span></div>
+      </div>
+      <div class="legend">
+        <span style="--z:var(--endurance)"><i></i>Endurance</span>
+        <span style="--z:var(--tempo)"><i></i>Tempo</span>
+        <span style="--z:var(--sweetspot)"><i></i>Sweet Spot</span>
+        <span style="--z:var(--recovery)"><i></i>Recovery</span>
+      </div>
+    </div>
+  </div>
+<script>
+  // A representative session like the screenshot: warm-up ramp, a spike,
+  // three sweet-spot blocks per set with short recoveries, cool-down ramp.
+  var SS=90;
+  var segs=[
+    {z:'endurance',min:8,pct:50,pctEnd:70},
+    {z:'tempo',min:1,pct:96},
+    {z:'recovery',min:2,pct:50},
+    {z:'sweetspot',min:2,pct:SS},{z:'sweetspot',min:2,pct:SS},{z:'sweetspot',min:2,pct:SS},{z:'sweetspot',min:2,pct:SS},
+    {z:'recovery',min:2.5,pct:55},
+    {z:'sweetspot',min:2,pct:SS+1},{z:'sweetspot',min:2,pct:SS+1},{z:'sweetspot',min:2,pct:SS+1},{z:'sweetspot',min:2,pct:SS+1},
+    {z:'recovery',min:2.5,pct:55},
+    {z:'sweetspot',min:2,pct:SS+2},{z:'sweetspot',min:2,pct:SS+2},{z:'sweetspot',min:2,pct:SS+2},{z:'sweetspot',min:2,pct:SS+2},
+    {z:'endurance',min:5,pct:65,pctEnd:45}
+  ];
+  var TOP=180, MINH=16, SMIN=45, CEIL=105;
+  function h(pct){ var f=Math.max(0,Math.min(1,(pct-SMIN)/(CEIL-SMIN))); return Math.round(MINH+f*(TOP-MINH)); }
+  function barHtml(s){
+    var style='flex-grow:'+s.min+';--seg:var(--'+s.z+');';
+    if(s.pctEnd!=null && s.pctEnd!==s.pct){
+      var hA=h(s.pct),hB=h(s.pctEnd),tall=Math.max(hA,hB);
+      var tl=Math.round((1-hA/tall)*100), tr=Math.round((1-hB/tall)*100);
+      style+='--h:'+tall+'px;height:'+tall+'px;clip-path:polygon(0 '+tl+'%,100% '+tr+'%,100% 100%,0 100%);';
+    } else {
+      var hh=h(s.pct); style+='--h:'+hh+'px;height:'+hh+'px;';
+    }
+    return '<div class="seg-bar" style="'+style+'"></div>';
+  }
+  document.getElementById('tl').innerHTML=segs.map(barHtml).join('');
+  document.getElementById('grid').innerHTML='<span style="top:25%"></span><span style="top:50%"></span><span style="top:75%"></span>';
+  var total=segs.reduce(function(s,x){return s+x.min;},0);
+  document.getElementById('axMax').textContent=Math.round(total)+' min';
+
+  var CAP={
+    now:'<b>Now.</b> The current look: rounded shoulders, a pastel zone tint with a glossy top cap, soft card. Reads a touch skeuomorphic next to the DM-Mono screens.',
+    a:'<b>A · Flat + cap.</b> Same zone colours, flattened — square shoulders, a quiet 24% tint, one crisp 2px zone edge on top, hairline baseline. Smallest change; keeps the colour read.',
+    a2:'<b>A2 · Flat, no cap.</b> Just the flat zone tint — no top edge at all, bumped to 34% so the shape still holds. The quietest, most solid-bar read.',
+    b:'<b>B · Ink + cap.</b> Every block is the same neutral ink; colour shrinks to a 3px cap naming the zone. Most editorial — the chart reads as data-ink, colour as accent.',
+    c:'<b>C · Outline.</b> Blocks as hairline outlines over a faint wash. Airy and technical, like a blueprint; zone colour lives in the stroke.',
+    d:'<b>D · Skyline.</b> One ink silhouette with no gaps; the zone shows as a colour ribbon along the baseline. Most graphic and minimal.'
+  };
+  function show(d){
+    var g=document.getElementById('graph'); g.className='graph '+d;
+    document.getElementById('cap').innerHTML=CAP[d];
+  }
+  document.getElementById('seg').addEventListener('click',function(e){var b=e.target.closest('button[data-d]');if(!b)return;[].forEach.call(this.children,function(x){x.classList.toggle('on',x===b);});show(b.getAttribute('data-d'));});
+  document.getElementById('theme').addEventListener('click',function(){var d=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',d);this.textContent=d==='light'?'Dark':'Light';});
+  show('now');
+</script>
+</body>
+</html>

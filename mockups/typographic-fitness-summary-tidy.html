@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fitness summary — tidy-up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{ --bg:#F4F3EF; --elev:#FFFFFF; --strong:#14140F; --fg:#14140F; --dim:#4A4A44; --faint:#6E6B60; --rule:#E2E0D8; --hair:#ECEAE3; --ok:#1C8579; --okSoft:rgba(28,133,121,.10); --warn:#B07A12; --warnSoft:rgba(224,162,47,.14); --bad:#D9455F; --easy:#3F79E8; --easySoft:rgba(63,121,232,.12); --ss:#E0A22F; --tempo:#1E9E99; --fill:rgba(20,20,15,.06); }
+  :root[data-theme="dark"]{ --bg:#121213; --elev:#1B1B1D; --strong:#F6F6F5; --fg:#ECECEA; --dim:#A9A9A6; --faint:#85857F; --rule:#2C2C2F; --hair:#232326; --ok:#5CCDC1; --okSoft:rgba(92,205,193,.10); --warn:#E7B84E; --warnSoft:rgba(231,184,78,.14); --bad:#FF5D75; --easy:#6E9BEF; --easySoft:rgba(110,155,239,.14); --ss:#E8B24D; --tempo:#49B4B0; --fill:rgba(236,236,234,.07); }
+  :root{ --mono:'DM Mono',ui-monospace,"SF Mono",Consolas,monospace; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);-webkit-font-smoothing:antialiased;font-size:14px;}
+  b{font-weight:500;}
+
+  /* mock chrome */
+  .chrome{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:10px 18px;padding:12px 22px;background:var(--bg);border-bottom:1px solid var(--rule);flex-wrap:wrap;}
+  .chrome .t{font-size:12px;letter-spacing:.16em;text-transform:uppercase;}
+  .seg{display:flex;gap:4px;flex-wrap:wrap;}
+  .seg button{font:inherit;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);background:none;border:1px solid var(--rule);border-radius:7px;padding:6px 11px;cursor:pointer;}
+  .seg button.on{color:var(--bg);background:var(--fg);border-color:var(--fg);}
+  .sp{flex:1;}
+  .stage{max-width:1040px;margin:0 auto;padding:24px 22px 80px;transition:max-width .2s;}
+  .stage.phone{max-width:420px;}
+  .cap{font-size:12px;color:var(--dim);margin:0 0 18px;line-height:1.65;max-width:760px;}
+  .cap b{color:var(--strong);}
+  .cap ul{margin:8px 0 0;padding-left:18px;}
+  .cap li{margin:3px 0;}
+
+  /* the Fitness modal shell, as in the app */
+  .modal{container-type:inline-size;background:var(--elev);border:1px solid var(--rule);border-radius:14px;padding:22px 26px 30px;}
+  .mhead{display:flex;align-items:center;justify-content:space-between;}
+  .mhead h1{margin:0;font-size:15px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--strong);}
+  .close{font:inherit;font-size:12px;font-weight:500;border:0;background:#E8395A;color:#fff;border-radius:8px;padding:9px 14px;}
+  .tabs{display:flex;gap:24px;border-bottom:1px solid var(--rule);margin:20px 0 26px;}
+  .tabs span{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);padding:10px 0;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .tabs span.on{color:var(--strong);border-bottom-color:var(--fg);}
+
+  .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);}
+  .meta{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);}
+  .why{font-size:12px;line-height:1.65;color:var(--dim);margin:0;}
+  .why b{color:var(--strong);}
+  .chart{width:100%;}
+  .chart svg{display:block;}
+  .chart text{font-family:var(--mono);}
+
+  /* shared bits */
+  .pip{width:9px;height:9px;border-radius:50%;flex:none;align-self:flex-start;margin-top:.42em;background:var(--c);box-shadow:0 0 0 4px color-mix(in srgb,var(--c) 20%,transparent);}
+  .wrow{display:grid;grid-template-columns:10px 1fr auto;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--hair);}
+  .wrow .sw{width:10px;height:10px;border-radius:2px;background:var(--zc);}
+  .wrow .n{font-size:13px;color:var(--strong);}
+  .wrow .m{display:block;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-top:3px;}
+  .wrow .go{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);}
+  .slider{position:relative;height:7px;border-radius:4px;background:linear-gradient(90deg,var(--faint),var(--strong));opacity:.9;}
+  .slider .th{position:absolute;top:50%;width:15px;height:15px;margin:-7.5px 0 0 -7.5px;border-radius:50%;background:var(--elev);border:2px solid var(--strong);}
+  .ends{display:flex;justify-content:space-between;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:8px;}
+  .tgl{display:flex;gap:14px;}
+  .tgl span{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);opacity:.45;}
+  .tgl span.on{color:var(--strong);opacity:1;font-weight:500;}
+
+  /* ============ CURRENT (as built) ============ */
+  .cur .row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:44px;}
+  .cur .row + .row{margin-top:34px;padding-top:0;}
+  .cur .word{font-size:30px;font-weight:500;color:var(--strong);margin:8px 0 14px;}
+  .cur .k3{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-top:16px;}
+  .cur .k3 > div{padding:12px 0 12px 0;}
+  .cur .k3 > div + div{border-left:1px solid var(--rule);padding-left:16px;}
+  .cur .k3 .v{font-size:22px;color:var(--strong);}
+  .cur .k3 .v i{font-style:normal;font-size:13px;color:var(--faint);margin-left:8px;}
+  .cur .k3 .l{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-top:6px;}
+  .cur .k3 .s{font-size:9px;letter-spacing:.1em;color:var(--faint);margin-top:3px;}
+  .cur .wk{display:flex;gap:30px;margin:14px 0 18px;}
+  .cur .wk .v{font-size:20px;color:var(--strong);}
+  .cur .wk .l{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-top:8px;}
+  .cur .chh{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .cur .coach{border-top:1px solid var(--rule);padding-top:4px;}
+  .cur .coach .row{gap:0;}
+  .cur .coach .col{padding:18px 24px 0 0;}
+  .cur .coach .col + .col{border-left:1px solid var(--rule);padding:18px 0 0 24px;}
+  .cur .ch{display:flex;justify-content:space-between;align-items:baseline;}
+  .cur .vd{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:500;color:var(--strong);margin:16px 0 8px;}
+  .cur .vd + .why{margin-bottom:16px;}
+  .cur .wrows{border-top:1px solid var(--rule);}
+  .cur .fact{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--dim);padding:10px 0;border-bottom:1px solid var(--rule);}
+  .cur .fact:first-of-type{border-top:1px solid var(--rule);}
+  .cur .ramp{position:relative;height:5px;background:var(--hair);border-radius:3px;margin:8px 0 6px;}
+  .cur .ramp .band{position:absolute;left:30%;right:30%;top:0;bottom:0;background:var(--okSoft);border-left:1px solid var(--rule);border-right:1px solid var(--rule);}
+  .cur .ramp .mk{position:absolute;top:-4px;width:2px;height:13px;background:var(--strong);}
+  .cur .sq{display:flex;gap:4px;align-items:center;}
+  .cur .sq b{margin-right:8px;color:var(--strong);}
+  .cur .sq i{width:15px;height:15px;border-radius:3px;background:var(--dim);opacity:.8;}
+  .cur .sq i.e{background:none;border:1px solid var(--strong);opacity:1;}
+  .cur .plan{margin-top:14px;font-size:12px;line-height:1.6;color:var(--fg);padding:12px 14px;border:1px solid var(--rule);border-radius:8px;}
+  @container (max-width:640px){ .cur .row{grid-template-columns:1fr;gap:28px;} .cur .coach .col + .col{border-left:0;padding:22px 0 0;border-top:1px solid var(--rule);margin-top:20px;} .cur .coach .col{padding-right:0;} }
+
+  /* ============ A · TIDY (same layout, one system) ============ */
+  .A .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:56px;}
+  .A .cell{display:flex;flex-direction:column;}
+  .A .hd{display:flex;justify-content:space-between;align-items:baseline;height:18px;}
+  .A .r1{padding-bottom:30px;}
+  .A .r2{padding-top:26px;border-top:1px solid var(--rule);}
+  .A .word{font-size:30px;font-weight:500;color:var(--strong);margin:14px 0 18px;line-height:1;}
+  .A .nums{display:flex;gap:34px;margin-top:22px;}
+  .A .num .v{font-size:22px;color:var(--strong);line-height:1;}
+  .A .num .l{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:8px;}
+  .A .num .l em{font-style:normal;color:var(--dim);}
+  .A .wkn{display:flex;gap:34px;margin:14px 0 0;}
+  .A .wkn .v{font-size:30px;color:var(--strong);line-height:1;}
+  .A .wkn .v small{font-size:14px;color:var(--dim);margin-left:2px;}
+  .A .wkn .l{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:8px;}
+  .A .chh{display:flex;justify-content:space-between;align-items:baseline;margin:22px 0 4px;}
+  .A .vd{display:flex;align-items:center;gap:11px;font-size:19px;font-weight:500;color:var(--strong);margin:14px 0 8px;line-height:1.25;}
+  .A .why{margin-bottom:16px;}
+  .A .wrows{border-top:1px solid var(--hair);}
+  .A .facts{border-top:1px solid var(--hair);}
+  .A .fact{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px 12px;padding:11px 0;border-bottom:1px solid var(--hair);font-size:12px;color:var(--dim);}
+  .A .fact .val{color:var(--strong);font-weight:500;}
+  .A .ramp{grid-column:1/-1;position:relative;height:5px;background:var(--hair);border-radius:3px;}
+  .A .ramp .band{position:absolute;left:30%;right:30%;top:0;bottom:0;background:var(--okSoft);}
+  .A .ramp .mk{position:absolute;top:-4px;width:2px;height:13px;background:var(--strong);}
+  .A .rsc{grid-column:1/-1;display:flex;justify-content:space-between;font-size:9.5px;color:var(--faint);letter-spacing:.06em;}
+  .A .sq{display:flex;gap:4px;}
+  .A .sq i{width:14px;height:14px;border-radius:3px;background:var(--dim);}
+  .A .sq i.now{background:none;border:1px dashed var(--faint);}
+  .A .plan{margin-top:16px;font-size:12px;line-height:1.65;color:var(--fg);padding:2px 0 2px 14px;border-left:2px solid var(--easy);}
+  @container (max-width:640px){ .A .grid{grid-template-columns:1fr;} .A .r1 + .r1{margin-top:4px;} .A .grid > .cell + .cell{margin-top:30px;} .A .r2{padding-top:22px;} .A .grid.g2 > .cell + .cell{border-top:1px solid var(--rule);padding-top:22px;margin-top:26px;} .A .nums,.A .wkn{gap:0;justify-content:space-between;} }
+
+  /* ============ B · NOW / BIG PICTURE (two columns, two stories) ============ */
+  .B .grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:0;}
+  .B .col{padding-right:36px;}
+  .B .col + .col{padding:0 0 0 36px;border-left:1px solid var(--rule);}
+  .B .hd{display:flex;justify-content:space-between;align-items:baseline;}
+  .B .vd{display:flex;align-items:center;gap:11px;font-size:24px;font-weight:500;color:var(--strong);margin:14px 0 10px;line-height:1.2;letter-spacing:-.005em;}
+  .B .vd small{display:block;font-size:13px;font-weight:400;color:var(--dim);letter-spacing:0;margin-top:4px;}
+  .B .why{margin-bottom:20px;}
+  .B .gauge{margin:0 0 4px;}
+  .B .gnums{display:flex;justify-content:space-between;margin-top:18px;padding:12px 0 0;border-top:1px solid var(--hair);}
+  .B .gnums .v{font-size:18px;color:var(--strong);line-height:1;}
+  .B .gnums .l{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:7px;}
+  .B .gnums > div:nth-child(2){text-align:center;} .B .gnums > div:nth-child(3){text-align:right;}
+  .B .sub{margin:26px 0 0;}
+  .B .wrows{border-top:1px solid var(--hair);margin-top:10px;}
+  .B .cap-bar{margin:4px 0 20px;}
+  .B .cb-top{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--dim);}
+  .B .cb-top .v{font-size:22px;color:var(--strong);}
+  .B .cb-top .v small{font-size:12px;color:var(--faint);margin-left:4px;}
+  .B .bar{position:relative;height:8px;background:var(--hair);border-radius:4px;margin:10px 0 7px;overflow:hidden;}
+  .B .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--easy);border-radius:4px;}
+  .B .cb-sub{font-size:11px;color:var(--faint);display:flex;justify-content:space-between;gap:16px;}
+  .B .chh{display:flex;justify-content:space-between;align-items:baseline;margin:6px 0 2px;}
+  .B .key{display:flex;gap:14px;font-size:10px;color:var(--faint);letter-spacing:.04em;margin-top:8px;flex-wrap:wrap;}
+  .B .key i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:-1px;}
+  .B .line{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--dim);padding:11px 0;border-top:1px solid var(--hair);margin-top:16px;}
+  .B .line b{color:var(--strong);}
+  .B .line .q{color:var(--faint);font-size:11px;}
+  @container (max-width:640px){ .B .grid{grid-template-columns:1fr;} .B .col{padding-right:0;} .B .col + .col{border-left:0;padding:24px 0 0;margin-top:28px;border-top:1px solid var(--rule);} .B .vd{font-size:21px;} }
+
+  /* ============ C · BRIEFING (index rows) ============ */
+  .C .lede{font-size:26px;line-height:1.3;font-weight:500;color:var(--strong);margin:2px 0 6px;letter-spacing:-.01em;max-width:44ch;}
+  .C .lede span{color:var(--faint);}
+  .C .lede-sub{font-size:12px;color:var(--faint);letter-spacing:.04em;margin-bottom:24px;}
+  .C .ix{border-top:1px solid var(--strong);}
+  .C .ir{display:grid;grid-template-columns:150px 1fr;gap:24px;padding:18px 0;border-bottom:1px solid var(--rule);}
+  .C .ir > .lbl{padding-top:3px;}
+  .C .ir .lbl b{display:block;color:var(--strong);font-weight:500;font-size:11px;letter-spacing:.14em;}
+  .C .ir .lbl span{display:block;margin-top:5px;font-size:9.5px;letter-spacing:.1em;color:var(--faint);}
+  .C .h{display:flex;align-items:center;gap:10px;font-size:16px;font-weight:500;color:var(--strong);margin-bottom:6px;}
+  .C .picks{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-top:14px;}
+  .C .pick{display:grid;grid-template-columns:10px 1fr auto;gap:10px;align-items:center;padding:11px 12px;border:1px solid var(--rule);border-radius:9px;}
+  .C .pick .sw{width:10px;height:10px;border-radius:2px;background:var(--zc);}
+  .C .pick .n{font-size:13px;color:var(--strong);}
+  .C .pick .m{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin-top:3px;}
+  .C .pick .go{font-size:13px;color:var(--dim);}
+  .C .stats{display:flex;gap:0;flex-wrap:wrap;}
+  .C .stat{padding-right:28px;margin-right:28px;border-right:1px solid var(--hair);}
+  .C .stat:last-child{border-right:0;}
+  .C .stat .v{font-size:20px;color:var(--strong);line-height:1;}
+  .C .stat .v small{font-size:12px;color:var(--faint);margin-left:3px;}
+  .C .stat .l{font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-top:7px;}
+  .C .two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px;align-items:end;}
+  .C .bar{position:relative;height:6px;background:var(--hair);border-radius:3px;margin:12px 0 6px;}
+  .C .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--easy);border-radius:3px;}
+  .C .bsub{font-size:11px;color:var(--faint);}
+  @container (max-width:640px){ .C .ir{grid-template-columns:1fr;gap:10px;} .C .picks,.C .two{grid-template-columns:1fr;} .C .lede{font-size:21px;} .C .stat{padding-right:16px;margin-right:16px;} }
+
+  .note{margin-top:22px;font-size:11.5px;line-height:1.65;color:var(--faint);max-width:760px;}
+  .note b{color:var(--dim);}
+</style>
+</head>
+<body>
+<div class="chrome">
+  <span class="t">Fitness · Summary</span>
+  <div class="seg" id="vSeg">
+    <button data-v="cur">Now</button>
+    <button data-v="A" class="on">A · Tidy</button>
+    <button data-v="B">B · Today / Big picture</button>
+    <button data-v="C">C · Briefing</button>
+  </div>
+  <span class="sp"></span>
+  <div class="seg" id="wSeg"><button data-w="desk" class="on">Desktop</button><button data-w="phone">Phone</button></div>
+  <div class="seg" id="tSeg"><button data-t="light" class="on">Light</button><button data-t="dark">Dark</button></div>
+</div>
+
+<div class="stage" id="stage">
+  <div class="cap" id="cap"></div>
+  <div class="modal">
+    <div class="mhead"><h1>Fitness</h1><button class="close">Close</button></div>
+    <div class="tabs"><span class="on">Summary</span><span>Performance</span><span>Power</span></div>
+    <div id="body"></div>
+  </div>
+  <div class="note" id="note"></div>
+</div>
+
+<script>
+/* ---------- one dataset, every variant ---------- */
+var WEEKS = ['10 Aug','17 Aug','24 Aug','31 Aug','7 Sep','14 Sep','21 Sep','28 Sep','5 Oct','12 Oct','19 Oct','26 Oct'];
+var TSS   = [470, 520, 610, 300, 450, 500, 280, 480, 530, 590, 610, 275];
+var LIGHT = {3:1, 6:1};          // lighter weeks (<70% of the 3 before)
+var NOWI  = 11;                  // this week, in progress
+var CAP   = 330;                 // recovery-week cap (~60% of usual)
+
+function css(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
+
+/* line chart (Now + A) */
+function lineChart(el){
+  var W = el.clientWidth, H = 130, pl = 30, pr = 10, pt = 8, pb = 22;
+  var max = 800, n = TSS.length, x = function(i){ return pl + i * (W - pl - pr) / (n - 1); }, y = function(v){ return pt + (1 - v / max) * (H - pt - pb); };
+  var s = '<svg width="' + W + '" height="' + H + '">';
+  [0,200,400,600,800].forEach(function(g){ s += '<line x1="' + pl + '" x2="' + (W - pr) + '" y1="' + y(g) + '" y2="' + y(g) + '" stroke="' + css('--hair') + '"/><text x="' + (pl - 6) + '" y="' + (y(g) + 3) + '" font-size="9" text-anchor="end" fill="' + css('--faint') + '">' + g + '</text>'; });
+  var d = TSS.map(function(v, i){ return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); }).join(' ');
+  s += '<path d="' + d + ' L' + x(n - 1) + ' ' + y(0) + ' L' + x(0) + ' ' + y(0) + 'Z" fill="' + css('--fill') + '"/>';
+  s += '<path d="' + d + '" fill="none" stroke="' + css('--strong') + '" stroke-width="1.6"/>';
+  TSS.forEach(function(v, i){ s += '<circle cx="' + x(i) + '" cy="' + y(v) + '" r="' + (i === n - 1 ? 4.5 : 2.2) + '" fill="' + css('--strong') + '"/>'; });
+  var lab = el.dataset.clip ? [[0,'start'],[6,'middle'],[11,'start']] : [[0,'start'],[6,'middle'],[11,'end']];
+  lab.forEach(function(p){ s += '<text x="' + x(p[0]) + '" y="' + (H - 5) + '" font-size="9" text-anchor="' + p[1] + '" fill="' + css('--faint') + '">' + WEEKS[p[0]] + '</text>'; });
+  el.innerHTML = s + '</svg>';
+}
+
+/* bar chart (B + C): weeks as bars, lighter weeks + this week marked, cap line */
+function barChart(el){
+  var W = el.clientWidth, H = +(el.dataset.h || 120), pl = 0, pr = 0, pt = 24, pb = 20;
+  var max = 700, n = TSS.length, gap = 5, bw = (W - pl - pr - gap * (n - 1)) / n;
+  var y = function(v){ return pt + (1 - v / max) * (H - pt - pb); };
+  var s = '<svg width="' + W + '" height="' + H + '">';
+  TSS.forEach(function(v, i){
+    var x = pl + i * (bw + gap), h = y(0) - y(v);
+    if(i === NOWI){
+      s += '<rect x="' + x + '" y="' + y(CAP) + '" width="' + bw + '" height="' + (y(0) - y(CAP)) + '" rx="2" fill="none" stroke="' + css('--easy') + '" stroke-dasharray="3 3"/>';
+      s += '<rect x="' + x + '" y="' + y(v) + '" width="' + bw + '" height="' + h + '" rx="2" fill="' + css('--easy') + '"/>';
+    } else {
+      s += '<rect x="' + x + '" y="' + y(v) + '" width="' + bw + '" height="' + h + '" rx="2" fill="' + (LIGHT[i] ? css('--rule') : css('--dim')) + '"' + (LIGHT[i] ? '' : ' opacity=".85"') + '/>';
+    }
+  });
+  // the build streak, bracketed
+  var a = 7 * (bw + gap), b = 10 * (bw + gap) + bw;
+  s += '<path d="M' + a + ' ' + (pt - 4) + ' V' + (pt - 8) + ' H' + b + ' V' + (pt - 4) + '" fill="none" stroke="' + css('--faint') + '"/>';
+  s += '<text x="' + ((a + b) / 2) + '" y="' + (pt - 11) + '" font-size="9" text-anchor="middle" fill="' + css('--faint') + '">4 build weeks</text>';
+  [[0,'start'],[NOWI,'end']].forEach(function(p){ var x = p[0] * (bw + gap) + (p[1] === 'end' ? bw : 0); s += '<text x="' + x + '" y="' + (H - 5) + '" font-size="9" text-anchor="' + p[1] + '" fill="' + css('--faint') + '">' + (p[0] === NOWI ? 'this week' : WEEKS[p[0]]) + '</text>'; });
+  el.innerHTML = s.replace('<svg ', '<svg style="overflow:visible" ') + '</svg>';
+}
+
+var wrows = '<div class="wrow"><span class="sw" style="--zc:var(--ss)"></span><div><span class="n">Warmhearth</span><span class="m">Sweet spot · 45 min · TSS 44</span></div><span class="go">Start ›</span></div>'
+          + '<div class="wrow"><span class="sw" style="--zc:var(--tempo)"></span><div><span class="n">Slipway</span><span class="m">Tempo · 45 min · TSS 34</span></div><span class="go">Start ›</span></div>';
+var slider = '<div class="slider"><span class="th" style="left:37%"></span></div><div class="ends"><span>Overloaded</span><span>Fresh</span></div>';
+
+var V = {
+/* ---------------- NOW ---------------- */
+cur: {
+  cap: '<b>Now</b> — as built. Four blocks, four different heading treatments; two verdicts for the same Form number (“Building” and “Steady day”); boxed KPI cells, a boxed plan note and a vertical rule only on the second row.',
+  html: '<div class="cur">'
+   + '<div class="row"><div><div class="lbl">Today’s readiness</div><div class="word">Building</div>' + slider
+   +   '<div class="k3"><div><div class="v">64<i>↑</i></div><div class="l">Fitness</div><div class="s">CTL</div></div><div><div class="v">-18<i>↓</i></div><div class="l">Form</div><div class="s">TSB</div></div><div><div class="v">71<i>↑</i></div><div class="l">Fatigue</div><div class="s">ATL</div></div></div></div>'
+   +   '<div><div class="lbl">This week</div><div class="wk"><div><div class="v">275</div><div class="l">Load</div></div><div><div class="v">3h 49m</div><div class="l">Time</div></div><div><div class="v">4</div><div class="l">Rides</div></div></div>'
+   +   '<div class="chh"><span class="lbl">12-week load</span><span class="tgl"><span class="on">TSS</span><span>Hours</span></span></div><div class="chart" data-k="line" data-clip="1"></div></div></div>'
+   + '<div class="row coach"><div class="col"><div class="ch"><span class="lbl">Today</span><span class="meta">Based on form</span></div><div class="vd"><span class="pip" style="--c:var(--ss)"></span>Steady day — sweet spot or tempo</div><p class="why">Form is <b>-18</b>: normal mid-build tiredness. You can work — save VO₂ for fresher legs.</p><div class="wrows">' + wrows + '</div></div>'
+   +   '<div class="col"><div class="ch"><span class="lbl">Next 4 weeks</span><span class="meta">Based on last 4–6 wks</span></div><div class="vd"><span class="pip" style="--c:#9A7420"></span>Recovery week due</div><p class="why"><b>4 build weeks</b> in a row without a lighter one. Fitness lands when you back off.</p>'
+   +   '<div class="fact" style="display:block"><div style="display:flex;justify-content:space-between"><span>Fitness ramp</span><b style="color:var(--warn)">+0.9 / week</b></div><div class="ramp"><span class="band"></span><span class="mk" style="left:26%"></span></div><div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--faint)"><span>losing</span><span>healthy 2-7</span><span>too fast</span></div></div>'
+   +   '<div class="fact"><span>Build weeks in a row</span><span class="sq"><b>4</b><i></i><i></i><i></i><i class="e"></i></span></div>'
+   +   '<div class="plan"><b>Make this week easy:</b> about 330 TSS (~60% of usual) with a couple of short openers, then build again.</div></div></div>'
+   + '</div>',
+  note: ''
+},
+
+/* ---------------- A ---------------- */
+A: {
+  cap: '<b>A · Tidy</b> — same layout, one system. Nothing moves; the screen just stops arguing with itself.<ul>'
+     + '<li>Every block gets the same header line: label left, nothing right except the TSS/Hours toggle. “Based on form / last 4–6 wks” dropped.</li>'
+     + '<li>Headers sit on one shared baseline, and the two rows split by one full-width rule (not a half-height vertical one).</li>'
+     + '<li>CTL/TSB/ATL lose their boxes; numbers are plain, like “This week”. Arrows go — they had no time frame.</li>'
+     + '<li>Pips mean one thing: amber = work with care, blue = go easy. Plan note becomes a left-ruled line, not a card.</li>'
+     + '<li>Build-week squares: the empty one is labelled as this week (it read as “3 of 4”). Chart end-label no longer clips.</li></ul>',
+  html: '<div class="A">'
+   + '<div class="grid r1"><div class="cell"><div class="hd"><span class="lbl">Today’s readiness</span></div><div class="word">Building</div>' + slider
+   +   '<div class="nums"><div class="num"><div class="v">64</div><div class="l">Fitness <em>CTL</em></div></div><div class="num"><div class="v">−18</div><div class="l">Form <em>TSB</em></div></div><div class="num"><div class="v">71</div><div class="l">Fatigue <em>ATL</em></div></div></div></div>'
+   +   '<div class="cell"><div class="hd"><span class="lbl">This week</span></div><div class="wkn"><div><div class="v">275</div><div class="l">Load · TSS</div></div><div><div class="v">3<small>h</small> 49<small>m</small></div><div class="l">Time</div></div><div><div class="v">4</div><div class="l">Rides</div></div></div>'
+   +   '<div class="chh"><span class="lbl">12-week load</span><span class="tgl"><span class="on">TSS</span><span>Hours</span></span></div><div class="chart" data-k="line"></div></div></div>'
+   + '<div class="grid g2 r2"><div class="cell"><div class="hd"><span class="lbl">Today</span></div><div class="vd"><span class="pip" style="--c:var(--ss)"></span>Steady day — sweet spot or tempo</div><p class="why">Form is <b>−18</b>: normal mid-build tiredness. You can work — save VO₂ for fresher legs.</p><div class="wrows">' + wrows + '</div></div>'
+   +   '<div class="cell"><div class="hd"><span class="lbl">Next 4 weeks</span></div><div class="vd"><span class="pip" style="--c:var(--easy)"></span>Recovery week due</div><p class="why"><b>4 build weeks</b> in a row without a lighter one. Fitness lands when you back off.</p>'
+   +   '<div class="facts"><div class="fact"><span>Fitness ramp</span><span class="val" style="color:var(--warn)">+0.9 / wk</span><div class="ramp"><span class="band"></span><span class="mk" style="left:26%"></span></div><div class="rsc"><span>losing</span><span>healthy 2–7</span><span>too fast</span></div></div>'
+   +   '<div class="fact"><span>Build weeks in a row</span><span class="sq"><i></i><i></i><i></i><i></i><i class="now" title="this week"></i></span><div class="rsc" style="justify-content:flex-end"><span>4 done + this week</span></div></div></div>'
+   +   '<div class="plan"><b>Make this week easy:</b> about 330 TSS (~60% of usual), a couple of short openers, then build again.</div></div></div>'
+   + '</div>',
+  note: '<b>Effort:</b> CSS + a few markup tweaks in coachSummaryHTML / summaryPane. No logic changes.'
+},
+
+/* ---------------- B ---------------- */
+B: {
+  cap: '<b>B · Today / Big picture</b> — two columns, two timescales, one story each. <i>Recommended.</i><ul>'
+     + '<li><b>Left = today.</b> Readiness and the Today suggestion are the same fact (Form −18), so they merge: one verdict, the gauge as its evidence, then the workouts.</li>'
+     + '<li><b>Right = weeks.</b> “This week” and “Next 4 weeks” merge: the week’s load is shown against the recovery-week cap (275 of ~330), so the plan note becomes a progress bar you can act on.</li>'
+     + '<li>The 12-week chart becomes bars so the build streak and lighter weeks are visible in the chart itself — the separate build-week squares go.</li>'
+     + '<li>Ramp drops to a single line. The cap bar is a ceiling, not a target to beat — it only appears in easy weeks.</li></ul>',
+  html: '<div class="B"><div class="grid">'
+   + '<div class="col"><div class="hd"><span class="lbl">Today</span><span class="meta">Form −18</span></div>'
+   +   '<div class="vd"><span class="pip" style="--c:var(--ss)"></span><div>Building · steady day<small>Sweet spot or tempo — save VO₂ for fresher legs.</small></div></div>'
+   +   '<div class="gauge">' + slider + '</div>'
+   +   '<div class="gnums"><div><div class="v">64</div><div class="l">Fitness</div></div><div><div class="v">−18</div><div class="l">Form</div></div><div><div class="v">71</div><div class="l">Fatigue</div></div></div>'
+   +   '<div class="sub lbl">Ride today</div><div class="wrows">' + wrows + '</div></div>'
+   + '<div class="col"><div class="hd"><span class="lbl">Next 4 weeks</span><span class="meta">Ramp +0.9 / wk</span></div>'
+   +   '<div class="vd"><span class="pip" style="--c:var(--easy)"></span><div>Recovery week due<small>4 build weeks in a row — fitness lands when you back off.</small></div></div>'
+   +   '<div class="cap-bar"><div class="cb-top"><span class="lbl">This week</span><span class="v">275<small>/ ~330 TSS</small></span></div><div class="bar"><i style="width:83%"></i></div><div class="cb-sub"><span>3h 49m · 4 rides</span><span>~55 left · easy spins + openers</span></div></div>'
+   +   '<div class="chh"><span class="lbl">12 weeks</span><span class="tgl"><span class="on">TSS</span><span>Hours</span></span></div><div class="chart" data-k="bar" data-h="140"></div>'
+   +   '<div class="key"><span><i style="background:var(--dim)"></i>build week</span><span><i style="background:var(--rule)"></i>lighter week</span><span><i style="background:var(--easy)"></i>this week · cap</span></div></div>'
+   + '</div></div>',
+  note: '<b>Effort:</b> moderate — new summaryPane markup, bar chart in place of the line chart, cap bar reads easyTss from coachBlock. Build-week week-squares + plan box removed. In non-recovery weeks the cap bar is replaced by plain “This week” numbers.'
+},
+
+/* ---------------- C ---------------- */
+C: {
+  cap: '<b>C · Briefing</b> — reads like a coach’s note, top to bottom, in the Workouts-page index style.<ul>'
+     + '<li>A one-sentence lede answers “what now?” before any number.</li>'
+     + '<li>Below it, labelled index rows: Ride today · This week · The numbers · 12 weeks. One column, one rule style, no cards.</li>'
+     + '<li>Most compact on phone (no two-column collapse to manage); least “dashboard” of the three.</li></ul>',
+  html: '<div class="C">'
+   + '<div class="lede">Steady day today. <span>Recovery week due — keep this week under ~330.</span></div>'
+   + '<div class="lede-sub">Form −18 · 4 build weeks in a row · ramp +0.9 / wk</div>'
+   + '<div class="ix">'
+   + '<div class="ir"><div class="lbl"><b>Ride today</b><span>Sweet spot or tempo</span></div><div><p class="why">Normal mid-build tiredness. You can work — save VO₂ for fresher legs.</p>'
+   +   '<div class="picks"><div class="pick"><span class="sw" style="--zc:var(--ss)"></span><div><span class="n">Warmhearth</span><span class="m">Sweet spot · 45 min · TSS 44</span></div><span class="go">›</span></div><div class="pick"><span class="sw" style="--zc:var(--tempo)"></span><div><span class="n">Slipway</span><span class="m">Tempo · 45 min · TSS 34</span></div><span class="go">›</span></div></div></div></div>'
+   + '<div class="ir"><div class="lbl"><b>This week</b><span>Easy week</span></div><div class="two"><div class="stats"><div class="stat"><div class="v">275<small>TSS</small></div><div class="l">Load</div></div><div class="stat"><div class="v">3h 49m</div><div class="l">Time</div></div><div class="stat"><div class="v">4</div><div class="l">Rides</div></div></div>'
+   +   '<div><div class="bar"><i style="width:83%"></i></div><div class="bsub">275 of ~330 · easy spins + a couple of openers</div></div></div></div>'
+   + '<div class="ir"><div class="lbl"><b>The numbers</b><span>Overloaded ← → fresh</span></div><div class="two"><div class="stats"><div class="stat"><div class="v">64</div><div class="l">Fitness</div></div><div class="stat"><div class="v">−18</div><div class="l">Form</div></div><div class="stat"><div class="v">71</div><div class="l">Fatigue</div></div></div><div>' + slider.replace('<div class="ends"><span>Overloaded</span><span>Fresh</span></div>','') + '</div></div></div>'
+   + '<div class="ir"><div class="lbl"><b>12 weeks</b><span class="tgl" style="display:flex;margin-top:6px"><span class="on">TSS</span><span>Hours</span></span></div><div class="chart" data-k="bar" data-h="120"></div></div>'
+   + '</div></div>',
+  note: '<b>Effort:</b> moderate–large — new layout and a lede generator that joins the Today and Block verdicts into one sentence.'
+}
+};
+
+var cur = 'A';
+function render(){
+  document.getElementById('cap').innerHTML = V[cur].cap;
+  document.getElementById('body').innerHTML = V[cur].html;
+  document.getElementById('note').innerHTML = V[cur].note;
+  draw();
+}
+function draw(){
+  document.querySelectorAll('.chart').forEach(function(el){ (el.dataset.k === 'bar' ? barChart : lineChart)(el); });
+}
+function seg(id, attr, fn){
+  document.getElementById(id).addEventListener('click', function(e){
+    var b = e.target.closest('button'); if(!b) return;
+    this.querySelectorAll('button').forEach(function(x){ x.classList.toggle('on', x === b); });
+    fn(b.dataset[attr]);
+  });
+}
+seg('vSeg', 'v', function(v){ cur = v; render(); });
+seg('wSeg', 'w', function(w){ document.getElementById('stage').classList.toggle('phone', w === 'phone'); setTimeout(draw, 230); });
+seg('tSeg', 't', function(t){ document.documentElement.dataset.theme = t; draw(); });
+window.addEventListener('resize', draw);
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profile-forward specs — ideas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{ --bg:#F4F3EF; --elev:#FFFFFF; --strong:#14140F; --fg:#14140F; --dim:#6E6B60; --faint:#A8A496; --rule:#E2E0D8; --hair:#ECEAE3; }
+  :root[data-theme="dark"]{ --bg:#121213; --elev:#1E1E20; --strong:#F2F2F0; --fg:#ECECEA; --dim:#9A9A93; --faint:#6A6A62; --rule:#2A2A2C; --hair:#202022; }
+  :root{ --mono:'DM Mono',ui-monospace,monospace; --tempo:#49B4B0; --endurance:#5B8DEF; --rec:#9AA0AD; --spice:#E8395A; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);-webkit-font-smoothing:antialiased;font-size:14px;}
+  .chrome{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:14px 22px;background:var(--bg);border-bottom:1px solid var(--rule);flex-wrap:wrap;}
+  .chrome .t{font-size:12px;letter-spacing:.16em;text-transform:uppercase;}
+  .seg{display:flex;gap:4px;margin-left:6px;flex-wrap:wrap;}
+  .seg button{font:inherit;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);background:none;border:1px solid var(--rule);border-radius:7px;padding:6px 11px;cursor:pointer;}
+  .seg button.on{color:var(--bg);background:var(--fg);border-color:var(--fg);}
+  .chrome .tgl{margin-left:auto;font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);background:none;border:0;cursor:pointer;}
+  .stage{max-width:1040px;margin:0 auto;padding:24px 22px 60px;}
+  .cap{font-size:12px;color:var(--dim);margin:0 0 16px;line-height:1.5;}
+  .cap b{color:var(--fg);font-weight:500;}
+
+  .card{border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:26px 4px 30px;}
+  .header{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;padding-bottom:18px;border-bottom:1px solid var(--rule);margin-bottom:20px;}
+  .namerow{display:flex;align-items:center;gap:16px;}
+  .name{font-size:30px;font-weight:500;letter-spacing:-.01em;color:var(--strong);margin:0;line-height:1.05;}
+  .zbadge{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);}
+  .zbadge i{width:9px;height:9px;border-radius:2px;background:var(--tempo);}
+  .hmeta{display:flex;align-items:center;gap:14px;color:var(--dim);font-size:12.5px;}
+  .spice{display:inline-flex;gap:2px;vertical-align:middle;}
+  .spice b{width:9px;height:12px;background:var(--spice);display:inline-block;clip-path:polygon(50% 0,100% 35%,78% 100%,22% 100%,0 35%);opacity:.9;}
+  .spice b.off{background:var(--rule);}
+  .cue{font-size:14px;line-height:1.6;color:var(--dim);max-width:60ch;margin:0 0 20px;}
+  .ph{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0 0 12px;}
+  .chart{height:150px;display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--rule);}
+  .chart i{flex-grow:var(--g,1);background:color-mix(in srgb,var(--c) 46%,transparent);}
+  .axis{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.06em;color:var(--faint);margin:6px 0 0;}
+  .hint{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:4px 0 0;}
+
+  .act{display:flex;align-items:center;gap:16px;margin-top:24px;}
+  .start{font-size:12.5px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;padding:12px 24px;border-radius:6px;border:1px solid var(--strong);background:none;color:var(--strong);cursor:pointer;}
+  .start:hover{background:var(--strong);color:var(--bg);}
+  .star{width:34px;height:34px;border:0;background:none;color:var(--faint);cursor:pointer;font-size:18px;}
+
+  /* ===== spec treatments (the thing we're exploring) ===== */
+  .specs-wrap{margin-top:22px;}
+  .s .k{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--faint);display:block;}
+  .s .v{font-size:24px;font-weight:500;letter-spacing:-.01em;color:var(--strong);margin-top:7px;display:block;}
+  .s .v u{text-decoration:none;font-size:.55em;color:var(--dim);margin-left:2px;}
+
+  /* now — left strip */
+  .t-now{display:grid;grid-template-columns:repeat(5,auto);justify-content:start;gap:0 40px;}
+
+  /* spread — evenly across full width, airy */
+  .t-spread{display:grid;grid-template-columns:repeat(5,1fr);}
+
+  /* ruled — equal columns with vertical hairlines between */
+  .t-ruled{display:grid;grid-template-columns:repeat(5,1fr);}
+  .t-ruled .s{padding:0 20px;border-left:1px solid var(--rule);}
+  .t-ruled .s:first-child{padding-left:0;border-left:0;}
+
+  /* value-led — big number first, label under, evenly spread */
+  .t-led{display:grid;grid-template-columns:repeat(5,1fr);}
+  .t-led .s{display:flex;flex-direction:column-reverse;gap:7px;}
+  .t-led .k{margin-top:0;}
+
+  /* boxed — bordered grid */
+  .t-boxed{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--rule);border-left:1px solid var(--rule);border-radius:10px;overflow:hidden;}
+  .t-boxed .s{border-right:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:14px 16px;}
+  .t-boxed .s .v{font-size:22px;}
+
+  /* inline — one compact line */
+  .t-inline{display:flex;flex-wrap:wrap;gap:0 10px;align-items:baseline;font-size:14px;color:var(--strong);}
+  .t-inline .s{display:inline-flex;align-items:baseline;gap:7px;}
+  .t-inline .s .k{display:inline;font-size:10.5px;color:var(--faint);}
+  .t-inline .s .v{display:inline;font-size:16px;margin:0;}
+  .t-inline .sep{color:var(--faint);opacity:.6;}
+
+  /* hero — Duration + TSS large, the rest a quiet row */
+  .t-hero .big{display:flex;gap:54px;margin-bottom:16px;}
+  .t-hero .big .v{font-size:40px;}
+  .t-hero .rest{display:flex;gap:40px;border-top:1px solid var(--rule);padding-top:14px;}
+  .t-hero .rest .v{font-size:18px;}
+</style>
+</head>
+<body>
+  <div class="chrome">
+    <span class="t">Profile-forward specs</span>
+    <span class="seg" id="seg">
+      <button data-d="now" class="on">Now (strip)</button>
+      <button data-d="spread">Spread</button>
+      <button data-d="ruled">Ruled columns</button>
+      <button data-d="led">Value-led</button>
+      <button data-d="boxed">Boxed</button>
+      <button data-d="inline">Inline</button>
+      <button data-d="hero">Hero stats</button>
+    </span>
+    <button class="tgl" id="theme">Dark</button>
+  </div>
+  <div class="stage">
+    <p class="cap" id="cap"></p>
+    <div class="card">
+      <div class="header">
+        <div class="namerow"><h2 class="name">Anvilstone</h2><span class="zbadge"><i></i>Tempo</span></div>
+        <div class="hmeta"><span>3 × 18 min @ 191w</span><span class="spice" id="spice"></span></div>
+      </div>
+      <p class="cue">Sustained tempo — aerobic strength held at a hard-but-steady pace.</p>
+      <div class="ph">Profile</div>
+      <div class="chart" id="chart"></div>
+      <div class="axis"><span>0 min</span><span>90 min</span></div>
+      <div class="specs-wrap" id="specs"></div>
+      <div class="act"><button class="start">▶ Start Workout</button><button class="star">☆</button></div>
+    </div>
+  </div>
+<script>
+  var SP=4; var sp=''; for(var i=0;i<5;i++) sp+='<b class="'+(i<SP?'':'off')+'"></b>'; document.getElementById('spice').innerHTML=sp;
+  var BLOCKS=[['endurance',3,34],['endurance',3,46],['endurance',2,58],['tempo',18,86],['rec',4,30],['tempo',18,86],['rec',4,30],['tempo',18,86],['endurance',2,56],['endurance',3,42],['endurance',2,30]];
+  document.getElementById('chart').innerHTML=BLOCKS.map(function(b){return '<i style="--g:'+b[1]+';--c:var(--'+b[0]+');height:'+b[2]+'%"></i>';}).join('');
+  var S=[['Duration','90','min'],['Time in zone','54','min'],['TSS','92',''],['Est. avg power','162','W'],['Normalised','172','W']];
+  function cell(s){ return '<span class="s"><span class="k">'+s[0]+'</span><span class="v">'+s[1]+(s[2]?'<u>'+s[2]+'</u>':'')+'</span></span>'; }
+  function cells(){ return S.map(cell).join(''); }
+  var T={
+    now:function(){return '<div class="t-now">'+cells()+'</div>';},
+    spread:function(){return '<div class="t-spread">'+cells()+'</div>';},
+    ruled:function(){return '<div class="t-ruled">'+cells()+'</div>';},
+    led:function(){return '<div class="t-led">'+cells()+'</div>';},
+    boxed:function(){return '<div class="t-boxed">'+cells()+'</div>';},
+    inline:function(){ return '<div class="t-inline">'+S.map(function(s,i){return (i?'<span class="sep">·</span>':'')+'<span class="s"><span class="k">'+s[0]+'</span><span class="v">'+s[1]+(s[2]?' '+s[2]:'')+'</span></span>';}).join('')+'</div>'; },
+    hero:function(){ return '<div class="t-hero"><div class="big">'+cell(S[0])+cell(S[2])+'</div><div class="rest">'+cell(S[1])+cell(S[3])+cell(S[4])+'</div></div>'; }
+  };
+  var CAP={
+    now:'<b>Now (strip).</b> Left-aligned under the chart with a lot of empty space to the right.',
+    spread:'<b>Spread.</b> The five evenly distributed across the full width — balanced under the wide chart, no dividers, airy.',
+    ruled:'<b>Ruled columns.</b> Evenly spread with thin vertical dividers between — reads like a ledger / instrument strip.',
+    led:'<b>Value-led.</b> Big number on top, label underneath, evenly spread — the figures lead the eye.',
+    boxed:'<b>Boxed.</b> A full-width bordered grid (matches the live screen). Most structured.',
+    inline:'<b>Inline.</b> One compact line of label + value pairs — the most space-efficient, least loud.',
+    hero:'<b>Hero stats.</b> Duration + TSS large up top; time-in-zone / avg / NP as a quiet second row. Adds hierarchy.'
+  };
+  function show(d){ document.getElementById('specs').innerHTML=T[d](); document.getElementById('cap').innerHTML=CAP[d]; }
+  document.getElementById('seg').addEventListener('click',function(e){var b=e.target.closest('button[data-d]');if(!b)return;[].forEach.call(this.children,function(x){x.classList.toggle('on',x===b);});show(b.getAttribute('data-d'));});
+  document.getElementById('theme').addEventListener('click',function(){var d=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',d);this.textContent=d==='light'?'Dark':'Light';});
+  show('now');
+</script>
+</body>
+</html>

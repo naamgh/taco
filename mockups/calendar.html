@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendar - minimal mock</title>
+<link rel="stylesheet" href="mock.css">
+<style>
+  body{padding:30px;display:flex;justify-content:center;}
+  .modal{width:100%;max-width:1300px;background:var(--card);border:1.5px solid var(--line);border-radius:24px;overflow:hidden;box-shadow:0 30px 80px -40px rgba(0,0,0,.35);}
+  .cal-head{display:flex;align-items:center;gap:16px;padding:22px 28px;border-bottom:1.5px solid var(--line);}
+  .cal-head h1{font-size:22px;font-weight:600;letter-spacing:-.01em;}
+  .cal-head .nav{display:flex;gap:8px;}
+  .cal-head .sp{flex:1;}
+  .cal-body{display:grid;grid-template-columns:1fr 360px;}
+  .grid-wrap{padding:24px 28px 30px;border-right:1.5px solid var(--line);}
+  .dow{display:grid;grid-template-columns:repeat(7,1fr) 132px;gap:12px;margin-bottom:14px;}
+  .dow span{font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:left;}
+  .dow span:last-child{text-align:right;}
+  .week{display:grid;grid-template-columns:repeat(7,1fr) 132px;gap:12px;margin-bottom:12px;}
+  .day{min-height:118px;border:1.5px solid var(--line);border-radius:14px;padding:10px 11px;display:flex;flex-direction:column;gap:6px;}
+  .day .dn{font-size:13px;font-weight:600;color:var(--ink-soft);font-variant-numeric:tabular-nums;}
+  .day.out{background:var(--card-2);}
+  .day.out .dn{color:var(--faint);}
+  .day.today{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink);}
+  .day.sel{background:var(--active);border-color:var(--ink);box-shadow:0 0 0 1px var(--ink);}
+  .ent{display:flex;align-items:center;gap:7px;padding:5px 9px;border-radius:9px;font-size:11.5px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .ent .d{width:7px;height:7px;border-radius:50%;flex:none;}
+  .ent.plan{background:transparent;border:1.3px dashed var(--line-2);color:var(--muted);}
+  .wk{border:1.5px dashed var(--line-2);border-radius:14px;padding:12px;display:flex;flex-direction:column;justify-content:center;gap:8px;text-align:right;}
+  .wk .n{font-family:var(--mono);font-size:20px;font-weight:600;}
+  .wk .l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;}
+
+  .side{padding:26px 26px 30px;display:flex;flex-direction:column;gap:22px;}
+  .side .map{background:var(--card-2);border:1.5px solid var(--line);border-radius:16px;height:150px;display:flex;align-items:center;justify-content:center;}
+  .side h2{font-size:22px;font-weight:600;letter-spacing:-.01em;}
+  .side .meta{font-size:13px;color:var(--muted);margin-top:5px;display:flex;gap:9px;align-items:center;}
+  .dstats{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line);border:1.5px solid var(--line);border-radius:14px;overflow:hidden;}
+  .dstats .c{background:var(--card);padding:14px 16px;}
+  .dstats .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:7px;}
+  .dstats .v{font-family:var(--mono);font-size:20px;font-weight:600;}
+  .dstats .v small{font-size:.55em;color:var(--muted);}
+  .hrz{display:flex;flex-direction:column;gap:9px;}
+  .hrz .bar{display:flex;align-items:center;gap:12px;}
+  .hrz .bar .zl{font-size:11.5px;color:var(--muted);width:26px;font-family:var(--mono);}
+  .hrz .bar .tk{flex:1;height:10px;border-radius:5px;background:var(--line);overflow:hidden;}
+  .hrz .bar .tk i{display:block;height:100%;background:var(--d-endurance);}
+  .rpe{display:inline-flex;align-items:center;gap:9px;padding:8px 15px;border:1.5px solid var(--ink);border-radius:22px;font-size:13px;font-weight:600;align-self:flex-start;}
+</style>
+</head>
+<body>
+<div class="modal">
+
+  <div class="cal-head">
+    <h1>September 2026</h1>
+    <div class="nav">
+      <button class="icobtn" style="width:40px;height:40px" aria-label="Previous"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"/></svg></button>
+      <button class="icobtn" style="width:40px;height:40px" aria-label="Next"><svg viewBox="0 0 24 24" width="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6l6 6-6 6"/></svg></button>
+    </div>
+    <div class="sp"></div>
+    <button class="pill-out"><svg viewBox="0 0 24 24" width="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Log activity</button>
+    <button class="pill-out">Import</button>
+    <button class="pill">Close</button>
+  </div>
+
+  <div class="cal-body">
+    <div class="grid-wrap">
+      <div class="dow"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span><span>Week</span></div>
+
+      <div class="week">
+        <div class="day out"><span class="dn">1</span></div>
+        <div class="day"><span class="dn">2</span><span class="ent" style="background:var(--z-vo2)"><span class="d" style="background:var(--d-vo2)"></span>Coldlash</span></div>
+        <div class="day"><span class="dn">3</span></div>
+        <div class="day"><span class="dn">4</span><span class="ent" style="background:var(--z-endurance)"><span class="d" style="background:var(--d-endurance)"></span>Zwift ride</span></div>
+        <div class="day"><span class="dn">5</span></div>
+        <div class="day"><span class="dn">6</span><span class="ent" style="background:var(--z-tempo)"><span class="d" style="background:var(--d-tempo)"></span>Long run</span></div>
+        <div class="day"><span class="dn">7</span></div>
+        <div class="wk"><div class="n">312</div><div class="l">TSS · 4h 20m</div></div>
+      </div>
+
+      <div class="week">
+        <div class="day"><span class="dn">8</span><span class="ent" style="background:var(--z-sweetspot)"><span class="d" style="background:var(--d-sweetspot)"></span>Brazier</span></div>
+        <div class="day"><span class="dn">9</span></div>
+        <div class="day"><span class="dn">10</span><span class="ent" style="background:var(--z-threshold)"><span class="d" style="background:var(--d-threshold)"></span>Endline</span></div>
+        <div class="day"><span class="dn">11</span></div>
+        <div class="day"><span class="dn">12</span><span class="ent" style="background:var(--z-endurance)"><span class="d" style="background:var(--d-endurance)"></span>Outdoor</span></div>
+        <div class="day"><span class="dn">13</span><span class="ent" style="background:var(--z-recovery)"><span class="d" style="background:var(--d-recovery)"></span>Gym</span></div>
+        <div class="day"><span class="dn">14</span></div>
+        <div class="wk"><div class="n">288</div><div class="l">TSS · 3h 55m</div></div>
+      </div>
+
+      <div class="week">
+        <div class="day"><span class="dn">15</span></div>
+        <div class="day"><span class="dn">16</span><span class="ent" style="background:var(--z-vo2)"><span class="d" style="background:var(--d-vo2)"></span>Coldlash</span></div>
+        <div class="day"><span class="dn">17</span></div>
+        <div class="day"><span class="dn">18</span><span class="ent" style="background:var(--z-sweetspot)"><span class="d" style="background:var(--d-sweetspot)"></span>Brazier</span></div>
+        <div class="day"><span class="dn">19</span></div>
+        <div class="day sel"><span class="dn">20</span><span class="ent" style="background:var(--z-endurance)"><span class="d" style="background:var(--d-endurance)"></span>Coast loop</span></div>
+        <div class="day"><span class="dn">21</span></div>
+        <div class="wk"><div class="n">265</div><div class="l">TSS · 3h 30m</div></div>
+      </div>
+
+      <div class="week">
+        <div class="day today"><span class="dn">22</span><span class="ent plan"><span class="d" style="background:var(--muted)"></span>Threshold</span></div>
+        <div class="day"><span class="dn">23</span><span class="ent plan"><span class="d" style="background:var(--muted)"></span>Recovery</span></div>
+        <div class="day"><span class="dn">24</span></div>
+        <div class="day"><span class="dn">25</span><span class="ent plan"><span class="d" style="background:var(--muted)"></span>Long ride</span></div>
+        <div class="day"><span class="dn">26</span></div>
+        <div class="day"><span class="dn">27</span></div>
+        <div class="day"><span class="dn">28</span></div>
+        <div class="wk"><div class="n">-</div><div class="l">Planned</div></div>
+      </div>
+    </div>
+
+    <aside class="side">
+      <div class="map">
+        <svg viewBox="0 0 300 130" width="90%" height="120" fill="none" stroke="var(--d-endurance)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 100 C40 40 80 30 110 60 S170 120 210 80 250 20 280 40"/></svg>
+      </div>
+      <div>
+        <h2>Coast loop</h2>
+        <div class="meta"><span class="ztag" style="background:var(--z-endurance);padding:4px 11px"><span class="zdot" style="background:var(--d-endurance)"></span>Outdoor ride</span> · Sat 20 Sep</div>
+      </div>
+      <div class="dstats">
+        <div class="c"><div class="k">Distance</div><div class="v">42.6<small>km</small></div></div>
+        <div class="c"><div class="k">Time</div><div class="v">1:28</div></div>
+        <div class="c"><div class="k">TSS</div><div class="v">96</div></div>
+        <div class="c"><div class="k">Avg power</div><div class="v">212<small>w</small></div></div>
+      </div>
+      <div>
+        <span class="m-label" style="display:block;margin-bottom:14px">Heart-rate zones</span>
+        <div class="hrz">
+          <div class="bar"><span class="zl">Z1</span><span class="tk"><i style="width:18%"></i></span></div>
+          <div class="bar"><span class="zl">Z2</span><span class="tk"><i style="width:46%"></i></span></div>
+          <div class="bar"><span class="zl">Z3</span><span class="tk"><i style="width:64%"></i></span></div>
+          <div class="bar"><span class="zl">Z4</span><span class="tk"><i style="width:30%"></i></span></div>
+          <div class="bar"><span class="zl">Z5</span><span class="tk"><i style="width:8%"></i></span></div>
+        </div>
+      </div>
+      <div class="rpe"><span style="width:9px;height:9px;border-radius:50%;background:var(--d-threshold)"></span>RPE 6 / 10</div>
+    </aside>
+  </div>
+
+</div>
+</body>
+</html>

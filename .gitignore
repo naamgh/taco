@@ -1,0 +1,32 @@
+# This folder also holds other projects and scratch files, so the repo is an
+# allowlist: ignore everything, then add back the training app's source.
+/*
+!/.gitignore
+!/.claude/
+!/CLAUDE.md
+!/README.txt
+!/DESIGN.md
+!/PRODUCT.md
+!/build.ps1
+!/serve.ps1
+!/start.bat
+!/library-gen.js
+!/library-builder.html
+!/src/
+!/mockups/
+!/cloud/
+!/github/
+
+# Build outputs — regenerate with build.ps1 (github/ keeps only the hand-made
+# deploy files: worker, service worker, manifests, icons).
+/github/index.html
+/github/log.html
+/github/library-gen.js
+/github/library-builder.html
+
+# Local Claude settings other than the preview launcher
+/.claude/*
+!/.claude/launch.json
+
+# Wrangler's local cache holds Cloudflare account details
+.wrangler/

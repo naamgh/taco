@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Numbers panel + Zones — ideas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{ --bg:#F4F3EF; --elev:#FFFFFF; --strong:#14140F; --fg:#14140F; --dim:#6E6B60; --faint:#A8A496; --rule:#E2E0D8; --hair:#ECEAE3; --cardhover:#ECEAE3; }
+  :root[data-theme="dark"]{ --bg:#121213; --elev:#1E1E20; --strong:#F2F2F0; --fg:#ECECEA; --dim:#9A9A93; --faint:#6A6A62; --rule:#2A2A2C; --hair:#202022; --cardhover:#232326; }
+  :root{ --mono:'DM Mono',ui-monospace,monospace; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);-webkit-font-smoothing:antialiased;font-size:14px;}
+  .chrome{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:14px 22px;background:var(--bg);border-bottom:1px solid var(--rule);flex-wrap:wrap;}
+  .chrome .t{font-size:12px;letter-spacing:.16em;text-transform:uppercase;}
+  .seg{display:flex;gap:4px;margin-left:6px;flex-wrap:wrap;}
+  .seg button{font:inherit;font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint);background:none;border:1px solid var(--rule);border-radius:7px;padding:6px 11px;cursor:pointer;}
+  .seg button.on{color:var(--bg);background:var(--fg);border-color:var(--fg);}
+  .chrome .tgl{margin-left:auto;font:inherit;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);background:none;border:0;cursor:pointer;}
+  .stage{max-width:720px;margin:0 auto;padding:30px 22px 60px;}
+  .cap{font-size:12px;color:var(--dim);margin:0 0 20px;line-height:1.5;}
+  .cap b{color:var(--fg);font-weight:500;}
+  .frame{display:flex;justify-content:flex-start;}
+
+  /* the dropdown panel */
+  .panel{width:330px;background:var(--bg);border:1px solid var(--rule);border-radius:12px;padding:16px 16px 14px;box-shadow:0 18px 44px -16px rgba(0,0,0,.28);}
+  .sec-h{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0 0 12px;}
+  .chips{display:flex;gap:8px;}
+  .chip{flex:1;border:1px solid var(--rule);border-radius:8px;background:var(--bg);padding:9px 11px;cursor:pointer;text-align:left;min-width:0;}
+  .chip:hover{border-color:var(--strong);background:var(--cardhover);}
+  .chip label{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);}
+  .chip .v{display:block;font-size:20px;font-weight:500;color:var(--strong);margin-top:3px;}
+  .chip .v.ph{color:var(--faint);}
+
+  /* ---- zones link variants ---- */
+  .zbars{display:inline-flex;align-items:flex-end;gap:2px;}
+  .zbars i{width:3px;background:currentColor;border-radius:1px;}
+  .zbars i:nth-child(1){height:6px;} .zbars i:nth-child(2){height:9px;} .zbars i:nth-child(3){height:13px;}
+  .arrow{margin-left:auto;}
+
+  /* A · plain link */
+  .z-a{display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:13px;border-top:1px solid var(--hair);font-size:12px;letter-spacing:.02em;color:var(--dim);cursor:pointer;}
+  .z-a:hover{color:var(--strong);}
+  .z-a .caret{margin-left:auto;transition:transform .2s ease;}
+  .z-a.open{color:var(--strong);}
+  .z-a.open .caret{transform:rotate(90deg);}
+
+  /* inline zones panel (the "open" state) */
+  .zones{max-height:0;overflow:hidden;transition:max-height .25s ease;}
+  .zones.open{max-height:460px;overflow-y:auto;}
+  .zinner{padding:14px 0 2px;}
+  .z-sub{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin:0 0 8px;display:flex;align-items:baseline;gap:8px;}
+  .z-sub b{color:var(--dim);font-weight:500;letter-spacing:0;text-transform:none;font-size:12px;}
+  .zrow{display:grid;grid-template-columns:12px auto 1fr auto;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--hair);font-size:12px;}
+  .zrow:last-child{border-bottom:0;}
+  .zsw{width:10px;height:10px;border-radius:2px;background:var(--zc);}
+  .zcode{color:var(--faint);font-size:10.5px;letter-spacing:.06em;}
+  .zname{color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .zrange{color:var(--dim);white-space:nowrap;letter-spacing:.01em;}
+  .znote{margin:12px 0 4px;font-size:11px;line-height:1.5;color:var(--faint);}
+  .znote b{color:var(--dim);font-weight:500;}
+  .z-sub.hr{margin-top:18px;padding-top:14px;border-top:1px solid var(--hair);}
+
+  /* B · small-caps link */
+  .z-b{display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:13px;border-top:1px solid var(--hair);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);cursor:pointer;}
+  .z-b:hover{color:var(--strong);}
+
+  /* C · menu row (bordered, hover) */
+  .z-c{display:flex;align-items:center;gap:11px;margin-top:12px;padding:11px 12px;border:1px solid var(--rule);border-radius:8px;color:var(--dim);cursor:pointer;font-size:13px;}
+  .z-c:hover{border-color:var(--strong);background:var(--cardhover);color:var(--strong);}
+  .z-c .arrow{color:var(--faint);}
+
+  /* D · fourth tile in the row */
+  .chips.has-tile .chip.ztile{flex:0 0 68px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;color:var(--dim);}
+  .chips.has-tile .chip.ztile label{letter-spacing:.06em;}
+</style>
+</head>
+<body>
+  <div class="chrome">
+    <span class="t">Numbers + Zones</span>
+    <span class="seg" id="seg">
+      <button data-d="now" class="on">Now</button>
+      <button data-d="a">A · Link</button>
+      <button data-d="b">B · Small-caps</button>
+      <button data-d="c">C · Row</button>
+      <button data-d="d">D · Tile</button>
+    </span>
+    <button class="tgl" id="theme">Dark</button>
+  </div>
+  <div class="stage">
+    <p class="cap" id="cap"></p>
+    <div class="frame"><div class="panel" id="panel"></div></div>
+  </div>
+<script>
+  var BARS='<span class="zbars"><i></i><i></i><i></i></span>';
+  var ARROW='<span class="arrow">&#8250;</span>';
+  var CHIPS='<div class="sec-h">Your numbers</div><div class="chips" id="chips">'+
+    '<button class="chip"><label>FTP</label><span class="v">223</span></button>'+
+    '<button class="chip"><label>Max HR</label><span class="v ph">&mdash;</span></button>'+
+    '<button class="chip"><label>Weight</label><span class="v ph">&mdash;</span></button>'+
+    '</div>';
+  // Chips with Max HR set (185), so the open state can show HR zones too.
+  var CHIPS_HR='<div class="sec-h">Your numbers</div><div class="chips">'+
+    '<button class="chip"><label>FTP</label><span class="v">223</span></button>'+
+    '<button class="chip"><label>Max HR</label><span class="v">185</span></button>'+
+    '<button class="chip"><label>Weight</label><span class="v ph">&mdash;</span></button>'+
+    '</div>';
+  var PWR=[['#6E7486','Z1','Recovery','≤ 123 W'],['#5B8DEF','Z2','Endurance','124–167 W'],['#49B4B0','Z3','Tempo','168–201 W'],['#F2764A','Z4','Threshold','203–234 W'],['#C77DFF','Z5','VO₂ Max','236–268 W'],['#FF5D75','Z6','Anaerobic','270–335 W'],['#C23B4E','Z7','Neuromuscular','335 W +']];
+  var HRZ=[['#6E7486','Z1','Recovery','≤ 111'],['#5B8DEF','Z2','Endurance','112–130'],['#49B4B0','Z3','Tempo','131–148'],['#F2764A','Z4','Threshold','149–167'],['#FF5D75','Z5','Maximum','168–185']];
+  function rows(zs){ return zs.map(function(z){ return '<div class="zrow"><span class="zsw" style="--zc:'+z[0]+'"></span><span class="zcode">'+z[1]+'</span><span class="zname">'+z[2]+'</span><span class="zrange">'+z[3]+'</span></div>'; }).join(''); }
+  function zonesPanel(){
+    return '<div class="zones" id="zones"><div class="zinner">'+
+      '<div class="z-sub">Power <b>at 223 W</b></div>'+rows(PWR)+
+      '<p class="znote"><b>Sweet Spot</b> is the 88–94% band across the top of Tempo and bottom of Threshold — not a zone of its own.</p>'+
+      '<div class="z-sub hr">Heart rate <b>at 185 bpm max</b></div>'+rows(HRZ)+
+      '</div></div>';
+  }
+  var T={
+    now:function(){return CHIPS;},
+    a:function(){return CHIPS_HR+'<div class="z-a" id="zlink">'+BARS+'Power &amp; HR zones<span class="caret">›</span></div>'+zonesPanel();},
+    b:function(){return CHIPS+'<div class="z-b">'+BARS+'Zones'+ARROW+'</div>';},
+    c:function(){return CHIPS+'<div class="z-c">'+BARS+'Power &amp; HR zones'+ARROW+'</div>';},
+    d:function(){return '<div class="sec-h">Your numbers</div><div class="chips has-tile">'+
+      '<button class="chip"><label>FTP</label><span class="v">223</span></button>'+
+      '<button class="chip"><label>Max HR</label><span class="v ph">&mdash;</span></button>'+
+      '<button class="chip"><label>Weight</label><span class="v ph">&mdash;</span></button>'+
+      '<button class="chip ztile">'+BARS+'<label>Zones</label></button>'+
+      '</div>';}
+  };
+  var CAP={
+    now:'<b>Now.</b> Just the three number chips — the zones reference lives over in the ⋯ overflow menu, away from the numbers it comes from.',
+    a:'<b>A · Link — open state.</b> Clicking “Power &amp; HR zones” expands the panel inline (the caret rotates): the power zones at your FTP, then the HR zones at your max — no second floating popover. Click it again to collapse. (Shown open.)',
+    b:'<b>B · Small-caps.</b> The same, shorter and set as a faint small-caps label — the most understated.',
+    c:'<b>C · Row.</b> A bordered menu-style row (icon + label + chevron) that lights on hover — reads most clearly as a button.',
+    d:'<b>D · Tile.</b> A fourth item sharing the chip row — compact, but it sits oddly beside three editable numbers (it’s a link, not a value).'
+  };
+  function show(d){
+    document.getElementById('panel').innerHTML=T[d]();
+    document.getElementById('cap').innerHTML=CAP[d];
+    if(d==='a'){
+      var link=document.getElementById('zlink'), zones=document.getElementById('zones');
+      var toggle=function(){ var open=zones.classList.toggle('open'); link.classList.toggle('open',open); };
+      link.addEventListener('click',toggle);
+      toggle();   // default open so the expanded state is visible
+    }
+  }
+  document.getElementById('seg').addEventListener('click',function(e){var b=e.target.closest('button[data-d]');if(!b)return;[].forEach.call(this.children,function(x){x.classList.toggle('on',x===b);});show(b.getAttribute('data-d'));});
+  document.getElementById('theme').addEventListener('click',function(){var d=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';document.documentElement.setAttribute('data-theme',d);this.textContent=d==='light'?'Dark':'Light';});
+  show('now');
+</script>
+</body>
+</html>

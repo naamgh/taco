@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Monolith · Overlay + HR hero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;background:#E6E3DC;color:#14140F;font-family:'Inter',system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;padding:40px 24px 80px;}
+  .wrap{max-width:900px;margin:0 auto;}
+  .kick{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#6E6B60;margin:0 0 10px;}
+  h1{margin:0 0 8px;font-family:'Archivo Black',sans-serif;font-size:32px;letter-spacing:-0.01em;}
+  .lede{margin:0 0 30px;max-width:640px;color:#4A4A44;font-size:14.5px;line-height:1.55;}
+  .slot{margin-bottom:38px;}
+  .tag{display:flex;align-items:baseline;gap:9px;margin-bottom:12px;}
+  .tag b{font-size:16px;font-weight:700;}
+  .tag span{font-family:'JetBrains Mono',monospace;font-size:11px;color:#6E6B60;letter-spacing:.04em;}
+  .card{width:100%;aspect-ratio:4/3;border-radius:14px;overflow:hidden;box-shadow:0 24px 50px -24px rgba(0,0,0,.45);}
+  .card svg{display:block;width:100%;height:100%;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kick">Monolith · overlay plot + HR-hero layout · 4:3</p>
+  <h1>One layout, four workouts</h1>
+  <p class="lede">Heart-led data layout (chunky title up top, big AVG/MAX bpm down low) with the overlay plot (power bars + HR line in one chart). Accent = the ride's zone colour (threshold orange, anaerobic pink); HR runs in off-white so it never fights the accent. Same template across micro-intervals and steady shapes.</p>
+  <div id="board"></div>
+</div>
+
+<script>
+var INK='#F2F1EC', LINE='#EDE7DA', DIM='#6B7180', GRID='#23252E', BG='#0C0D10';
+
+/* ---- profile builders ---- */
+function seg(a,b,min){return [a,b,min];}
+function micro(reps,onH,offH,onS,offS){var o=[];for(var i=0;i<reps;i++){o.push([onH,onH,onS/60]);o.push([offH,offH,offS/60]);}return o;}
+function build(SEG,n){var total=0,i,j;for(i=0;i<SEG.length;i++)total+=SEG[i][2];var out=[];for(i=0;i<n;i++){var mp=i/(n-1)*total,c=0,v=0;for(j=0;j<SEG.length;j++){if(mp<=c+SEG[j][2]||j===SEG.length-1){var f=Math.min(1,Math.max(0,(mp-c)/SEG[j][2]));v=SEG[j][0]+(SEG[j][1]-SEG[j][0])*f;break;}c+=SEG[j][2];}out.push(v);}return out;}
+// HR follows power with lag (so micro spikes smooth into a climbing line) + drift
+function hr(P,lag,drift){var h=92,out=[],cw=0;for(var i=0;i<P.length;i++){if(P[i]>0.62)cw++;var t=92+P[i]*80+drift*cw;h+=(t-h)*lag;out.push(h);}var mn=Math.min.apply(null,out),mx=Math.max.apply(null,out);return out.map(function(v){return (v-mn)/(mx-mn);});} // 0..1
+
+var FC_set=micro(8,1.06,.34,20,25);
+var WORKOUTS=[
+  {name:'FIRECRACKER', zone:'ANAEROBIC', col:'#E8395A', struct:'4 × (8 × 20/25s) @ 118%', date:'02 OCT 2026',
+   dur:'46:00', np:232, tss:72, avghr:152, maxhr:181, drift:'FADED A LITTLE', driftv:'+6%', lag:.03, dr:.42,
+   seg:[seg(.3,.56,8)].concat(FC_set,[seg(.4,.4,3)],FC_set,[seg(.4,.4,3)],FC_set,[seg(.4,.4,3)],FC_set,[seg(.56,.24,5)])},
+  {name:'CROSSCUT', zone:'THRESHOLD', col:'#E85F2E', struct:'5 × 6 min · over / under', date:'28 SEP 2026',
+   dur:'58:00', np:241, tss:86, avghr:156, maxhr:172, drift:'HELD STRONG', driftv:'+4%', lag:.06, dr:.3,
+   seg:[seg(.3,.58,8)].concat([0,1,2,3,4].reduce(function(a,k){return a.concat([seg(.88,.88,1),seg(1.06,1.06,1),seg(.88,.88,1),seg(1.06,1.06,1),seg(.88,.88,1),seg(1.06,1.06,1),seg(.45,.45, k<4?3:0)]);},[]),[seg(.5,.24,4)])},
+  {name:'LONGBOW', zone:'THRESHOLD', col:'#E85F2E', struct:'2 × 20 min @ 250 W', date:'25 SEP 2026',
+   dur:'60:00', np:247, tss:90, avghr:158, maxhr:170, drift:'HELD STRONG', driftv:'+3%', lag:.07, dr:.3,
+   seg:[seg(.3,.58,9),seg(1.0,1.0,20),seg(.47,.47,5),seg(1.0,1.0,20),seg(.55,.24,6)]},
+  {name:'DETONATE', zone:'ANAEROBIC', col:'#E8395A', struct:'4 × 3 min @ 300 W', date:'22 SEP 2026',
+   dur:'42:00', np:251, tss:66, avghr:149, maxhr:183, drift:'FADED A LITTLE', driftv:'+7%', lag:.05, dr:.4,
+   seg:[seg(.3,.56,8)].concat([0,1,2,3].reduce(function(a,k){return a.concat([seg(1.2,1.2,3),seg(.45,.45,k<3?4:0)]);},[]),[seg(.52,.24,6)])}
+];
+
+function render(w){
+  var P=build(w.seg,150), H=hr(P,w.lag,w.dr), A=w.col;
+  var px=40,py=186,pw=720,ph=270, n=P.length, bw=pw/n;
+  // power bars
+  var bars='';
+  for(var i=0;i<n;i++){var bh=Math.min(1,P[i])*ph;bars+='<rect x="'+(px+i*bw).toFixed(1)+'" y="'+(py+ph-bh).toFixed(1)+'" width="'+(bw-0.4).toFixed(2)+'" height="'+bh.toFixed(1)+'" fill="'+(P[i]>0.72?A:'#2A2D36')+'"/>';}
+  // hr line
+  var step=pw/(n-1), d='';
+  for(i=0;i<n;i++){d+=(i?'L':'M')+(px+i*step).toFixed(1)+' '+(py+ph-H[i]*(ph-16)-5).toFixed(1)+' ';}
+  return '<svg viewBox="0 0 800 600"><rect width="800" height="600" fill="'+BG+'"/>'+
+    '<text x="34" y="132" font-family="Archivo Black" font-size="96" fill="'+INK+'" letter-spacing="-3">'+w.name+'</text>'+
+    bars+
+    '<line x1="'+px+'" y1="'+(py+ph)+'" x2="'+(px+pw)+'" y2="'+(py+ph)+'" stroke="'+GRID+'" stroke-width="1.5"/>'+
+    '<path d="'+d+'" fill="none" stroke="'+LINE+'" stroke-width="3.6" stroke-linejoin="round" stroke-linecap="round"/>'+
+    // bottom: big HR numbers + compact stats
+    '<line x1="40" y1="492" x2="760" y2="492" stroke="'+GRID+'" stroke-width="1.5"/>'+
+    '<text x="40" y="556" font-family="Archivo Black" font-size="76" fill="'+A+'">'+w.avghr+'</text>'+
+    '<text x="44" y="582" font-family="JetBrains Mono" font-size="12" letter-spacing="1" fill="'+DIM+'">♥ AVG BPM</text>'+
+    '<text x="238" y="556" font-family="Archivo Black" font-size="76" fill="'+INK+'">'+w.maxhr+'</text>'+
+    '<text x="242" y="582" font-family="JetBrains Mono" font-size="12" letter-spacing="1" fill="'+DIM+'">MAX BPM</text>'+
+    '<text x="760" y="550" text-anchor="end" font-family="JetBrains Mono" font-size="19" font-weight="800" fill="'+INK+'">'+w.dur+' · '+w.np+'W · TSS '+w.tss+'</text>'+
+    '</svg>';
+}
+
+var board=document.getElementById('board');
+WORKOUTS.forEach(function(w){
+  var slot=document.createElement('div');slot.className='slot';
+  slot.innerHTML='<div class="tag"><b>'+w.name+'</b><span>'+(/micro|×.*s|20\/25|over/i.test(w.struct)?'micro intervals':'steady intervals')+' · '+w.zone.toLowerCase()+'</span></div><div class="card">'+render(w)+'</div>';
+  board.appendChild(slot);
+});
+</script>
+</body>
+</html>

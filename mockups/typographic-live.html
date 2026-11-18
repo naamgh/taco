@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Live — typographic index</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{
+    --bg:#F4F3EF; --elev:#FFFFFF; --fg:#14140F; --dim:#6E6B60; --faint:#A8A496; --rule:#E2E0D8; --hair:#ECEAE3;
+  }
+  :root[data-theme="dark"]{
+    --bg:#121213; --elev:#1E1E20; --fg:#ECECEA; --dim:#9A9A93; --faint:#6A6A62; --rule:#2A2A2C; --hair:#202022;
+  }
+  :root{ --mono:'DM Mono',ui-monospace,monospace; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--mono);-webkit-font-smoothing:antialiased;font-size:14px;}
+  .wrap{max-width:1120px;margin:0 auto;padding:30px 40px 70px;}
+
+  /* top strip */
+  .top{display:flex;align-items:baseline;gap:18px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);}
+  .top .wk{color:var(--fg);display:flex;align-items:baseline;gap:9px;}
+  .top .wk i{width:9px;height:9px;border-radius:2px;background:#D1544E;align-self:center;}
+  .top .wk .z{color:var(--faint);}
+  .top .right{margin-left:auto;display:flex;gap:18px;align-items:baseline;}
+  .top .dev{color:var(--faint);}
+  .top .dev b{color:var(--fg);font-weight:400;}
+  .top .dev .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#4E9A5B;margin-right:5px;vertical-align:1px;}
+  .top .tgl{font:inherit;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);background:none;border:0;cursor:pointer;}
+
+  /* interval banner */
+  .iv{margin-top:30px;padding-top:26px;border-top:1px solid var(--rule);display:flex;align-items:flex-end;gap:30px;}
+  .iv .lab{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint);}
+  .iv .blk{font-size:30px;font-weight:500;letter-spacing:-.01em;line-height:1;margin-top:8px;}
+  .iv .rem{margin-left:8px;}
+  .iv .rem .t{font-size:56px;font-weight:500;letter-spacing:-.02em;line-height:.9;}
+  .iv .next{margin-left:auto;text-align:right;color:var(--dim);}
+  .iv .next .n{font-size:16px;color:var(--fg);margin-top:7px;}
+  .iv .next .n i{display:inline-block;width:8px;height:8px;border-radius:2px;background:#6FA0C4;margin-right:7px;vertical-align:1px;}
+  .iv .elapsed{margin-left:30px;text-align:right;}
+  .iv .elapsed .t{font-size:20px;color:var(--fg);margin-top:7px;}
+
+  /* metric grid */
+  .mx{margin-top:34px;display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);}
+  .m{padding:22px 4px;border-right:1px solid var(--rule);}
+  .m:last-child{border-right:0;}
+  .m .l{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);}
+  .m .v{font-weight:500;letter-spacing:-.02em;line-height:1;margin-top:10px;}
+  .m .v u{text-decoration:none;font-size:.4em;letter-spacing:.04em;color:var(--dim);margin-left:4px;}
+  .m.power .v{font-size:84px;}
+  .m .v{font-size:60px;}
+  .m .sub{font-size:12px;letter-spacing:.04em;color:var(--dim);margin-top:12px;}
+  .m .sub b{color:var(--fg);font-weight:500;}
+
+  /* live graph */
+  .graph{margin-top:30px;}
+  .graph .gh{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-bottom:12px;}
+  .graph .box{border:1px solid var(--rule);background:var(--bg);}
+  .graph svg{display:block;width:100%;height:auto;}
+  .prof-up{fill:var(--fg);opacity:.08;}
+  .prof-done{fill:var(--fg);opacity:.20;}
+  .prof-line{fill:none;stroke:var(--rule);stroke-width:1.5;}
+  .pw-line{fill:none;stroke:var(--fg);stroke-width:2.4;}
+  .cad-line{fill:none;stroke:var(--faint);stroke-width:1.6;}
+  .cursor{stroke:var(--fg);stroke-width:1.5;}
+  .cursor-dot{fill:var(--fg);}
+  .glbl{fill:var(--faint);font-size:11px;letter-spacing:.1em;}
+  .legend{display:flex;gap:24px;margin-top:12px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);}
+  .legend i{display:inline-block;width:14px;height:0;border-top:2px solid var(--fg);margin-right:7px;vertical-align:3px;}
+  .legend .c i{border-top:2px solid var(--faint);}
+
+  /* intensity steppers */
+  .ctl{margin-top:34px;display:flex;align-items:center;gap:40px;flex-wrap:wrap;}
+  .step{display:flex;align-items:center;gap:16px;}
+  .step .nm{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);width:64px;}
+  .step .pct{font-size:26px;font-weight:500;min-width:84px;text-align:center;}
+  .step button{width:40px;height:40px;border:1px solid var(--rule);background:none;color:var(--fg);font:inherit;font-size:20px;cursor:pointer;border-radius:3px;}
+  .step button:hover{border-color:var(--fg);}
+  .ctl .spacer{margin-left:auto;}
+  .ctl .act{display:flex;gap:14px;}
+  .ctl .act button{font:inherit;font-size:13px;letter-spacing:.14em;text-transform:uppercase;padding:13px 26px;cursor:pointer;border-radius:3px;}
+  .ctl .pause{border:1px solid var(--fg);background:none;color:var(--fg);}
+  .ctl .pause:hover{background:var(--fg);color:var(--bg);}
+  .ctl .end{border:1px solid var(--rule);background:none;color:var(--dim);}
+  .ctl .end:hover{border-color:var(--fg);color:var(--fg);}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="top">
+      <span class="wk"><i></i>Ashglow <span class="z">· VO2 Max</span></span>
+      <span class="right">
+        <span class="dev"><span class="dot"></span>Trainer</span>
+        <span class="dev"><span class="dot"></span>HR</span>
+        <button class="tgl" id="theme">Dark</button>
+      </span>
+    </div>
+
+    <div class="iv">
+      <div>
+        <div class="lab">Interval · 2 of 3</div>
+        <div class="blk" style="display:flex;align-items:baseline;">
+          <span>VO2</span>
+          <span class="rem"><span class="t" id="remT">1:46</span></span>
+        </div>
+      </div>
+      <div class="next">
+        <div class="lab">Next</div>
+        <div class="n"><i></i>Recovery · 3:00</div>
+      </div>
+      <div class="elapsed">
+        <div class="lab">Elapsed</div>
+        <div class="t">29:14 / 60:00</div>
+      </div>
+    </div>
+
+    <div class="mx">
+      <div class="m power">
+        <div class="l">Power</div>
+        <div class="v">312<u>W</u></div>
+        <div class="sub">Target <b id="tgt">300 W</b> · Avg 248 W</div>
+      </div>
+      <div class="m">
+        <div class="l">Cadence</div>
+        <div class="v">94<u>rpm</u></div>
+        <div class="sub">Avg 91 rpm</div>
+      </div>
+      <div class="m">
+        <div class="l">Heart Rate</div>
+        <div class="v">161<u>bpm</u></div>
+        <div class="sub">Avg 148 bpm · 88% max</div>
+      </div>
+    </div>
+
+    <div class="graph">
+      <div class="gh"><span>Session Profile</span><span>60 min · TSS 82</span></div>
+      <div class="box" id="gbox"></div>
+      <div class="legend"><span><i></i>Power</span><span class="c"><i></i>Cadence</span></div>
+    </div>
+
+    <div class="ctl">
+      <div class="step"><span class="nm">⚡ Overall</span><button data-k="o" data-s="-1">−</button><span class="pct" id="oPct">100%</span><button data-k="o" data-s="1">+</button></div>
+      <div class="step"><span class="nm">Rest</span><button data-k="r" data-s="-1">−</button><span class="pct" id="rPct">100%</span><button data-k="r" data-s="1">+</button></div>
+      <div class="spacer"></div>
+      <div class="act"><button class="pause">❚❚ Pause</button><button class="end">End</button></div>
+    </div>
+  </div>
+
+<script>
+  // target watts by segment; fixed = warm/cool (steppers don't touch), rest = recovery
+  var SEG=[
+    {d:10,w:160,fixed:1},
+    {d:9,w:300},{d:5,w:150,rest:1},
+    {d:9,w:300},{d:5,w:150,rest:1},
+    {d:9,w:300},{d:5,w:150,rest:1},
+    {d:8,w:120,fixed:1}
+  ];
+  var TOTAL=0; SEG.forEach(function(s){TOTAL+=s.d;});
+  var ELAPSED=29.23;              // minutes in
+  var oPct=100, rPct=100;
+  var W=1000,H=300, PTOP=14, PBOT=210, CTOP=236, CBOT=292, MAXW=340;
+
+  function eff(s){ return s.fixed? s.w : s.w*((s.rest?rPct:oPct)/100); }
+  function yFor(w){ return PBOT-(w/MAXW)*(PBOT-PTOP); }
+
+  // deterministic noise
+  function rnd(i){ var x=Math.sin(i*12.9898)*43758.5453; return x-Math.floor(x); }
+
+  function build(){
+    var curX=ELAPSED/TOTAL*W;
+    // stepped profile points
+    var t=0, up='M0,'+PBOT, line='', done='M0,'+PBOT, pts=[];
+    SEG.forEach(function(s){
+      var x0=t/TOTAL*W; t+=s.d; var x1=t/TOTAL*W; var y=yFor(eff(s));
+      pts.push([x0,x1,y]);
+      up+=' L'+x0.toFixed(1)+','+y.toFixed(1)+' L'+x1.toFixed(1)+','+y.toFixed(1);
+      line+=(line?' L':'M')+x0.toFixed(1)+','+y.toFixed(1)+' L'+x1.toFixed(1)+','+y.toFixed(1);
+    });
+    up+=' L'+W+','+PBOT+' Z';
+
+    // completed profile fill (clip to x<curX)
+    var clip='<clipPath id="dc"><rect x="0" y="0" width="'+curX.toFixed(1)+'" height="'+H+'"/></clipPath>';
+
+    // power trace across completed region, wobbling around target
+    var pw='', n=Math.max(2,Math.round(curX/6));
+    for(var i=0;i<=n;i++){
+      var x=i/n*curX, mm=x/W*TOTAL, yc=0;
+      // find seg at mm
+      var tt=0,seg=SEG[0]; for(var k=0;k<SEG.length;k++){ if(mm<=tt+SEG[k].d){seg=SEG[k];break;} tt+=SEG[k].d; }
+      var base=yFor(eff(seg)), wob=(rnd(i+1)-0.5)*24 + (seg.fixed?0:(rnd(i*3)-0.5)*10);
+      pw+=(i?' L':'M')+x.toFixed(1)+','+(base+wob).toFixed(1);
+    }
+    // cadence line (lower band, gentle)
+    var cad='';
+    for(var j=0;j<=n;j++){ var cx=j/n*curX, cy=(CTOP+CBOT)/2 + Math.sin(j/3.2)*10 + (rnd(j*7)-0.5)*7; cad+=(j?' L':'M')+cx.toFixed(1)+','+cy.toFixed(1); }
+
+    var svg='<svg viewBox="0 0 '+W+' '+H+'" preserveAspectRatio="none">'+clip+
+      '<path class="prof-up" d="'+up+'"/>'+
+      '<path class="prof-done" d="'+up+'" clip-path="url(#dc)"/>'+
+      '<path class="prof-line" d="'+line+'"/>'+
+      '<line class="cursor" x1="'+curX.toFixed(1)+'" y1="'+PTOP+'" x2="'+curX.toFixed(1)+'" y2="'+CBOT+'"/>'+
+      '<circle class="cursor-dot" cx="'+curX.toFixed(1)+'" cy="'+PTOP+'" r="4"/>'+
+      '<path class="cad-line" d="'+cad+'"/>'+
+      '<path class="pw-line" d="'+pw+'"/>'+
+      '<text class="glbl" x="6" y="'+(CBOT-4)+'">cadence</text>'+
+      '</svg>';
+    document.getElementById('gbox').innerHTML=svg;
+
+    // target readout = current segment effective watts
+    var tt2=0,cur=SEG[0]; for(var m=0;m<SEG.length;m++){ if(ELAPSED<=tt2+SEG[m].d){cur=SEG[m];break;} tt2+=SEG[m].d; }
+    document.getElementById('tgt').textContent=Math.round(eff(cur))+' W';
+    document.getElementById('oPct').textContent=oPct+'%';
+    document.getElementById('rPct').textContent=rPct+'%';
+  }
+
+  [].forEach.call(document.querySelectorAll('.step button'),function(b){
+    b.addEventListener('click',function(){
+      var step=(+b.getAttribute('data-s'))*5;
+      if(b.getAttribute('data-k')==='o') oPct=Math.min(150,Math.max(50,oPct+step));
+      else rPct=Math.min(150,Math.max(50,rPct+step));
+      build();
+    });
+  });
+
+  build();
+  document.getElementById('theme').addEventListener('click',function(){
+    var t=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+    document.documentElement.setAttribute('data-theme',t); this.textContent=t==='light'?'Dark':'Light';
+  });
+</script>
+</body>
+</html>

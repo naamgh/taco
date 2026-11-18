@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fitness dashboard — mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{
+    --bg:#F4F3EF; --bg-elev:#FFFFFF; --bg-card:#FFFFFF; --border:#E7E5DD; --border-soft:#EFEDE6;
+    --text:#14140F; --text-dim:#4A4A44; --text-faint:#6E6B60; --accent:#14140F; --on-accent:#F4F3EF;
+    --ok:#1C8579; --warn:#8A6410; --star:#D99A00; --track:#ECEAE3; --panel:#FBFAF7;
+  }
+  :root[data-theme="dark"]{
+    --bg:#121213; --bg-elev:#202022; --bg-card:#1B1B1D; --border:#2C2C2F; --border-soft:#232326;
+    --text:#ECECEA; --text-dim:#A9A9A6; --text-faint:#85857F; --accent:#ECECEA; --on-accent:#121213;
+    --ok:#5CCDC1; --warn:#E7B84E; --star:#E7B84E; --track:#2C2C2F; --panel:#161618;
+  }
+  :root{ --thr:#F2764A; --endu:#6E9BEF; --ana:#FF5D75; --tempo:#49B4B0;
+    --mono:'JetBrains Mono',ui-monospace,monospace; --sans:'Inter',system-ui,sans-serif; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;padding:0 0 50px;}
+  .bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:14px;padding:10px 20px;background:var(--bg-elev);border-bottom:1px solid var(--border);}
+  .bar b{font-size:13px;} .bar span{font-size:12.5px;color:var(--text-dim);}
+  .tgl{margin-left:auto;border:1px solid var(--border);background:var(--bg-card);color:var(--text);border-radius:8px;padding:6px 13px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;}
+  .wrap{max-width:1040px;margin:0 auto;padding:22px 22px 0;}
+
+  /* page header */
+  .ph{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+  .ph h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.02em;}
+  .range{margin-left:auto;display:flex;gap:3px;background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:3px;}
+  .range button{border:0;background:transparent;color:var(--text-dim);font:inherit;font-size:12px;font-weight:600;padding:5px 11px;border-radius:6px;cursor:pointer;}
+  .range button.on{background:var(--accent);color:var(--on-accent);}
+
+  .card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:18px 20px;}
+  .card-h{display:flex;align-items:center;gap:10px;margin:0 0 15px;}
+  .card-h h3{margin:0;font-size:13px;font-weight:700;letter-spacing:.02em;}
+  .card-h .sub{font-size:12px;color:var(--text-faint);}
+  .card-h .right{margin-left:auto;display:flex;align-items:center;gap:12px;}
+  .legend{display:flex;gap:13px;font-size:11.5px;color:var(--text-dim);}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px;}
+  .mini-tog{display:flex;gap:2px;background:var(--panel);border:1px solid var(--border);border-radius:7px;padding:2px;}
+  .mini-tog button{border:0;background:transparent;color:var(--text-dim);font:inherit;font-size:10.5px;font-weight:600;padding:3px 8px;border-radius:5px;cursor:pointer;}
+  .mini-tog button.on{background:var(--accent);color:var(--on-accent);}
+
+  /* 1 — status strip */
+  .status{display:grid;grid-template-columns:1.25fr 1fr;gap:0;margin-bottom:16px;padding:0;overflow:hidden;}
+  .readiness{padding:18px 22px;border-right:1px solid var(--border-soft);}
+  .r-lbl{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--text-faint);}
+  .r-word{font-size:30px;font-weight:700;letter-spacing:-.02em;margin:3px 0 15px;}
+  .grad{position:relative;height:10px;border-radius:6px;background:linear-gradient(90deg,var(--ana),var(--thr) 32%,var(--star) 54%,var(--tempo) 76%,var(--ok));}
+  .thumb{position:absolute;top:50%;width:17px;height:17px;border-radius:50%;background:var(--bg-card);border:3px solid var(--text);transform:translate(-50%,-50%);box-shadow:0 2px 6px rgba(0,0,0,.25);}
+  .r-ends{display:flex;justify-content:space-between;margin-top:9px;font-size:11px;color:var(--text-faint);}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);}
+  .kpi{padding:18px 16px;text-align:center;border-right:1px solid var(--border-soft);}
+  .kpi:last-child{border-right:0;}
+  .kpi .v{font-family:var(--mono);font-size:30px;font-weight:700;line-height:1;letter-spacing:-.02em;}
+  .kpi .v .ar{font-size:14px;margin-left:2px;vertical-align:middle;opacity:.8;}
+  .kpi.form .v{color:var(--ok);}
+  .kpi .l{display:block;margin-top:8px;font-size:11.5px;font-weight:600;color:var(--text-dim);}
+  .kpi .u{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;color:var(--text-faint);margin-top:2px;}
+
+  /* 2 — performance card */
+  .perf{margin-bottom:16px;}
+  .cap{font-size:11.5px;color:var(--text-faint);margin:10px 2px 0;}
+  .form-strip{margin-top:12px;}
+  .fs-head{display:flex;justify-content:space-between;font-size:10.5px;color:var(--text-faint);font-family:var(--mono);letter-spacing:.06em;text-transform:uppercase;margin-bottom:5px;}
+
+  /* 3 — bottom row */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+  .wk{display:flex;gap:10px;margin-bottom:14px;}
+  .wk-stat{flex:1;background:var(--panel);border:1px solid var(--border-soft);border-radius:11px;padding:11px 12px;}
+  .wk-stat .v{font-family:var(--mono);font-size:19px;font-weight:700;}
+  .wk-stat .v .ar{font-size:11px;color:var(--ok);}
+  .wk-stat .l{display:block;margin-top:4px;font-size:10.5px;color:var(--text-faint);font-weight:600;text-transform:uppercase;letter-spacing:.05em;}
+  .pc-row{display:flex;align-items:center;gap:10px;margin:0 0 9px;}
+  .pc-dur{width:34px;font-family:var(--mono);font-size:11px;color:var(--text-faint);text-align:right;flex:none;}
+  .pc-bar{flex:1;height:18px;border-radius:5px;background:var(--track);overflow:hidden;}
+  .pc-bar i{display:block;height:100%;border-radius:5px;background:var(--accent);}
+  .pc-bar i.pr{background:var(--star);}
+  .pc-val{width:46px;font-family:var(--mono);font-size:12px;font-weight:700;flex:none;}
+  svg{display:block;overflow:visible;}
+</style>
+</head>
+<body>
+  <div class="bar"><b>Fitness dashboard — restyle concept</b><span>One cohesive layout: Today · Trend · This week · Power. Toggle theme to compare.</span><button class="tgl" id="theme">Dark</button></div>
+  <div class="wrap">
+
+    <div class="ph">
+      <h1>Fitness</h1>
+      <div class="range"><button>6w</button><button class="on">3m</button><button>6m</button><button>1y</button><button>All</button></div>
+    </div>
+
+    <!-- 1 · TODAY -->
+    <div class="card status">
+      <div class="readiness">
+        <div class="r-lbl">Today's readiness</div>
+        <div class="r-word" id="word">Rested</div>
+        <div class="grad"><span class="thumb" id="thumb"></span></div>
+        <div class="r-ends"><span>Overloaded</span><span>Fresh</span></div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="v">61 <span class="ar">↑</span></div><span class="l">Fitness</span><span class="u">CTL</span></div>
+        <div class="kpi form"><div class="v">+9 <span class="ar">↑</span></div><span class="l">Form</span><span class="u">TSB</span></div>
+        <div class="kpi"><div class="v" style="color:var(--thr)">52 <span class="ar" style="color:var(--thr)">↓</span></div><span class="l">Fatigue</span><span class="u">ATL</span></div>
+      </div>
+    </div>
+
+    <!-- 2 · TREND (Fitness + Fatigue + Form, one module) -->
+    <div class="card perf">
+      <div class="card-h">
+        <h3>Performance</h3>
+        <div class="right"><div class="legend"><span><i style="background:var(--text)"></i>Fitness</span><span><i style="background:var(--thr)"></i>Fatigue</span><span><i style="background:var(--ok)"></i>Form</span></div></div>
+      </div>
+      <svg id="pmc" viewBox="0 0 980 230" width="100%" height="230"></svg>
+      <div class="form-strip">
+        <div class="fs-head"><span>Form</span><span>Fresh · Neutral · Overload</span></div>
+        <svg id="form" viewBox="0 0 980 70" width="100%" height="70"></svg>
+      </div>
+      <p class="cap">Fitness is a 42-day load average, Fatigue a 7-day; Form is the gap between them.</p>
+    </div>
+
+    <!-- 3 · THIS WEEK + POWER -->
+    <div class="grid2">
+      <div class="card">
+        <div class="card-h"><h3>This week</h3><span class="sub">vs last week</span></div>
+        <div class="wk">
+          <div class="wk-stat"><div class="v">410 <span class="ar">↑</span></div><span class="l">Load</span></div>
+          <div class="wk-stat"><div class="v">6h 20m</div><span class="l">Time</span></div>
+          <div class="wk-stat"><div class="v">5</div><span class="l">Rides</span></div>
+        </div>
+        <div class="fs-head" style="margin-top:4px"><span>12-week load</span></div>
+        <svg id="trend" viewBox="0 0 460 120" width="100%" height="120"></svg>
+      </div>
+
+      <div class="card">
+        <div class="card-h"><h3>Power</h3><div class="right"><div class="mini-tog"><button class="on">W</button><button>W/kg</button></div></div></div>
+        <div id="pc"></div>
+        <p class="cap">Best average at each duration · ★ a new best</p>
+      </div>
+    </div>
+
+  </div>
+<script>
+  function gv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();}
+  // ---- PMC area (CTL/ATL over 90 days) ----
+  function synth(n, base, amp, drift){var a=[];for(var i=0;i<n;i++){a.push(base + drift*i/n + amp*Math.sin(i/9) + amp*0.5*Math.sin(i/3));}return a;}
+  function draw(){
+    var N=90, W=980, H=230, padL=30, padR=8, padT=10, padB=18;
+    var ctl=synth(N,30,8,34), atl=[];
+    for(var i=0;i<N;i++){ atl[i]=ctl[i] + (10*Math.sin(i/4)+6*Math.sin(i/2)) ; }
+    ctl[N-1]=61; atl[N-1]=52;
+    var max=90;
+    function x(i){return padL+i/(N-1)*(W-padL-padR);}
+    function y(v){return H-padB-v/max*(H-padT-padB);}
+    var s='';
+    // grid
+    [0,.25,.5,.75,1].forEach(function(f){var gy=y(max*f);s+='<line x1="'+padL+'" y1="'+gy+'" x2="'+(W-padR)+'" y2="'+gy+'" stroke="'+gv('--border')+'" stroke-width="1"/>'+'<text x="'+(padL-5)+'" y="'+(gy+3)+'" text-anchor="end" font-family="'+gv('--mono')+'" font-size="9" fill="'+gv('--text-faint')+'">'+Math.round(max*f)+'</text>';});
+    // form fill (between ctl and atl)
+    var top='',bot='';
+    for(i=0;i<N;i++){ top+=(i?'L':'M')+x(i).toFixed(1)+' '+y(Math.max(ctl[i],atl[i])).toFixed(1)+' '; }
+    for(i=N-1;i>=0;i--){ bot+='L'+x(i).toFixed(1)+' '+y(Math.min(ctl[i],atl[i])).toFixed(1)+' '; }
+    s+='<path d="'+top+bot+'Z" fill="'+gv('--ok')+'" opacity="0.14"/>';
+    function line(arr,col,w){var d='';for(var i=0;i<N;i++)d+=(i?'L':'M')+x(i).toFixed(1)+' '+y(arr[i]).toFixed(1)+' ';return '<path d="'+d+'" fill="none" stroke="'+col+'" stroke-width="'+w+'" stroke-linejoin="round"/>';}
+    s+=line(atl, gv('--thr'), 1.8);
+    s+=line(ctl, gv('--text'), 2.4);
+    s+='<circle cx="'+x(N-1)+'" cy="'+y(61)+'" r="3.5" fill="'+gv('--text')+'"/>';
+    document.getElementById('pmc').innerHTML=s;
+
+    // ---- form strip ----
+    var fW=980,fH=70,fpadL=30; var tsb=[];for(i=0;i<N;i++)tsb[i]=ctl[i]-atl[i]; tsb[N-1]=9;
+    var lo=-40,hi=40;
+    function fy(v){return fH - (v-lo)/(hi-lo)*fH;}
+    function fx(i){return fpadL+i/(N-1)*(fW-fpadL-8);}
+    var fs='';
+    // zone bands
+    [[15,40,gv('--ok')],[-10,15,gv('--star')],[-40,-10,gv('--ana')]].forEach(function(b){var yt=fy(Math.min(hi,b[1])),yb=fy(Math.max(lo,b[0]));fs+='<rect x="0" y="'+yt+'" width="'+fW+'" height="'+(yb-yt)+'" fill="'+b[2]+'" opacity="0.08"/>';});
+    fs+='<line x1="0" y1="'+fy(0)+'" x2="'+fW+'" y2="'+fy(0)+'" stroke="'+gv('--text-faint')+'" stroke-dasharray="3 4" opacity="0.5"/>';
+    var fd='';for(i=0;i<N;i++)fd+=(i?'L':'M')+fx(i).toFixed(1)+' '+fy(tsb[i]).toFixed(1)+' ';
+    fs+='<path d="'+fd+'" fill="none" stroke="'+gv('--text')+'" stroke-width="1.8" stroke-linejoin="round"/>';
+    fs+='<circle cx="'+fx(N-1)+'" cy="'+fy(9)+'" r="3.5" fill="'+gv('--ok')+'" stroke="'+gv('--bg-card')+'" stroke-width="1.5"/>';
+    document.getElementById('form').innerHTML=fs;
+
+    // ---- 12-week trend ----
+    var tW=460,tH=120,tN=12,tp=14,tpb=16,tpl=24;
+    var vals=[260,330,300,355,290,340,380,360,410,430,410,120];
+    var tmax=500;
+    function tx(i){return tpl+i/(tN-1)*(tW-tpl-6);}
+    function ty(v){return tH-tpb-v/tmax*(tH-tp-tpb);}
+    var ts='';
+    [0,.5,1].forEach(function(f){var gy=ty(tmax*f);ts+='<line x1="'+tpl+'" y1="'+gy+'" x2="'+tW+'" y2="'+gy+'" stroke="'+gv('--border')+'"/>'+'<text x="'+(tpl-4)+'" y="'+(gy+3)+'" text-anchor="end" font-family="'+gv('--mono')+'" font-size="8.5" fill="'+gv('--text-faint')+'">'+Math.round(tmax*f)+'</text>';});
+    var ta='';for(i=0;i<tN;i++)ta+=(i?'L':'M')+tx(i).toFixed(1)+' '+ty(vals[i]).toFixed(1)+' ';
+    ts+='<path d="'+ta+'L'+tx(tN-1)+' '+ty(0)+'L'+tx(0)+' '+ty(0)+'Z" fill="'+gv('--accent')+'" opacity="0.06"/>';
+    ts+='<path d="'+ta+'" fill="none" stroke="'+gv('--text')+'" stroke-width="2" stroke-linejoin="round"/>';
+    ts+='<circle cx="'+tx(tN-1)+'" cy="'+ty(vals[tN-1])+'" r="3.5" fill="'+gv('--text')+'"/>';
+    document.getElementById('trend').innerHTML=ts;
+
+    // ---- power curve bars ----
+    var durs=[['15s',920,true],['1m',540,false],['5m',340,false],['20m',290,true],['60m',255,false]];
+    var pmax=1000, ph='';
+    durs.forEach(function(d){ph+='<div class="pc-row"><span class="pc-dur">'+d[0]+'</span><div class="pc-bar"><i class="'+(d[2]?'pr':'')+'" style="width:'+(d[1]/pmax*100)+'%"></i></div><span class="pc-val">'+d[1]+' W</span></div>';});
+    document.getElementById('pc').innerHTML=ph;
+
+    // readiness thumb
+    var t=9,frac=Math.max(0,Math.min(1,(t+45)/75));
+    document.getElementById('thumb').style.left=(frac*100)+'%';
+  }
+  draw();
+  document.getElementById('theme').addEventListener('click',function(){
+    var d=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+    document.documentElement.setAttribute('data-theme',d);this.textContent=d==='light'?'Dark':'Light';draw();
+  });
+</script>
+</body>
+</html>

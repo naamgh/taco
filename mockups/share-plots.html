@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plot variations</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=JetBrains+Mono:wght@500;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;}
+  body{margin:0;background:#E6E3DC;color:#14140F;font-family:'Inter',system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding:40px 24px 80px;}
+  .wrap{max-width:900px;margin:0 auto;}
+  .kick{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#6E6B60;margin:0 0 10px;}
+  h1{margin:0 0 8px;font-family:'Archivo Black',sans-serif;font-size:32px;letter-spacing:-0.01em;}
+  .lede{margin:0 0 30px;max-width:640px;color:#4A4A44;font-size:14.5px;line-height:1.55;}
+  .slot{margin-bottom:38px;}
+  .tag{display:flex;align-items:baseline;gap:9px;margin-bottom:12px;}
+  .tag b{font-size:16px;font-weight:700;}
+  .tag span{font-family:'JetBrains Mono',monospace;font-size:11px;color:#6E6B60;letter-spacing:.04em;}
+  .card{width:100%;aspect-ratio:4/3;border-radius:14px;overflow:hidden;box-shadow:0 24px 50px -24px rgba(0,0,0,.45);}
+  .card svg{display:block;width:100%;height:100%;}
+  .note{margin-top:10px;font-size:13px;color:#4A4A44;line-height:1.5;max-width:720px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <p class="kick">Interval-block plot · 6 variations</p>
+  <h1>Six ways to draw the effort</h1>
+  <p class="lede">Same card (CUTLINE · 5 × 5 min · the layout you liked), same data — only the middle plot changes. Power is the accent, HR the white line. Some are a nudge from now, some are a different world.</p>
+  <div id="board"></div>
+</div>
+
+<script>
+var INK='#F2F1EC', LINE='#EFEDE6', DIM='#6B7180', GRID='#23252E', BG='#0C0D10', A='#6E8BFF';
+var R={name:'CUTLINE', dur:'51:00', np:243, tss:80, avghr:156, maxhr:174};
+
+function seg(a,b,m){return [a,b,m];}
+function build(SEG,n){var total=0,i,j;for(i=0;i<SEG.length;i++)total+=SEG[i][2];var out=[];for(i=0;i<n;i++){var mp=i/(n-1)*total,c=0,v=0;for(j=0;j<SEG.length;j++){if(mp<=c+SEG[j][2]||j===SEG.length-1){var f=Math.min(1,Math.max(0,(mp-c)/SEG[j][2]));v=SEG[j][0]+(SEG[j][1]-SEG[j][0])*f;break;}c+=SEG[j][2];}out.push(v);}return out;}
+function hrtr(P){var h=92,out=[],cw=0;for(var i=0;i<P.length;i++){if(P[i]>0.62)cw++;var t=92+P[i]*80+0.32*cw;h+=(t-h)*0.07;out.push(h);}var mn=Math.min.apply(null,out),mx=Math.max.apply(null,out);return out.map(function(v){return (v-mn)/(mx-mn);});}
+var SEG=[seg(.3,.56,8)].concat([0,1,2,3,4].reduce(function(a,k){return a.concat(k<4?[seg(1,1,5),seg(.5,.5,3)]:[seg(1,1,5)]);},[]),[seg(.55,.24,6)]);
+var P=build(SEG,132), H=hrtr(P);
+
+// plot region
+var X=40,Y=190,W=720,Hh=252, BASE=Y+Hh;
+function hrLine(sw){var n=H.length,step=W/(n-1),d='';for(var i=0;i<n;i++)d+=(i?'L':'M')+(X+i*step).toFixed(1)+' '+(BASE-H[i]*(Hh-18)-8).toFixed(1)+' ';return '<path d="'+d+'" fill="none" stroke="'+LINE+'" stroke-width="'+(sw||3.4)+'" stroke-linejoin="round" stroke-linecap="round"/>';}
+function baseLine(){return '<line x1="'+X+'" y1="'+BASE+'" x2="'+(X+W)+'" y2="'+BASE+'" stroke="'+GRID+'" stroke-width="1.5"/>';}
+
+/* 1 · bars (current) */
+function pBars(){var n=P.length,bw=W/n,s='';for(var i=0;i<n;i++){var bh=Math.min(1,P[i])*Hh;s+='<rect x="'+(X+i*bw).toFixed(1)+'" y="'+(BASE-bh).toFixed(1)+'" width="'+(bw-0.4).toFixed(2)+'" height="'+bh.toFixed(1)+'" fill="'+(P[i]>0.72?A:'#2A2D36')+'"/>';}return s+baseLine()+hrLine();}
+
+/* 2 · stepped ERG blocks — clean rounded rects for the work efforts, low strip for the rest */
+function pStep(){var n=P.length,s='',i=0;
+  // low baseline strip
+  s+='<rect x="'+X+'" y="'+(BASE-Hh*0.5)+'" width="'+W+'" height="'+(Hh*0.5)+'" fill="#1A1C24"/>';
+  while(i<n){var j=i;while(j<n&&(P[j]>0.72)===(P[i]>0.72))j++;if(P[i]>0.72){var mx=0;for(var k=i;k<j;k++)mx=Math.max(mx,P[k]);var x=X+i/n*W,w=(j-i)/n*W,bh=Math.min(1,mx)*Hh;s+='<rect x="'+(x+3).toFixed(1)+'" y="'+(BASE-bh).toFixed(1)+'" width="'+(w-6).toFixed(1)+'" height="'+bh.toFixed(1)+'" rx="4" fill="'+A+'"/>';}i=j;}
+  return s+baseLine()+hrLine();}
+
+/* 3 · solid silhouette — one filled area */
+function pArea(){var n=P.length,step=W/(n-1),d='M'+X+' '+BASE+' ';for(var i=0;i<n;i++)d+='L'+(X+i*step).toFixed(1)+' '+(BASE-Math.min(1,P[i])*Hh).toFixed(1)+' ';d+='L'+(X+W)+' '+BASE+' Z';
+  return '<path d="'+d+'" fill="'+A+'" opacity="0.92"/>'+baseLine()+hrLine(3.6);}
+
+/* 4 · mirror waveform — power up from a spine, HR mirrored below */
+function pMirror(){var mid=Y+Hh*0.52, up=Hh*0.52, dn=Hh*0.48, n=P.length, step=W/(n-1);
+  var dp='M'+X+' '+mid+' ';for(var i=0;i<n;i++)dp+='L'+(X+i*step).toFixed(1)+' '+(mid-Math.min(1,P[i])*up).toFixed(1)+' ';dp+='L'+(X+W)+' '+mid+' Z';
+  var dh='M'+X+' '+mid+' ';for(i=0;i<n;i++)dh+='L'+(X+i*step).toFixed(1)+' '+(mid+H[i]*dn).toFixed(1)+' ';dh+='L'+(X+W)+' '+mid+' Z';
+  return '<path d="'+dp+'" fill="'+A+'"/>'+'<path d="'+dh+'" fill="'+LINE+'" opacity="0.16"/>'+
+    '<path d="'+dh.replace(/^M.*? /,'M'+X+' ').replace(/L'+(X+W)+' '+mid+' Z$/,'')+'" fill="none" stroke="'+LINE+'" stroke-width="3" />'+
+    '<line x1="'+X+'" y1="'+mid+'" x2="'+(X+W)+'" y2="'+mid+'" stroke="'+BG+'" stroke-width="2"/>';}
+
+/* 5 · dot matrix — LED meter columns, HR as a white dotted trace */
+function pDots(){var cols=48,rows=12,cw=W/cols,rh=Hh/rows,s='';
+  for(var c=0;c<cols;c++){var lvl=Math.min(1,P[Math.floor(c/cols*P.length)]),fill=Math.round(lvl*rows);
+    for(var r=0;r<rows;r++){var cy=BASE-rh*(r+0.5),cx=X+cw*(c+0.5),on=r<fill;
+      s+='<circle cx="'+cx.toFixed(1)+'" cy="'+cy.toFixed(1)+'" r="'+(Math.min(cw,rh)*0.28).toFixed(1)+'" fill="'+(on?(lvl>0.72?A:'#3A3F55'):'#191B22')+'"/>';}
+    var hy=BASE-H[Math.floor(c/cols*H.length)]*(Hh-16)-8;
+    s+='<circle cx="'+(X+cw*(c+0.5)).toFixed(1)+'" cy="'+hy.toFixed(1)+'" r="4" fill="'+LINE+'"/>';}
+  return s;}
+
+/* 6 · heat strip — a single horizontal band tinted by intensity over time, HR floats above */
+function pHeat(){var by=Y+Hh*0.62, bh=64, n=96, sw=W/n, s='';
+  for(var i=0;i<n;i++){var lvl=Math.min(1,P[Math.floor(i/n*P.length)]);
+    var col=lvl>0.72?A:(lvl>0.45?mix('#23252E',A,(lvl-0.45)/0.27):'#20222B');
+    s+='<rect x="'+(X+i*sw).toFixed(1)+'" y="'+by+'" width="'+(sw+0.6).toFixed(1)+'" height="'+bh+'" fill="'+col+'"/>';}
+  // HR line in the space above the band
+  var top=Y, span=by-Y-14, step=W/(H.length-1), d='';
+  for(i=0;i<H.length;i++)d+=(i?'L':'M')+(X+i*step).toFixed(1)+' '+(by-14-H[i]*span).toFixed(1)+' ';
+  return s+'<path d="'+d+'" fill="none" stroke="'+LINE+'" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/>'+
+    '<rect x="'+X+'" y="'+by+'" width="'+W+'" height="'+bh+'" fill="none" stroke="'+GRID+'" stroke-width="1"/>';}
+
+function mix(h1,h2,t){function p(h){h=h.replace('#','');return [parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}var a=p(h1),b=p(h2);return 'rgb('+Math.round(a[0]+(b[0]-a[0])*t)+','+Math.round(a[1]+(b[1]-a[1])*t)+','+Math.round(a[2]+(b[2]-a[2])*t)+')';}
+
+function card(plot){
+  return '<svg viewBox="0 0 800 600"><rect width="800" height="600" fill="'+BG+'"/>'+
+    '<text x="34" y="132" font-family="Archivo Black" font-size="96" fill="'+INK+'" letter-spacing="-3">'+R.name+'</text>'+
+    plot+
+    '<line x1="40" y1="492" x2="760" y2="492" stroke="'+GRID+'" stroke-width="1.5"/>'+
+    '<text x="40" y="556" font-family="Archivo Black" font-size="76" fill="'+A+'">'+R.avghr+'</text>'+
+    '<text x="44" y="582" font-family="JetBrains Mono" font-size="12" letter-spacing="1" fill="'+DIM+'">♥ AVG BPM</text>'+
+    '<text x="238" y="556" font-family="Archivo Black" font-size="76" fill="'+INK+'">'+R.maxhr+'</text>'+
+    '<text x="242" y="582" font-family="JetBrains Mono" font-size="12" letter-spacing="1" fill="'+DIM+'">MAX BPM</text>'+
+    '<text x="760" y="550" text-anchor="end" font-family="JetBrains Mono" font-size="19" font-weight="800" fill="'+INK+'">'+R.dur+' · '+R.np+'W · TSS '+R.tss+'</text>'+
+    '</svg>';
+}
+
+var VARS=[
+  {t:'1 · Bars', s:'current — for reference', fn:pBars, n:'What it looks like now: thin per-second power bars with the HR line over. Faithful to the data, a touch busy.'},
+  {t:'2 · Stepped blocks', s:'clean ERG rectangles', fn:pStep, n:'Each work effort as one bold rounded block on a quiet rest strip — the structured-workout read. Calmest of the bunch while still clearly "5 × 5".'},
+  {t:'3 · Solid silhouette', s:'one filled shape', fn:pArea, n:'Power as a single continuous filled area, HR line over it. Smoother and more graphic than bars — reads as a skyline.'},
+  {t:'4 · Mirror waveform', s:'power up, HR down', fn:pMirror, n:'A centre spine: power blooms upward, heart rate mirrors below. Symmetric and striking — effort and heart as one object.'},
+  {t:'5 · Dot matrix', s:'LED meter', fn:pDots, n:'Each column an LED bar filling to the power level, HR as a bright dotted trace across. Techy, pixel-art energy — the furthest from now.'},
+  {t:'6 · Heat strip', s:'intensity band', fn:pHeat, n:'The whole ride as one horizontal band that glows with intensity over time, HR line floating above. Minimal and abstract — barely a chart at all.'}
+];
+var board=document.getElementById('board');
+VARS.forEach(function(v){
+  var slot=document.createElement('div');slot.className='slot';
+  slot.innerHTML='<div class="tag"><b>'+v.t+'</b><span>'+v.s+'</span></div><div class="card">'+card(v.fn())+'</div><div class="note">'+v.n+'</div>';
+  board.appendChild(slot);
+});
+</script>
+</body>
+</html>

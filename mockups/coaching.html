@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Coaching — mock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="light"]{
+    --bg:#F4F3EF; --bg-elev:#FFFFFF; --bg-card:#FFFFFF; --bg-card-list:#FBFAF7; --border:#E7E5DD; --border-soft:#EFEDE6;
+    --text:#14140F; --text-dim:#4A4A44; --text-faint:#6E6B60; --accent:#14140F; --on-accent:#F4F3EF; --ok:#1C8579; --star:#D99A00; --panel:#FBFAF7;
+  }
+  :root[data-theme="dark"]{
+    --bg:#121213; --bg-elev:#202022; --bg-card:#1B1B1D; --bg-card-list:#1B1B1D; --border:#2C2C2F; --border-soft:#232326;
+    --text:#ECECEA; --text-dim:#A9A9A6; --text-faint:#85857F; --accent:#ECECEA; --on-accent:#121213; --ok:#5CCDC1; --star:#E7B84E; --panel:#161618;
+  }
+  :root{ --c-recovery:#8C93A6; --c-endurance:#6E9BEF; --c-tempo:#49B4B0; --c-sweetspot:#E8B24D; --c-threshold:#F2764A; --c-vo2:#C77DFF; --c-anaerobic:#FF5D75;
+    --mono:'JetBrains Mono',ui-monospace,monospace; --sans:'Inter',system-ui,sans-serif; }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased;padding:0 0 60px;}
+  .bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:10px 20px;background:var(--bg-elev);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .bar b{font-size:13px;} .bar .sub{font-size:12.5px;color:var(--text-dim);}
+  .tgl{margin-left:auto;border:1px solid var(--border);background:var(--bg-card);color:var(--text);border-radius:8px;padding:6px 13px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;}
+  .wrap{max-width:880px;margin:0 auto;padding:26px 20px 0;}
+  .sec-h{display:flex;align-items:center;gap:10px;margin:30px 2px 12px;}
+  .sec-h .n{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--star);letter-spacing:.08em;}
+  .sec-h h2{margin:0;font-size:17px;font-weight:700;letter-spacing:-.01em;}
+  .sec-h .tag{margin-left:auto;font-size:11px;color:var(--text-faint);background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:3px 10px;}
+  .note{font-size:12.5px;color:var(--text-dim);line-height:1.55;margin:0 2px 14px;}
+  .note b{color:var(--text);}
+  .card{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;padding:18px 20px;}
+
+  /* ---- Today's session ---- */
+  .coach-head{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-faint);margin-bottom:4px;}
+  .coach-head .dot{width:7px;height:7px;border-radius:50%;background:var(--ok);}
+  .readline{font-size:13px;color:var(--text-dim);margin:0 0 15px;}
+  .readline b{color:var(--text);}
+  .rec{display:flex;gap:16px;align-items:flex-start;}
+  .rec-main{flex:1;min-width:0;}
+  .rec-type{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;margin-bottom:9px;}
+  .rec-name{font-size:23px;font-weight:700;letter-spacing:-.02em;margin:0 0 4px;}
+  .rec-struct{font-family:var(--mono);font-size:12.5px;color:var(--text-dim);}
+  .rec-why{margin:13px 0 0;font-size:13.5px;line-height:1.55;color:var(--text);}
+  .rec-why .lead{font-weight:600;}
+  .rec-side{flex:none;width:150px;display:flex;flex-direction:column;gap:8px;}
+  .rec-kpi{background:var(--panel);border:1px solid var(--border-soft);border-radius:11px;padding:9px 12px;}
+  .rec-kpi .l{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);font-weight:600;}
+  .rec-kpi .v{font-family:var(--mono);font-size:16px;font-weight:700;margin-top:2px;}
+  .rec-actions{display:flex;gap:9px;margin-top:17px;align-items:center;}
+  .btn{background:var(--accent);color:var(--on-accent);border:0;border-radius:11px;padding:11px 20px;font:inherit;font-size:14px;font-weight:650;cursor:pointer;}
+  .btn-ghost{background:none;border:0;color:var(--text-dim);font:inherit;font-size:13px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+  .sim{display:flex;align-items:center;gap:12px;margin-top:16px;padding-top:15px;border-top:1px solid var(--border-soft);}
+  .sim label{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-faint);}
+  .sim input{flex:1;accent-color:var(--star);}
+  .sim .val{font-family:var(--mono);font-size:12px;font-weight:700;min-width:62px;}
+
+  /* ---- post-ride note ---- */
+  .pr-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:15px;}
+  .pr-stat{background:var(--panel);border:1px solid var(--border-soft);border-radius:11px;padding:10px 12px;}
+  .pr-stat .l{font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);font-weight:600;}
+  .pr-stat .v{font-family:var(--mono);font-size:19px;font-weight:700;margin-top:3px;}
+  .pr-note{display:flex;gap:11px;align-items:flex-start;background:var(--panel);border:1px solid var(--border-soft);border-left:3px solid var(--ok);border-radius:11px;padding:13px 15px;}
+  .pr-note .ic{flex:none;width:26px;height:26px;border-radius:50%;background:var(--ok);color:var(--on-accent);display:grid;place-items:center;font-weight:700;font-size:14px;}
+  .pr-note p{margin:0;font-size:13.5px;line-height:1.6;}
+  .pr-note b{font-weight:700;}
+
+  /* ---- adaptive plan ---- */
+  .plan-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+  .plan-head h3{margin:0;font-size:14px;font-weight:700;}
+  .plan-head .pill{font-size:11px;color:var(--text-dim);background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:4px 11px;}
+  .week{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
+  .day{border:1px solid var(--border-soft);border-radius:11px;padding:9px 7px;min-height:92px;display:flex;flex-direction:column;gap:6px;background:var(--bg-elev);}
+  .day.today{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+  .day .dow{font-family:var(--mono);font-size:9.5px;color:var(--text-faint);letter-spacing:.06em;text-transform:uppercase;}
+  .day .ses{font-size:11px;font-weight:600;line-height:1.25;}
+  .day .chip{display:inline-block;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;align-self:flex-start;}
+  .day .mins{font-family:var(--mono);font-size:10px;color:var(--text-faint);margin-top:auto;}
+  .day.rest .ses{color:var(--text-faint);font-weight:500;}
+  .day.changed{background:color-mix(in srgb,var(--c-threshold) 8%,transparent);border-color:color-mix(in srgb,var(--c-threshold) 35%,var(--border-soft));}
+  .day .was{font-size:9px;color:var(--text-faint);text-decoration:line-through;}
+  .adapt{display:flex;gap:11px;align-items:flex-start;margin-top:14px;background:color-mix(in srgb,var(--c-threshold) 7%,transparent);border:1px solid color-mix(in srgb,var(--c-threshold) 30%,var(--border));border-radius:12px;padding:13px 15px;}
+  .adapt .ic{flex:none;width:26px;height:26px;border-radius:50%;background:var(--c-threshold);color:#fff;display:grid;place-items:center;}
+  .adapt p{margin:0;font-size:13px;line-height:1.55;}
+  .adapt b{font-weight:700;}
+  .rule{font-family:var(--mono);font-size:11px;color:var(--text-faint);background:var(--panel);border:1px dashed var(--border);border-radius:9px;padding:9px 12px;margin-top:12px;line-height:1.6;}
+  .rule b{color:var(--text-dim);}
+</style>
+</head>
+<body>
+  <div class="bar"><b>Coaching — concept</b><span class="sub">Rule-based, offline. Tier 1 (today's session + post-ride) and adaptive plans.</span><button class="tgl" id="theme">Dark</button></div>
+  <div class="wrap">
+
+    <!-- ===== 1 · TODAY'S SESSION ===== -->
+    <div class="sec-h"><span class="n">TIER 1</span><h2>Today's session</h2><span class="tag">readiness → workout</span></div>
+    <p class="note">The coach reads your <b>Form</b> and recent load, decides what kind of ride serves you today, and pulls a matching workout from your library. Drag the slider to see it react.</p>
+    <div class="card">
+      <div class="coach-head"><span class="dot"></span>Your coach · today</div>
+      <p class="readline" id="readline">Form <b>+9 (Rested)</b> · 24h since your last hard ride.</p>
+      <div class="rec">
+        <div class="rec-main">
+          <span class="rec-type" id="recType">Threshold</span>
+          <div class="rec-name" id="recName">Anvil Light</div>
+          <div class="rec-struct" id="recStruct">2 × 12 min @ 100% FTP</div>
+          <p class="rec-why"><span class="lead" id="recLead">Make it count.</span> <span id="recWhy">You're rested and the timing's right for a quality effort — hold threshold evenly.</span></p>
+          <div class="rec-actions"><button class="btn">▶ Start session</button><button class="btn-ghost">Pick another</button></div>
+        </div>
+        <div class="rec-side">
+          <div class="rec-kpi"><div class="l">Duration</div><div class="v" id="recDur">60 min</div></div>
+          <div class="rec-kpi"><div class="l">Target TSS</div><div class="v" id="recTss">72</div></div>
+        </div>
+      </div>
+      <div class="sim"><label>Form</label><input type="range" id="form" min="-45" max="30" value="9"><span class="val" id="formVal">+9</span></div>
+    </div>
+
+    <!-- ===== 2 · POST-RIDE NOTE ===== -->
+    <div class="sec-h"><span class="n">TIER 1</span><h2>Post-ride note</h2><span class="tag">on the finish screen</span></div>
+    <p class="note">After a ride, one plain-English read of what it did — built from TSS, HR drift (already computed) and your new Form. No fluff, just "what happened and what's next."</p>
+    <div class="card">
+      <div class="pr-grid">
+        <div class="pr-stat"><div class="l">Load</div><div class="v">74 <span style="font-size:11px;color:var(--text-faint)">TSS</span></div></div>
+        <div class="pr-stat"><div class="l">Avg / NP</div><div class="v">188 W</div></div>
+        <div class="pr-stat"><div class="l">HR drift</div><div class="v" style="color:var(--ok)">+3%</div></div>
+        <div class="pr-stat"><div class="l">Form now</div><div class="v" style="color:var(--c-threshold)">−12</div></div>
+      </div>
+      <div class="pr-note"><span class="ic">✓</span><p><b>Strong threshold session.</b> You held the efforts with only +3% heart-rate drift — good aerobic durability. That's +74 TSS, pushing Form to −12: a productive overload. <b>Keep tomorrow easy</b> so it sticks.</p></div>
+    </div>
+
+    <!-- ===== 3 · ADAPTIVE PLAN ===== -->
+    <div class="sec-h"><span class="n">TIER 2</span><h2>Adaptive training plan</h2><span class="tag">plan that reacts</span></div>
+    <p class="note">A plan lays workouts into your calendar with progression, recovery weeks and a taper. The <b>adaptive</b> part is what makes it feel like a coach: it watches your actual Form and completion, and re-flows upcoming sessions when life (or fatigue) gets in the way.</p>
+    <div class="card">
+      <div class="plan-head"><h3>FTP Builder · Week 3 of 8</h3><span class="pill">This week · 4 sessions · ~5h</span></div>
+      <div class="week" id="week"></div>
+      <div class="adapt"><span class="ic">⟳</span><p><b>Adapted today.</b> Your Form dropped to <b>−28</b> after the weekend block — deeper than planned. I eased <b>Thursday's VO2 Max → 45 min Endurance</b>, and moved the hard session to <b>Saturday</b> when you'll be fresher. Your week's target load is unchanged.</p></div>
+      <div class="rule"><b>Triggers I'd react to:</b> Form below the plan's floor → downgrade the next hard day · a workout you couldn't hold → repeat it easier · missed sessions → re-flow, don't cram · fresher than expected → offer to add intensity.</div>
+    </div>
+
+    <div class="sec-h"><span class="n">NOTE</span><h2>How it stays "your app"</h2></div>
+    <p class="note" style="margin-bottom:40px">Everything above is <b>deterministic</b> — plain rules over data you already have (Form, load, drift, the library). It runs offline on the trainer, costs nothing, and never leaves the device. An optional conversational AI coach could sit on top later, but it's not needed to ship any of this.</p>
+
+  </div>
+<script>
+  var gv=function(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim();};
+  // Today's-session decision table (illustrative)
+  var TABLE=[
+    {min:13, type:'VO2 Max', zone:'--c-vo2', name:'Spire', struct:'5 × 4 min @ 118% FTP', dur:'58 min', tss:84, lead:'You’re fresh — spend it.', why:'High Form is a green light for top-end work; go deep and recover after.'},
+    {min:4, type:'Threshold', zone:'--c-threshold', name:'Anvil Light', struct:'2 × 12 min @ 100% FTP', dur:'60 min', tss:72, lead:'Make it count.', why:'You’re rested and the timing’s right for a quality effort — hold threshold evenly.'},
+    {min:-11, type:'Sweet Spot', zone:'--c-sweetspot', name:'Ashcreek', struct:'3 × 15 min @ 90% FTP', dur:'70 min', tss:68, lead:'Build steadily.', why:'Form’s neutral — sweet spot adds fitness without digging a hole.'},
+    {min:-28, type:'Endurance', zone:'--c-endurance', name:'Long Spin', struct:'75 min @ 65% FTP', dur:'75 min', tss:52, lead:'Keep it aerobic.', why:'You’re carrying productive fatigue — stay steady and let fitness absorb.'},
+    {min:-99, type:'Recovery', zone:'--c-recovery', name:'Easy Roll', struct:'40 min @ 55% FTP', dur:'40 min', tss:24, lead:'Back right off.', why:'You’re deep in the red — spin easy today so you can train hard later.'}
+  ];
+  function wordFor(t){ if(t>15)return'Fresh'; if(t>5)return'Rested'; if(t>=-10)return'Maintaining'; if(t>=-30)return'Building'; return'Overreaching'; }
+  function pick(t){ for(var i=0;i<TABLE.length;i++){ if(t>=TABLE[i].min) return TABLE[i]; } return TABLE[TABLE.length-1]; }
+  function render(){
+    var t=+document.getElementById('form').value, r=pick(t), c=gv(r.zone);
+    document.getElementById('formVal').textContent=(t>0?'+':'')+t;
+    document.getElementById('readline').innerHTML='Form <b>'+(t>0?'+':'')+t+' ('+wordFor(t)+')</b> · 24h since your last hard ride.';
+    var rt=document.getElementById('recType'); rt.textContent=r.type; rt.style.background='color-mix(in srgb,'+c+' 16%,transparent)'; rt.style.color=c;
+    document.getElementById('recName').textContent=r.name;
+    document.getElementById('recStruct').textContent=r.struct;
+    document.getElementById('recLead').textContent=r.lead;
+    document.getElementById('recWhy').textContent=r.why;
+    document.getElementById('recDur').textContent=r.dur;
+    document.getElementById('recTss').textContent=r.tss;
+  }
+  document.getElementById('form').addEventListener('input', render);
+
+  // adaptive week
+  var DAYS=[
+    {dow:'Mon', rest:true, ses:'Rest'},
+    {dow:'Tue', type:'Sweet Spot', zone:'--c-sweetspot', ses:'Ashglow', mins:'60m'},
+    {dow:'Wed', type:'Endurance', zone:'--c-endurance', ses:'Long Spin', mins:'75m'},
+    {dow:'Thu', today:true, changed:true, type:'Endurance', zone:'--c-endurance', ses:'Easy 45', mins:'45m', was:'VO2 Max'},
+    {dow:'Fri', rest:true, ses:'Rest'},
+    {dow:'Sat', type:'VO2 Max', zone:'--c-vo2', ses:'Spire', mins:'58m'},
+    {dow:'Sun', type:'Endurance', zone:'--c-endurance', ses:'Long Spin', mins:'90m'}
+  ];
+  function drawWeek(){
+    document.getElementById('week').innerHTML=DAYS.map(function(d){
+      if(d.rest) return '<div class="day rest'+(d.today?' today':'')+'"><span class="dow">'+d.dow+'</span><span class="ses">Rest</span></div>';
+      var c=gv(d.zone);
+      return '<div class="day'+(d.today?' today':'')+(d.changed?' changed':'')+'"><span class="dow">'+d.dow+'</span>'+
+        (d.was?'<span class="was">'+d.was+'</span>':'')+
+        '<span class="chip" style="background:color-mix(in srgb,'+c+' 18%,transparent);color:'+c+'">'+d.type+'</span>'+
+        '<span class="ses">'+d.ses+'</span><span class="mins">'+d.mins+'</span></div>';
+    }).join('');
+  }
+  render(); drawWeek();
+  document.getElementById('theme').addEventListener('click',function(){
+    var d=document.documentElement.getAttribute('data-theme')==='light'?'dark':'light';
+    document.documentElement.setAttribute('data-theme',d);this.textContent=d==='light'?'Dark':'Light';render();drawWeek();
+  });
+</script>
+</body>
+</html>

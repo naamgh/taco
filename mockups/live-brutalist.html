@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Live — minimal mono</title>
+<style>
+  :root{
+    --page:#F4F3EF; --card:#FFFFFF; --ink:#14140F; --ink-soft:#4A4A44;
+    --muted:#6C6B62; --line:#DEDCD3; --line-2:#C7C5BB;
+    --sans:"Segoe UI",-apple-system,BlinkMacSystemFont,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html,body{height:100%;}
+  body{background:var(--page);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased;display:flex;justify-content:center;}
+  ::selection{background:var(--ink);color:var(--page);}
+
+  .screen{width:100%;max-width:1180px;height:100%;min-height:100vh;display:flex;flex-direction:column;gap:16px;padding:18px 22px 20px;}
+
+  .label{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
+
+  /* header */
+  .hd{display:flex;align-items:center;gap:14px;flex:none;}
+  .hd .ic{width:42px;height:42px;border:1.5px solid var(--line-2);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--ink);flex:none;}
+  .hd .pill{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .hd .pill .tag{background:var(--ink);color:var(--page);border-radius:22px;padding:10px 30px;font-size:14px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;}
+  .hd .pill .sub{font-size:12.5px;color:var(--muted);}
+  .hd .end{border:1.5px solid var(--line-2);border-radius:22px;padding:10px 20px;background:transparent;color:var(--ink);font-family:inherit;font-size:12px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;cursor:pointer;}
+  .hd .end:hover{background:var(--ink);color:var(--page);border-color:var(--ink);}
+
+  /* segment status row */
+  .seg{display:flex;align-items:flex-end;gap:16px;flex:none;}
+  .seg .now{flex:1;min-width:0;}
+  .seg .now .zone{font-size:clamp(24px,4.2vw,38px);font-weight:600;letter-spacing:-.01em;line-height:1;margin-top:6px;}
+  .seg .tgt{text-align:right;flex:none;}
+  .seg .tgt .val{font-size:clamp(26px,4.4vw,40px);font-weight:600;font-variant-numeric:tabular-nums;line-height:1;margin-top:6px;}
+  .seg .tgt .val small{font-size:.46em;color:var(--muted);font-weight:600;margin-left:3px;}
+  .seg .tgt .erg{display:inline-block;border:1.5px solid var(--line-2);border-radius:20px;padding:2px 9px;font-size:11px;font-weight:700;letter-spacing:.14em;color:var(--muted);margin-left:8px;vertical-align:middle;}
+
+  /* segmented workout progress (echoes the reference tick-bars) */
+  .prog{display:flex;gap:5px;flex:none;}
+  .prog span{flex:1;height:8px;border:1.5px solid var(--line-2);border-radius:4px;}
+  .prog span.done{background:var(--ink);border-color:var(--ink);}
+  .prog span.cur{background:var(--ink);border-color:var(--ink);position:relative;}
+
+  /* chart card (hero) */
+  .chart-card{flex:1 1 auto;min-height:0;background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:14px 14px 8px;display:flex;flex-direction:column;position:relative;}
+  .chart-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex:none;}
+  .legend{display:flex;gap:18px;}
+  .legend span{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);}
+  .legend b{font-weight:600;}
+  .legend .ln{width:22px;height:3px;background:var(--ink);display:inline-block;border-radius:2px;}
+  #chart{display:block;width:100%;height:100%;flex:1;}
+
+  /* readouts */
+  .rail{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;flex:none;}
+  .cell{background:var(--card);border:1.5px solid var(--line);border-radius:16px;padding:14px 16px 15px;}
+  .cell .c-lab{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:9px;}
+  .cell .c-val{font-size:clamp(30px,5.4vw,56px);font-weight:600;line-height:.9;font-variant-numeric:tabular-nums;letter-spacing:-.01em;}
+  .cell .c-unit{font-size:12px;color:var(--muted);margin-top:7px;letter-spacing:.02em;}
+  .cell.emph{background:var(--ink);border-color:var(--ink);color:var(--page);}
+  .cell.emph .c-lab,.cell.emph .c-unit{color:#B9B7AC;}
+  .cell .mini{display:flex;gap:3px;margin-top:10px;}
+  .cell .mini i{flex:1;height:6px;border-radius:3px;background:var(--line);}
+  .cell .mini i.on{background:var(--ink);}
+
+  /* controls */
+  .ctrls{display:grid;grid-template-columns:1fr 1.4fr;gap:12px;flex:none;}
+  .btn{border:1.5px solid var(--line-2);border-radius:26px;background:transparent;color:var(--ink);font-family:inherit;font-size:15px;font-weight:600;letter-spacing:.06em;padding:18px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;}
+  .btn:hover{background:#ECEAE3;}
+  .btn.primary{background:var(--ink);border-color:var(--ink);color:var(--page);}
+  .btn.primary:hover{background:#000;}
+  .btn svg{width:18px;height:18px;}
+
+  @media(max-width:640px){
+    .screen{padding:14px 14px 16px;gap:12px;}
+    .rail{grid-template-columns:1fr 1fr;}
+    .cell.wide{grid-column:1 / -1;}
+    .cell.elapsed{display:none;}
+    .hd .pill .tag{padding:9px 20px;}
+  }
+</style>
+</head>
+<body>
+<div class="screen">
+
+  <div class="hd">
+    <div class="ic" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+    </div>
+    <div class="pill"><span class="tag">Brazier</span><span class="sub">Sweet-spot builder · 60 min</span></div>
+    <button class="end">End</button>
+  </div>
+
+  <div class="seg">
+    <div class="now"><span class="label">Segment <b id="segNo">3</b> / 9</span><div class="zone" id="zone">Sweet spot</div></div>
+    <div class="tgt"><span class="label">Target <span class="erg">ERG</span></span><div class="val" id="target">228<small>W</small></div></div>
+  </div>
+  <div class="prog" id="prog"></div>
+
+  <div class="chart-card">
+    <div class="chart-head">
+      <span class="label">This ride</span>
+      <div class="legend">
+        <span><i class="ln" style="background:#E0A400"></i><b>Power</b></span>
+        <span><i class="ln" style="background:#E23B3B"></i>Heart</span>
+        <span><i class="ln" style="background:#55554E"></i>Cadence</span>
+      </div>
+    </div>
+    <canvas id="chart"></canvas>
+  </div>
+
+  <div class="rail">
+    <div class="cell emph">
+      <div class="c-lab">Cadence</div><div class="c-val" id="rCad">92</div><div class="c-unit">rpm</div>
+    </div>
+    <div class="cell wide">
+      <div class="c-lab">Interval left</div><div class="c-val" id="rInt">07:32</div>
+      <div class="mini" id="intMini"></div>
+    </div>
+    <div class="cell">
+      <div class="c-lab">Power</div><div class="c-val" id="rPwr">248</div><div class="c-unit">watts</div>
+    </div>
+    <div class="cell">
+      <div class="c-lab">Heart</div><div class="c-val" id="rHr">156</div><div class="c-unit">bpm</div>
+    </div>
+    <div class="cell elapsed">
+      <div class="c-lab">Elapsed</div><div class="c-val" id="rTot">23:10</div><div class="c-unit">of 60:00</div>
+    </div>
+  </div>
+
+  <div class="ctrls">
+    <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 5l9 7-9 7zM19 5v14"/></svg>Skip</button>
+    <button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 5v14M16 5v14"/></svg>Pause</button>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var segs=[
+    {n:'Warm-up',pct:55,sec:300},{n:'Warm-up',pct:70,sec:300},
+    {n:'Sweet spot',pct:91,sec:900},{n:'Recovery',pct:55,sec:180},
+    {n:'Sweet spot',pct:94,sec:900},{n:'Recovery',pct:55,sec:180},
+    {n:'Sweet spot',pct:91,sec:720},{n:'Endurance',pct:68,sec:600},
+    {n:'Cool-down',pct:50,sec:220}
+  ];
+  var total=segs.reduce(function(a,s){return a+s.sec;},0);
+  var elapsed=23*60+10;
+  function segAt(t){var acc=0;for(var i=0;i<segs.length;i++){if(t<acc+segs[i].sec)return{i:i,seg:segs[i],into:t-acc,start:acc};acc+=segs[i].sec;}return{i:segs.length-1,seg:segs[segs.length-1],into:segs[segs.length-1].sec,start:total-segs[segs.length-1].sec};}
+  function ftpTarget(t){return segAt(t).seg.pct;}
+  function rnd(x){var s=Math.sin(x*12.9898)*43758.5453;return s-Math.floor(s);}
+  function powerAt(t){return ftpTarget(t)*2.5*(0.985+(rnd(t*0.7)-0.5)*0.04);}
+  function hrAt(t){return 110+(ftpTarget(t)-55)*0.9+t/total*14+(rnd(t*0.31)-0.5)*4;}
+  function cadAt(t){var z=ftpTarget(t);return (z>85?90:88)+Math.sin(t/40)*3+(rnd(t*0.53)-0.5)*3;}
+
+  // Zone -> a light colour scheme for the interval blocks. Each zone's saturated
+  // hue is mixed toward the page (soft pastel fill) and toward ink (a readable
+  // coloured top edge); future blocks are lighter than the ridden ones.
+  function zoneOf(p){if(p<56)return'recovery';if(p<76)return'endurance';if(p<88)return'tempo';if(p<95)return'sweetspot';if(p<106)return'threshold';if(p<120)return'vo2';return'anaerobic';}
+  var ZBASE={recovery:'#8C93A6',endurance:'#5B8DEF',tempo:'#3FB6AE',sweetspot:'#E8B24D',threshold:'#F2764A',vo2:'#C77DFF',anaerobic:'#FF5D75'};
+  var PAGE='#F4F3EF',INK='#14140F';
+  function hx(c){c=c.replace('#','');return[parseInt(c.substr(0,2),16),parseInt(c.substr(2,2),16),parseInt(c.substr(4,2),16)];}
+  function mix(a,b,t){var A=hx(a),B=hx(b);return'rgb('+Math.round(A[0]+(B[0]-A[0])*t)+','+Math.round(A[1]+(B[1]-A[1])*t)+','+Math.round(A[2]+(B[2]-A[2])*t)+')';}
+  var ZL={};Object.keys(ZBASE).forEach(function(z){var b=ZBASE[z];ZL[z]={fill:mix(b,PAGE,0.74),future:mix(b,PAGE,0.88),edge:mix(b,INK,0.12),edgeF:mix(b,PAGE,0.40)};});
+
+  function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim();}
+  var cv=document.getElementById('chart'),ctx=cv.getContext('2d');
+  function draw(){
+    var dpr=Math.min(2,window.devicePixelRatio||1),W=cv.clientWidth,H=cv.clientHeight;
+    cv.width=W*dpr;cv.height=H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,W,H);
+    var padL=44,padR=8,padT=10,padB=24,x0=padL,x1=W-padR,y0=H-padB,y1=padT,maxPct=130;
+    function X(t){return x0+(t/total)*(x1-x0);}
+    function Y(p){return y0-(p/maxPct)*(y0-y1);}
+    var ink=css('--ink'),line=css('--line'),line2=css('--line-2'),muted=css('--muted');
+
+    var nowX=X(elapsed),acc=0;
+    // interval blocks: soft zone-tinted profile, ridden fuller than upcoming,
+    // with a readable coloured top edge naming the zone.
+    segs.forEach(function(s){
+      var bx0=X(acc),bx1=X(acc+s.sec),by=Y(s.pct),future=acc>=elapsed,zl=ZL[zoneOf(s.pct)];
+      ctx.fillStyle=future?zl.future:zl.fill;
+      ctx.fillRect(bx0,by,Math.max(1,bx1-bx0),y0-by);
+      ctx.strokeStyle=future?zl.edgeF:zl.edge;ctx.lineWidth=2.4;
+      ctx.beginPath();ctx.moveTo(bx0,by);ctx.lineTo(bx1,by);ctx.stroke();
+      acc+=s.sec;
+    });
+    // FTP line
+    var fy=Y(100);ctx.strokeStyle=line2;ctx.lineWidth=1;ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(x0,fy);ctx.lineTo(x1,fy);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=muted;ctx.font='11px '+css('--sans');ctx.textAlign='right';ctx.textBaseline='middle';ctx.fillText('FTP',x0-7,fy);
+    ctx.fillText('50%',x0-7,Y(50));
+
+    function plot(fn,color,scaleMax,w){
+      var step=Math.max(3,total/700),t,gy,first;
+      ctx.lineJoin='round';ctx.lineCap='round';
+      ctx.strokeStyle='rgba(20,20,15,0.14)';ctx.lineWidth=w+2;ctx.beginPath();first=true;
+      for(t=0;t<=elapsed;t+=step){gy=Y(fn(t)/scaleMax*100);if(first){ctx.moveTo(X(t),gy);first=false;}else ctx.lineTo(X(t),gy);}ctx.stroke();
+      ctx.strokeStyle=color;ctx.lineWidth=w;ctx.beginPath();first=true;
+      for(t=0;t<=elapsed;t+=step){gy=Y(fn(t)/scaleMax*100);if(first){ctx.moveTo(X(t),gy);first=false;}else ctx.lineTo(X(t),gy);}ctx.stroke();
+    }
+    // all solid; cadence (grey) -> HR (red) -> power (yellow) on top.
+    plot(function(t){return cadAt(t);},'#55554E',150,2.1);
+    plot(function(t){return hrAt(t)/190*100;},'#E23B3B',100,2.2);
+    plot(function(t){return powerAt(t)/2.5;},'#EAB308',100,2.8);
+
+    // NOW marker
+    ctx.strokeStyle=ink;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(nowX,y1-3);ctx.lineTo(nowX,y0);ctx.stroke();
+    ctx.fillStyle=ink;ctx.beginPath();ctx.moveTo(nowX-5,y1-3);ctx.lineTo(nowX+5,y1-3);ctx.lineTo(nowX,y1+4);ctx.closePath();ctx.fill();
+
+    ctx.fillStyle=muted;ctx.font='11px '+css('--sans');ctx.textAlign='center';ctx.textBaseline='alphabetic';
+    for(var m=0;m<=total;m+=600){ctx.fillText((m/60)+'m',X(m),y0+16);}
+  }
+
+  function fmt(s){s=Math.max(0,Math.round(s));var m=Math.floor(s/60),ss=s%60;return(m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;}
+  var progEl=document.getElementById('prog');
+  segs.forEach(function(){var e=document.createElement('span');progEl.appendChild(e);});
+  var intMini=document.getElementById('intMini');
+  for(var k=0;k<12;k++){var e=document.createElement('i');intMini.appendChild(e);}
+
+  function update(){
+    var a=segAt(elapsed);
+    document.getElementById('segNo').textContent=(a.i+1);
+    document.getElementById('zone').textContent=a.seg.n;
+    document.getElementById('target').innerHTML=Math.round(a.seg.pct*2.5)+'<small>W</small>';
+    document.getElementById('rPwr').textContent=Math.round(powerAt(elapsed));
+    document.getElementById('rHr').textContent=Math.round(hrAt(elapsed));
+    document.getElementById('rCad').textContent=Math.round(cadAt(elapsed));
+    document.getElementById('rInt').textContent=fmt(a.seg.sec-a.into);
+    document.getElementById('rTot').textContent=fmt(elapsed);
+    // workout progress ticks
+    [].forEach.call(progEl.children,function(sp,i){sp.className=(i<a.i?'done':(i===a.i?'cur':''));});
+    // interval mini progress
+    var frac=a.into/a.seg.sec,on=Math.round(frac*intMini.children.length);
+    [].forEach.call(intMini.children,function(sp,i){sp.className=(i<on?'on':'');});
+  }
+
+  var last=performance.now();
+  function loop(now){var dt=(now-last)/1000;last=now;elapsed=(elapsed+dt*6)%total;draw();update();requestAnimationFrame(loop);}
+  draw();update();window.addEventListener('resize',draw);requestAnimationFrame(loop);
+})();
+</script>
+</body>
+</html>
