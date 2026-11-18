@@ -8,6 +8,7 @@
 !/DESIGN.md
 !/PRODUCT.md
 !/build.ps1
+!/build.mjs
 !/serve.ps1
 !/start.bat
 !/library-gen.js
